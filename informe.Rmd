@@ -1,0 +1,92 @@
+---
+title: "Informe preliminar"
+author: "Emanuelle Marsella, Maximiliano Saldaña"
+date: "16/4/2020"
+output:
+  pdf_document:
+    toc: no
+    pandoc_args: [
+      "--number-sections",
+      "--number-offset=1"
+    ]
+header-includes:
+  - \usepackage{float}
+  - \usepackage[spanish]{babel}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE,
+                      include=FALSE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.pos = 'H',
+                      fig.align = 'center',
+                      out.extra = '',
+                      fig.hold = 'hold',
+                      out.width = "50%"
+                      )
+options(xtable.comment=FALSE,
+        xtable.table.placement="H")
+```
+
+
+```{r, include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(xtable)
+
+
+```
+
+\title{Modelización lineal del salario \\ 
+
+\large Modelos Lineales, UdelaR
+}
+
+\author{Emanuelle Marsella, Maximiliano Saldaña}
+
+\date{Junio 2021}
+
+
+\maketitle
+
+
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+
+
+```{r}
+#Lectura de los datos
+
+
+datos <- read.table("corona.txt", sep = "\t", header = TRUE)
+
+#Hay NAs en varias variables, una opcion de imputacion, en las cuantitativas imputar la media y en las 
+# cualitativas el modo.
+```
+
+
+
+# Introducción
+
+
+
+
+# Descripción de los datos
+
+
+
+
+## Variables Indicadoras
+
+
+
+
+
