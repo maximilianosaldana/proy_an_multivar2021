@@ -40,9 +40,9 @@ library(xtable)
 
 ```
 
-\title{Modelización lineal del salario \\ 
+\title{Proyecto Análisis Multivariado\\ 
 
-\large Modelos Lineales, UdelaR
+\large Análisis Multivariado, UdelaR
 }
 
 \author{Emanuelle Marsella, Maximiliano Saldaña}
@@ -61,15 +61,10 @@ library(xtable)
 \newpage
 
 
-
-```{r}
+```{r lectura de datos, echo=FALSE}
 #Lectura de los datos
 
-
 datos <- read.table("corona.txt", sep = "\t", header = TRUE)
-
-#Hay NAs en varias variables, una opcion de imputacion, en las cuantitativas imputar la media y en las 
-# cualitativas el modo.
 ```
 
 
@@ -81,7 +76,39 @@ datos <- read.table("corona.txt", sep = "\t", header = TRUE)
 
 # Descripción de los datos
 
+(Describir variables una a una?)
 
+En primer lugar se aprecia que varias de las variables cuentan con datos faltantes, en particular las variables *total cases*, *medage*, *gpdpercapitaconstant2010us*, *currenthealthexpenditureofgdpshx*, *hospitalbed*, *stringency*, *infectionrate* y *CESI_INDEX*. Debe destacarse que la variable *stringency* cuenta con 93 valores faltantes en las 166 observaciones.
+
+```{r imputacion, echo=FALSE}
+
+dim(datos)
+(NAcheck <- as.numeric(apply(is.na(datos), 2, sum)))
+
+#Hay NAs en varias variables, una opcion de imputacion, en las cuantitativas imputar la media y en las cualitativas el modo. Stringency tiene 93 NAs (evaluar sacarla)
+
+#vector de valores medios
+
+vals_meds <- rep(0, dim(datos)[2])
+
+for(j in 1:dim(datos)[2]){
+  
+  vals_meds[j] <- mean(datos[,j], na.rm = TRUE)
+}
+
+#imputacion de vals medios en NAs
+
+for(j in 1:dim(datos)[2]){
+  if(NAcheck[j]>0){
+    
+    for(i in 1:dim(datos)[1]){
+      if(is.na(datos[i,j])==TRUE){
+       datos[i,j] <- vals_meds[j] 
+    }
+    }
+  }
+}
+```
 
 
 ## Variables Indicadoras
