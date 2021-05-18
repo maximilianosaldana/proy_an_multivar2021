@@ -71,12 +71,30 @@ datos <- read.table("corona.txt", sep = "\t", header = TRUE)
 
 # Introducción
 
+El objetivo de este trabajo es aplicar las técnicas de Análisis Factorial a la base de datos que surgen del trabajo **Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index** (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020). El objetivo es analizar las políticas económicas adoptadas por distintos países como respuesta a la pandemia de covid-19. 
 
 
 
 # Descripción de los datos
 
-(Describir variables una a una?)
+Los datos disponibles fueron elaborados por los autores a partir de una recopilación de distintas fuentes. La principal es el FMI, pero algunos datos fueron reemplazados por otros provenientes de páginas gubernamentales o canales de noticias con el fin de que toda la información estuviese actualizada. \underline{La información se extiende  hasta el 31 de marzo de 2020. (ver bien si esto es cierto, o si aunque el artículo diga eso la base que nos dio Federico es una versión más actualizada)}
+
+Las variables con las que cuenta la base son:
+* Políticas fiscales: Paquete de políticas fiscales adoptadas, representado como porcentaje del PBI
+* Recorte en la tasa de interés: representa el porcentaje que fue recortado de la tasa de interés vigente a febrero de 2020
+* Medidas macrofinancieras: tamaño del paquete de medidas macrofinancieras, expresado como porcentaje del PBI
+* Otras medidas monetarias: variable indicadora que indica si en el país se tomaron otras medidas monetarias
+* Políticas de balanza de pago: expresada como porcentaje del PBI
+* Otras políticas de Balanza de Pago: variable indicadora que indica si en el país se tomaron otras medidas de políticas de balanza de pago
+* Cantidad de casos totales de covid-19
+* Edad mediana en el país (a 2019)
+* Tasa de infección: representa la proporción de la población total infectada de covid-19
+* Camas de hospital ocupadas por cada 1000 personas
+* Gastos en salud: expresados como porcentaje del PBI
+* Índice de rigurosidad de respuesta gubernamental (desarrollado por Hale y Webster en 2020)
+* PBI per cápita del país
+* Índice de estímulo económico (construido por los autores utilizando análisis de componentes principles)
+
 
 En primer lugar se aprecia que varias de las variables cuentan con datos faltantes, en particular las variables *total cases*, *medage*, *gpdpercapitaconstant2010us*, *currenthealthexpenditureofgdpshx*, *hospitalbed*, *stringency*, *infectionrate* y *CESI_INDEX*. Debe destacarse que la variable *stringency* cuenta con 93 valores faltantes en las 166 observaciones.
 
