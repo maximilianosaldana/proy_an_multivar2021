@@ -36,6 +36,7 @@ library(dplyr)
 library(ggplot2)
 library(readxl)
 library(xtable)
+library(FactoMineR)
 
 
 ```
@@ -137,14 +138,22 @@ for(j in 1:dim(datos)[2]){
     }
   }
 }
+
+datos <- datos %>% select(-c(stringency)) %>% rename(healthexp= "currenthealthexpenditureofgdpshx", gdppercap = "gdppercapitaconstant2010us" )
 ```
 
 
 ## Correlación
 
+```{r correlaciones}
+
+correl <- datos %>% select(-c(country, othermonetary, otherbop)) %>% cor()
+```
+Se comienza por analizar las correlaciones entre las variables cuantitativas. En primer lugar se debe tener en cuenta que la variable *CESI_INDEX* tiene como origen el análisis de componentes principales efectuado por los autores del artículo de origen de los datos y como tal es de esperarse que se vea correlacionada con el resto de las variables, ya que proviene de una combinación lineal de los datos originales. En efecto, este índice del estímulo económico tiene una correlación alta con *fiscal* (`r correl["fiscal", "CESI_INDEX"]`), *macrofin* (`r correl["macrofin", "CESI_INDEX"]`) y *gdppercap* (`r correl["gdppercap", "CESI_INDEX"]`), variables de caracter económico. A pesar de esto no tiene una correlación muy alta con *bopgdp* (`r correl["bopgdp", "CESI_INDEX"]`).
+
+Otras correlaciones que se destacan por ser altas son las entre *gdppercapita* y *fiscal* (`r correl["gdppercap", "fiscal"]`), *medage* y *gpdpercap* y entre *medage* y *hospitalbed*. En general, a la hora de aplicar el análisis de componentes principales la idea es trabajar con variables que estén correlacionadas y obtener nuevas que no lo estén.
 
 
+%evaluar grafico para ver observaciones atipicas , posible eliminacion%
 
-
-
-
+%mostrar correlaciones del analisis de comp prin%
