@@ -154,6 +154,68 @@ Se comienza por analizar las correlaciones entre las variables cuantitativas. En
 Otras correlaciones que se destacan por ser altas son las entre *gdppercapita* y *fiscal* (`r correl["gdppercap", "fiscal"]`), *medage* y *gpdpercap* y entre *medage* y *hospitalbed*. En general, a la hora de aplicar el análisis de componentes principales la idea es trabajar con variables que estén correlacionadas y obtener nuevas que no lo estén.
 
 
+
+```{r grafio correlaciones}
+names(datos)
+
+vars.economicas <- c("fiscal", "ratecut", "macrofin", "bopgdp", "gdppercap", "CESI_INDEX")
+
+vars.salud.demograficas <- c("medage", "bdppercap", "healthexp", "hospitalbed", "infectationrate")
+
+#Considero solo las variables demográficas. En ambos casos incluyo la variable de PBI per capita porque considero que puede llegar a ser importante para ambos análisis.
+
+datos[, vars.economicas]
+
+plot(datos[, vars.economicas])
+
+```
+Algunas observaciones respecto a lo que sucede con el gráfico de dispersión de las variables económicas:
+* Se observa en los gráficos de dispersión de variables económicas vs bopdgp que los niveles de esta última variable tienden a acumularse contra valores bajos, a excepción de algunos países que se separan del resto. Hacer boxplot de la variable para analizar esto mejor.
+
+* Hay varios gráficos en los cuales se observan países que se separan del resto. En particular esto es fácil de observar en los que incluyen a la variable bopgdp, si bien hay acumulación hay algunos puntos que se separan del resto. También los vemos en los gráficos que incluyen a las variables fiscal, parece ser que hay un país en particular que toma un valor muy bajo (próximo a -4) para esa variable.
+
+```{r, results='asis'}
+datos %>% arrange(desc(bopgdp)) %>% head(11) %>% select(country, bopgdp) %>% xtable(caption = "Tabla de medidas de balanza de pago como porcentaje de PBI, ordenada de forma decreciente.")
+
+```
+
+En la tabla anterior podemos ver que solo hay 10 países que tomaron estas medidas de balanza de pago, puesto que los restantes no lo hicieron. Siendo así, puede ser correcto preguntarse si no sería más conveniente excluir esta variable del ACP, crear una variable indicadora que indique si los países tomaron esta medida o no y realizar un análisis de correspondencias con ella en su lugar.
+
+```{r}
+summary(as.factor(datos$otherbop))
+```
+Vemos que solo 32 países tomaron alguna otra medida de balanza de pagos, y los restantes 134 no lo hicieron.
+
+
+```{r}
+boxplot(datos$fiscal)
+
+datos %>% select(country, fiscal) %>% arrange(fiscal) %>% head(1)
+
+datos %>% filter(country!="Algeria") %>% select(fiscal) %>% boxplot()
+```
+Vemos que Argelia, que era la observación que tenía el mayor valor de la variable bopgdp, es también la observación que tiene el menor valor de la variable fiscal.
+
+Para la variable ratecut no hay observaciones que se alejen demasiado de las demás.
+
+Para la variable macrofin hay dos observaciones que se alejan de las demás, tomando valores próximos a 25, siendo que las siguientes observaciones más altas están en torno a 15. Ests dos observaciones con valores altos corresponden a los países Bahrain y Oman.
+
+Como decíamos antes, para la variable bopgdp la mayoría de las observaciones tienen valor 0. Luego está Argelia que tiene el valor más alto proxmio a 6, y las dos siguientes con valores próximos a 3 son Croacia y Suiza.
+
+Para la variable gdppercap hay bastante dispersión y en general no hay observaciones que se aparten demasiado de las demás. Las observaciones que toman los mayores valores son Luxemburgo, Noruega y Suiza. De todas formas habría que mirar con detenimiento el rango de la variable, me llama la atención la gran dispersión que tiene, con observaciones que toman valores en 6 cifras y "bastante" acumulación en torno a valores más bajos. 
+
+```{r}
+plot(datos$gdppercap)
+
+datos %>% select(country, gdppercap) %>% arrange(desc(gdppercap)) %>% head(3)
+```
+
+
+Para la variable CESI_INDEX los valores son bastante "homogéneos". Argelia toma el valor más bajo de esta variable, en torno a -4. El más alto lo toma Baréin, pero sin alejarse demasiado de las siguientes observaciones con valores más altos.
+
+<!-- Ver de hacer todo este análisis con las variables sanitarias, y ponerlo en el lugar correcto del informe. -->
+
+
 %evaluar grafico para ver observaciones atipicas , posible eliminacion%
 
 %mostrar correlaciones del analisis de comp prin%
