@@ -396,3 +396,22 @@ head(datos[indices,], 10)
 acp2 <- PCA(datos[-c(160,3),varsacp], ncp = 11)
 ```
 
+
+
+
+
+
+```{r}
+datospob <- read_xls("datospob.xls")
+
+denspob <- datospob %>%  select(`Country Name`, `2018`) %>% rename(country = `Country Name`, denspob = `2018` )
+
+
+faltan <- datos$country %in% denspob$country
+datos$country[which(faltan == FALSE)]
+
+
+
+denspob2 <-  recode(denspob$country, `Bahamas, The` = "Bahamas" )
+```
+
