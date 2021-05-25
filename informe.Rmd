@@ -309,21 +309,90 @@ correl - correl2
 
 Inicialmente se aplicará esta técnica con el conjunto de variables cuantitativas, a modo de profundizar la exploración y analizar posibles relaciones entre variables, la diferencia entre individuos, haciendo una síntesis de la información contenida en las variables originales al crear las nuevas, las componentes principales.
 
+ Al aplicarse la técnica se obtiene un nuevo conjunto de 11 variables (componentes principales) contruidas a partir de combinaciones lineales de las variables originales, mediante la proyección en un nuevo subespacio contruido para ser de inercia mínima. Se busca maximizar la variabilidad explicada por las nubes de puntos en el nuevo subespacio, lo cual se logra considerando el conjunto de ejes ortonormales asociados a los vectores propios para la matriz $X^TDXM$, donde $X$ es la matriz de datos, $D$ la matriz de pesos de los individuos y $M$ es la matriz de métrica.
+ 
+El conjunto de variables resultantes no implicó una reducción de dimensiones, aunque se puede analizar el considerar un conjunto acotado de las mismas si la inercia que explican resulta aceptable según el criterio que se tome.
+
+
+
+## Nube de variables
+
 ```{r}
 varsacp <- c("fiscal", "ratecut", "macrofin", "bopgdp", "totalcases", "medage", "gdppercap", "healthexp", "hospitalbed", "infectionrate", "CESI_INDEX")
 
 
-acp1 <- PCA(datos[,varsacp])
+acp1 <- PCA(datos[,varsacp], ncp = 11)
 
 summary(acp1)
 
-plot.PCA(acp1, choix = c("var"))
+
 ```
 
-Al aplicarse la técnica se obtiene un nuevo conjunto de 11 variables contruidas a partir de combinaciones lineales de las variables originales, 
-## Nube de variables
+
+
+
+```{r}
+acp1$eig
+```
+Los valores propios asociados a los vectores propios de... 
+
+Al analizar las inercias explicadas por los distintos ejes, se aprecia que el primer plano principal (formado por los dos primeros componentes) acumula solamente un 50% de la inercia total. Se requiere de 7 de las componentes para llegar a explicar un 90% de la inercia total. De quererse obtener un número reducido de dimensiones deberá evaluarse omitir algunas de las últimas componentes, a costa de pérdida de la variabilidad explicada.
+
+
+
+
+```{r}
+plot.PCA(acp1, choix = c("var"))
+plot.PCA(acp1, axes= c(1,2), choix = c("var"))
+```
+
+
+
+
+
+```{r}
+acp2 <- PCA(datos[,varsacp[-4]], ncp = 11)
+```
+
+```{r}
+acp4 <- PCA(datos[,varsacp[-11]], ncp = 11)
+```
+
+
+
+### Variable población
+
+```{r}
+datos2 <- datos %>% mutate(pob = totalcases/infectionrate)
+
+#añadiendo la variable poblacion se reduce la inercia explicada
+varsacp2 <- c(varsacp, "pob")
+acp3 <- PCA(datos2[, varsacp2[-4]])
+
+```
 
 
 
 
 ## Nube de individuos
+
+Obervando las normas de las observaciones se puede notar que hay un conjunto de las mismas que se distancian más del baricentro que el resto del conjunto de observaciones. Se destacan las distancias correspondientes a observaciones que ya se había notado que contaban con valores extremos en algunas de las variables, como Estados Unidos, Argelia, San Marino, Luxemburgo y Barein
+, entre otras. Observaciones de este tipo tienen una influencia sobre el análisis, incrementando la inercia, por lo que se deberá evaluar efectuar un ACP excluyéndolas. 
+
+```{r}
+
+normas <- sort(acp1$ind$dist, decreasing = TRUE)
+
+indices <- as.numeric(names(normas))
+
+head(datos[indices,], 10)
+
+```
+
+
+
+
+```{r}
+acp2 <- PCA(datos[-c(160,3),varsacp], ncp = 11)
+```
+
