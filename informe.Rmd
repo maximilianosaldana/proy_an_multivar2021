@@ -66,6 +66,8 @@ library(FactoMineR)
 #Lectura de los datos
 
 datos <- read.table("corona.txt", sep = "\t", header = TRUE)
+
+datos <- datos  %>% rename(healthexp= "currenthealthexpenditureofgdpshx", gdppercap = "gdppercapitaconstant2010us" )
 ```
 
 
@@ -86,29 +88,58 @@ dim(datos)
 ```
 ## Observaciones y variables 
 
-Se cuenta con datos para 166 observaciones (paises) y 14 variables. Estas últimas son:
+Se cuenta con datos para 166 observaciones (países) y 14 variables. Estas últimas son:
 
 \underline{Cuantitativas}
-* *fiscal*: Paquete de políticas fiscales adoptadas, representado como porcentaje del PBI
+
+* *fiscal*: paquete de políticas fiscales adoptadas, representado como porcentaje del PBI
+
 * *ratecut*: representa el porcentaje que fue recortado de la tasa de interés en relación a la de febrero de 2020
-* *macrofin*: tamaño del paquete de medidas macrofinancieras, expresado como porcentaje del PBI.
-* *bopgdp*: expresadas como porcentaje del PBI.
-* *totalcases*: Cantidad de casos totales de covid-19
-* *medage*: Edad mediana en el país (a 2019).
-* *infectionrate*: Tasa de infección, representa la proporción de la población total infectada de covid-19
-* *hospitalbed*: Camas de hospital por cada 1000 personas.
-* *currenthealthexpenditureofgdpshx*: gastos en salud, expresados como porcentaje del PBI
-* *stringency*: Índice de rigurosidad de respuesta gubernamental (desarrollado por Hale y Webster en 2020)
-* *gdppercapitaconstant2010us*: PBI per cápita del país en dólares a niveles de 2010.
-* *CESI_INDEX*: Índice de estímulo económico (construido por los autores utilizando análisis de componentes principles)
+
+* *macrofin*: tamaño del paquete de medidas macrofinancieras, expresado como porcentaje del PBI
+
+* *bopgdp*: políticas de balanza de pago, expresadas como porcentaje del PBI
+
+* *totalcases*: cantidad de casos totales de covid-19
+
+* *medage*: edad mediana en el país (a 2019)
+
+* *infectionrate*: tasa de infección, representa la proporción de la población total infectada de covid-19
+
+* *hospitalbed*: camas de hospital por cada 1000 personas
+
+* *healthexp*: gastos en salud, expresados como porcentaje del PBI
+
+* *stringency*: índice de rigurosidad de respuesta gubernamental (desarrollado por Hale y Webster en 2020)
+
+* *gdppercap*: PBI per cápita del país en dólares a niveles de 2010
+
+* *CESI_INDEX*: índice de estímulo económico (construido por los autores utilizando análisis de componentes principles).
 
 
 \underline{Cualitativas}
+
 * *othermonetary*: variable indicadora que indica si en el país se tomaron otras medidas monetarias
+
 * *otherbp*: variable indicadora que indica si en el país se tomaron otras medidas de políticas de balanza de pago
 
+
 ## Datos faltantes
-En primer lugar se aprecia que varias de las variables cuentan con datos faltantes, en particular las variables *total cases*, *medage*, *gpdpercapitaconstant2010us*, *currenthealthexpenditureofgdpshx*, *hospitalbed*, *stringency*, *infectionrate* y *CESI_INDEX*. Para poder trabajar con las técnicas de análisis factorial es necesario que contemos con todos los datos, por lo que se tiene que considerar un método para imputar los valores faltantes. Una alternativa posible para el caso de las variables cuantitativas es imputar el valor medio de la variable cuando no contemos con el valor de dicha variable para una observación. Para el caso de las variables cualitativas una alternativa de imputación es emplear el modo de la variable cada vez que haya un dato faltante, pero en este caso no es necesario ya que no hay datos faltantes en las variables cualitativas. También se puede recurrir a métodos más sofisticados como modelizar linealmente la variable considerada e imputar una estimación puntual cuando tenemos un valor faltante. Por simplicidad y al no ser el foco del trabajo, se opta por las primeras dos opciones. Debe destacarse que la variable *stringency* cuenta con 93 valores faltantes en las 166 observaciones, por lo que se tomó la decisión de dejar esta variable de lado para no emplear una variable cuya mayoría de valores serían imputados.
+
+```{r, results='asis', include=TRUE}
+cbind("Variable"=names(datos), "Nº de NA's"=NAcheck <- as.numeric(apply(is.na(datos), 2, sum))) %>% 
+  as.data.frame %>% 
+  filter(`Nº de NA's`!=0) %>% 
+  t() %>%
+    xtable(caption="Tabla de cantidad de observaciones faltables para las variables.") %>% 
+  print.xtable(include.colnames = FALSE)
+
+datos <- datos %>% select(-c(stringency))
+
+```
+
+
+En primer lugar se aprecia que varias de las variables cuentan con datos faltantes, en particular las variables *total cases*, *medage*, *gpdpercapitaconstant2010us*, *healthexp*, *hospitalbed*, *stringency*, *infectionrate* y *CESI_INDEX*. Para poder trabajar con las técnicas de análisis factorial es necesario que contemos con todos los datos, por lo que se tiene que considerar un método para imputar los valores faltantes. Una alternativa posible para el caso de las variables cuantitativas es imputar el valor medio de la variable cuando no contemos con el valor de dicha variable para una observación. Para el caso de las variables cualitativas una alternativa de imputación es emplear el modo de la variable cada vez que haya un dato faltante, pero en este caso no es necesario ya que no hay datos faltantes en las variables cualitativas. También se puede recurrir a métodos más sofisticados como modelizar linealmente la variable considerada e imputar una estimación puntual cuando tenemos un valor faltante. Por simplicidad y al no ser el foco del trabajo, se opta por las primeras dos opciones. Debe destacarse que la variable *stringency* cuenta con 93 valores faltantes en las 166 observaciones, por lo que se tomó la decisión de dejar esta variable de lado para no emplear una variable cuya mayoría de valores serían imputados.
 
 ```{r imputacion, echo=FALSE}
 
@@ -139,15 +170,18 @@ for(j in 1:dim(datos)[2]){
   }
 }
 
-datos <- datos %>% select(-c(stringency)) %>% rename(healthexp= "currenthealthexpenditureofgdpshx", gdppercap = "gdppercapitaconstant2010us" )
+
 ```
 
 
-## Correlación
+## Análisis de correlaciones
 
-```{r correlaciones}
+```{r correlaciones, include=TRUE, results='asis'}
 
 correl <- datos %>% select(-c(country, othermonetary, otherbop)) %>% cor()
+
+correl %>% xtable(caption="Matriz de correlaciones") %>% print.xtable(include.rownames = FALSE)
+
 ```
 Se comienza por analizar las correlaciones entre las variables cuantitativas. En primer lugar se debe tener en cuenta que la variable *CESI_INDEX* tiene como origen el análisis de componentes principales efectuado por los autores del artículo de origen de los datos y como tal es de esperarse que se vea correlacionada con el resto de las variables, ya que proviene de una combinación lineal de los datos originales. En efecto, este índice del estímulo económico tiene una correlación alta con *fiscal* (`r correl["fiscal", "CESI_INDEX"]`), *macrofin* (`r correl["macrofin", "CESI_INDEX"]`) y *gdppercap* (`r correl["gdppercap", "CESI_INDEX"]`), variables de caracter económico. A pesar de esto no tiene una correlación muy alta con *bopgdp* (`r correl["bopgdp", "CESI_INDEX"]`).
 
