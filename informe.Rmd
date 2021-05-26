@@ -72,6 +72,41 @@ datos <- datos  %>% rename(healthexp= "currenthealthexpenditureofgdpshx", gdpper
 
 
 
+```{r densidad poblacional}
+datospob <- read_xls("datospob.xls") %>% 
+  select(`Country Name`, `2018`) %>%
+  rename(country = `Country Name`, denspob = `2018` )
+
+
+faltan <- datos$country %in% datos$country
+datos$country[which(faltan == FALSE)]
+
+
+datospob$country <-  recode(datospob$country,
+                    `Bahamas, The` = "Bahamas",
+                    `Brunei Darussalam` = "Brunei",
+                    `Congo, Rep.` = "Congo, R",
+                    `Cote d'Ivoire` = "Cote Ivory",
+                    `Congo, Dem. Rep.` = "Democratic Republic of Congo",
+                    `Egypt, Arab Rep.` = "Egypt",
+                    `Gambia, The` = "Gambia",
+                    `Guinea-Bissau` = "Guinea Bissau",
+                    `Hong Kong SAR, China` = "Hong Kong",
+                    `Iran, Islamic Rep.` = "Iran",
+                    `Kyrgyz Republic` = "Kyrgyzstan",
+                    `Lao PDR` = "Laos",
+                    `Russian Federation` = "Russia",
+                    `Korea, Rep.` = "South Korea",
+                    `Tajikistan` = "Taijikistan",
+                    `Yemen, Rep.` = "Yemen"
+                    )
+
+#sum(datos$country %in% datospob$country)-length(datos$country %in% datospob$country) control
+
+datos <- datos %>% left_join(datospob, by="country")
+```
+
+
 # Introducción
 
 El objetivo de este trabajo es aplicar las técnicas de Análisis Factorial a la base de datos que surgen del trabajo **Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index** (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020). Se busca analizar las políticas económicas adoptadas por distintos países como respuesta a la pandemia de covid-19. 
@@ -80,7 +115,8 @@ El objetivo de este trabajo es aplicar las técnicas de Análisis Factorial a la
 
 # Descripción de los datos
 
-Los datos disponibles fueron elaborados por los autores a partir de una recopilación de distintas fuentes. La principal es el FMI (Fondo Monetario Internacional), pero algunos datos fueron reemplazados por otros provenientes de páginas gubernamentales o canales de noticias con el fin de que toda la información estuviese actualizada. \underline{La información se extiende  hasta el 31 de marzo de 2020. (ver bien si esto es cierto, o si aunque el artículo diga eso la base que nos dio Federico es una versión más actualizada)}
+Los datos disponibles fueron elaborados por los autores a partir de una recopilación de distintas fuentes. La principal es el FMI (Fondo Monetario Internacional), pero algunos datos fueron reemplazados por otros provenientes de páginas gubernamentales o canales de noticias con el fin de que toda la información estuviese actualizada. La información se extiende  hasta el 31 de marzo de 2020.
+Además, incluimos por nuestra parte la variable densidad poblacional, con datos extraídos del Banco Mundial actualizados a 2018, pues consideramos que la variable puede ser de interés en el análisis.
 
 
 ```{r nro observaciones, echo =FALSE}
@@ -115,6 +151,8 @@ Se cuenta con datos para 166 observaciones (países) y 14 variables. Estas últi
 * *gdppercap*: PBI per cápita del país en dólares a niveles de 2010
 
 * *CESI_INDEX*: índice de estímulo económico (construido por los autores utilizando análisis de componentes principles).
+
+* *denspob*: densidad poblacional del país, medida como cantidad de personas por kilómetro cuadrado de área terrestre
 
 
 \underline{Cualitativas}
@@ -307,11 +345,87 @@ correl - correl2
 
 # Aplicación del Análisis de Componentes Principales
 
+Inicialmente, intentaremos replicar el índice de estímulo económico elaborado por los autores del artículo. Para esto, realizamos un análisis de componentes principales únicamente con las variables de índole económico *fiscal*, *ratecut*, *macrofin*, *bopgdp*, *othermonetary* y *otherbop*.
+
+```{r}
+vars.indice <- c("fiscal", "ratecut", "macrofin", "bopgdp", "othermonetary", "otherbop")
+
+acp_indice <- PCA(select(datos, vars.indice), ncp=6)
+
+summary(acp_indice)
+
+indice <- acp_indice$ind$coord[,1]
+
+cor(indice, datos$CESI_INDEX)
+
+sum(indice-datos$CESI_INDEX) #Llegamos a que son el mismo índice
+
+#No coinciden los componentes de las variables con los que presentan los autores en el artículo.
+
+```
+Como resultado, llegamos a que la primera componente principal resultante del análisis coincide exactamente con la elaborada por los autores.
+
+.
+.
+.
+
+
 Inicialmente se aplicará esta técnica con el conjunto de variables cuantitativas, a modo de profundizar la exploración y analizar posibles relaciones entre variables, la diferencia entre individuos, haciendo una síntesis de la información contenida en las variables originales al crear las nuevas, las componentes principales.
 
  Al aplicarse la técnica se obtiene un nuevo conjunto de 11 variables (componentes principales) contruidas a partir de combinaciones lineales de las variables originales, mediante la proyección en un nuevo subespacio contruido para ser de inercia mínima. Se busca maximizar la variabilidad explicada por las nubes de puntos en el nuevo subespacio, lo cual se logra considerando el conjunto de ejes ortonormales asociados a los vectores propios para la matriz $X^TDXM$, donde $X$ es la matriz de datos, $D$ la matriz de pesos de los individuos y $M$ es la matriz de métrica.
  
 El conjunto de variables resultantes no implicó una reducción de dimensiones, aunque se puede analizar el considerar un conjunto acotado de las mismas si la inercia que explican resulta aceptable según el criterio que se tome.
+
+
+
+```{r}
+datos2 <- datos %>% select(-vars.indice, -CESI_INDEX, -country) %>% cbind(indice)
+
+acp <- PCA(datos2, ncp=8)
+
+summary(acp)
+
+```
+
+```{r}
+datos3 <- datos %>% select(-vars.indice, -CESI_INDEX, -country, -denspob) %>% cbind(indice)
+
+acp3 <- PCA(datos3, ncp=7)
+
+summary(acp3)
+
+```
+
+
+```{r}
+datos4 <- datos  %>% filter(country!="United States") %>% select(-vars.indice, -CESI_INDEX, -country, -denspob) %>% cbind(indice[-160])
+
+acp4 <- PCA(datos4, ncp=7)
+
+summary(acp4)
+
+```
+
+```{r}
+datos5 <- datos  %>% filter(country!="United States") %>% select(-vars.indice, -CESI_INDEX, -country, -denspob, -totalcases) %>% cbind(indice[-160])
+
+acp5 <- PCA(datos5, ncp=7)
+
+summary(acp5)
+
+
+#MODELO "FINAL"
+```
+
+<!-- LO DE ACÁ PARA ABAJO ES VIEJO, NO HACERLE CASO -->
+
+##
+
+
+```{r}
+vars.economicas <- c("fiscal", "ratecut", "macrofin", "bopgdp", "gdppercap", "CESI_INDEX")#other monetary other bopg
+```
+
 
 
 
@@ -401,17 +515,19 @@ acp2 <- PCA(datos[-c(160,3),varsacp], ncp = 11)
 
 
 
-```{r}
-datospob <- read_xls("datospob.xls")
-
-denspob <- datospob %>%  select(`Country Name`, `2018`) %>% rename(country = `Country Name`, denspob = `2018` )
-
-
-faltan <- datos$country %in% denspob$country
-datos$country[which(faltan == FALSE)]
 
 
 
-denspob2 <-  recode(denspob$country, `Bahamas, The` = "Bahamas" )
-```
+
+
+
+
+
+
+
+
+
+
+
+
 
