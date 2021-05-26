@@ -1,0 +1,326 @@
+---
+title: "Informe preliminar"
+author: "Emanuelle Marsella, Maximiliano Saldaña"
+date: "16/4/2020"
+output:
+  pdf_document:
+    toc: no
+    pandoc_args: [
+      "--number-sections",
+      "--number-offset=1"
+    ]
+header-includes:
+  - \usepackage{float}
+  - \usepackage[spanish]{babel}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE,
+                      include=FALSE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.pos = 'H',
+                      fig.align = 'center',
+                      out.extra = '',
+                      fig.hold = 'hold',
+                      out.width = "50%"
+                      )
+options(xtable.comment=FALSE,
+        xtable.table.placement="H")
+```
+
+
+```{r, include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(xtable)
+library(FactoMineR)
+library(forcats)
+
+
+```
+
+\title{Proyecto Análisis Multivariado\\ 
+
+\large Análisis Multivariado, UdelaR
+}
+
+\author{Emanuelle Marsella, Maximiliano Saldaña}
+
+\date{Junio 2021}
+
+
+\maketitle
+
+
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+
+```{r PRUEBA OTRAS BASES, echo=FALSE}
+
+##INTENTO CON OTRAS BASES, IMPUTACION Y REMPLAZO DE VALORES FALTANTES##
+
+
+
+# #Lectura de los datos, se incluyen valores de distintas bas.es
+# 
+# datos <- read.table("corona.txt", sep = "\t", header = TRUE)
+# 
+# datos <- datos  %>% rename(healthexp= "currenthealthexpenditureofgdpshx", gdppercap = "gdppercapitaconstant2010us" )
+# 
+# 
+# 
+# datos_supl <- read_xlsx("bases otras fuentes/owid-covid-data.xlsx")
+# 
+# datos_supl2 <- datos_supl %>% 
+#   mutate(date = as.Date(date)) %>% 
+#   filter(date == as.Date("2020-03-31"))
+#   
+#  
+# #verificamos que tenemos los datos de los paises en la base suplementaria
+# 
+# faltan <- datos$country %in% datos_supl2$location
+# datos$country[which(faltan == FALSE)]
+# 
+# #queremos completar las variables con datos faltantes, usando otra base
+# ##estos tienen datos disponibles al 31/03/2020
+# datos_supl2$location <-  recode(datos_supl2$location,
+#                             `Cape Verde` = "Cabo Verde",
+#                             `Congo` = "Congo, R",
+#                             `Cote d'Ivoire` = "Cote Ivory",
+#                             `Czechia` = "Czech Republic",
+#                             `Guinea-Bissau` = "Guinea Bissau",
+#                             `Slovakia` = "Slovak Republic"
+#                             )
+# 
+# 
+# datos_supl3 <- datos_supl2 %>% filter(location %in% c("Cabo Verde", "Congo, R", "Cote Ivory", "Czech Republic", "Guinea Bissau", "Slovak Republic"))
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# ###Observaciones que le faltan datos del 31/03/2020, remplazamos con la info mas cercana a esa fecha
+# 
+# nodata<- datos_supl %>% filter(location %in% c("Lesotho", "Tajikistan", "Tonga", "Turkmenistan", "Yemen")) %>%
+#   select(location, median_age, gdp_per_capita, hospital_beds_per_thousand, date) %>% 
+#   rename(country= "location", medage = "median_age", gdppercap = "gdp_per_capita", hospitalbed = "hospital_beds_per_thousand") %>% 
+#   mutate(country = if_else(country == "Tajikistan", "Taijikistan", country)) %>%
+#   arrange(date) %>% 
+#   group_by(country) %>% 
+#   filter(row_number()==1) 
+#   
+# 
+# faltantes <- datos %>% 
+#   filter(country %in% c("Lesotho", "Taijikistan", "Tonga", "Turkmenistan", "Yemen" )) %>% 
+#   select(-c("medage", "gdppercap", "hospitalbed"))
+# 
+# 
+# nodata <- left_join(nodata, faltantes, by = "country") %>% 
+#   mutate(hospitalbed = as.double(hospitalbed)) %>% 
+#   select(-date)
+# 
+# 
+# #info de lesotho extraida del banco mundial
+# nodata[3,4] <- 1.3 
+# 
+# 
+# ##Ahora unimos estos datos a los datos de la base
+# `%nin%` = Negate(`%in%`) 
+# 
+# datos <- datos %>% 
+#   filter(country %nin% c("Lesotho", "Tajikistan", "Tonga", "Turkmenistan", "Yemen")) %>% 
+#   select(names(nodata)) %>%
+#   rbind(nodata)
+
+```
+
+
+
+
+
+
+
+```{r lectura de datos, echo=FALSE}
+#Lectura de los datos
+
+datos <- read.table("corona.txt", sep = "\t", header = TRUE)
+
+datos <- datos  %>% rename(healthexp= "currenthealthexpenditureofgdpshx", gdppercap = "gdppercapitaconstant2010us" )
+```
+
+
+
+```{r densidad poblacional}
+datospob <- read_xls("datospob.xls") %>% 
+  select(`Country Name`, `2018`) %>%
+  rename(country = `Country Name`, denspob = `2018` )
+
+
+faltan <- datos$country %in% datos$country
+datos$country[which(faltan == FALSE)]
+
+
+datospob$country <-  recode(datospob$country,
+                    `Bahamas, The` = "Bahamas",
+                    `Brunei Darussalam` = "Brunei",
+                    `Congo, Rep.` = "Congo, R",
+                    `Cote d'Ivoire` = "Cote Ivory",
+                    `Congo, Dem. Rep.` = "Democratic Republic of Congo",
+                    `Egypt, Arab Rep.` = "Egypt",
+                    `Gambia, The` = "Gambia",
+                    `Guinea-Bissau` = "Guinea Bissau",
+                    `Hong Kong SAR, China` = "Hong Kong",
+                    `Iran, Islamic Rep.` = "Iran",
+                    `Kyrgyz Republic` = "Kyrgyzstan",
+                    `Lao PDR` = "Laos",
+                    `Russian Federation` = "Russia",
+                    `Korea, Rep.` = "South Korea",
+                    `Tajikistan` = "Taijikistan",
+                    `Yemen, Rep.` = "Yemen"
+                    )
+
+#sum(datos$country %in% datospob$country)-length(datos$country %in% datospob$country) control
+
+datos <- datos %>% left_join(datospob, by="country")
+```
+
+
+
+# Resumen ejecutivo
+
+El objetivo de este trabajo es aplicar las técnicas de Análisis Factorial a la base de datos que surgen del trabajo **Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index** (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020). Se busca reproducir el índice de estímulo económico creado por los autores y  posteriormente utilizar dicho índice para un análisis de componentes principales que involucre a su vez variables de índole sanitaria, económica y demográfica. 
+
+
+
+
+# Descripción de los datos
+
+Los datos disponibles fueron elaborados por los autores a partir de una recopilación de distintas fuentes. La principal es el FMI (Fondo Monetario Internacional), pero algunos datos fueron reemplazados por otros provenientes de páginas gubernamentales o canales de noticias con el fin de que toda la información estuviese actualizada. La información se extiende  hasta el 31 de marzo de 2020.
+Además, incluimos por nuestra parte la variable densidad poblacional, con datos extraídos del Banco Mundial actualizados a 2018, pues consideramos que la variable puede ser de interés en el análisis.
+
+
+```{r nro observaciones, echo =FALSE}
+dim(datos)
+```
+## Observaciones y variables 
+
+Se cuenta con datos para 166 observaciones (países) y 14 variables. Estas últimas son:
+
+\underline{Cuantitativas}
+
+* *fiscal*: paquete de políticas fiscales adoptadas, representado como porcentaje del PBI
+
+* *ratecut*: representa el porcentaje que fue recortado de la tasa de interés en relación a la de febrero de 2020
+
+* *macrofin*: tamaño del paquete de medidas macrofinancieras, expresado como porcentaje del PBI
+
+* *bopgdp*: políticas de balanza de pago, expresadas como porcentaje del PBI
+
+* *totalcases*: cantidad de casos totales de covid-19
+
+* *medage*: edad mediana en el país (a 2019)
+
+* *infectionrate*: tasa de infección, representa la proporción de la población total infectada de covid-19
+
+* *hospitalbed*: camas de hospital por cada 1000 personas
+
+* *healthexp*: gastos en salud, expresados como porcentaje del PBI
+
+* *stringency*: índice de rigurosidad de respuesta gubernamental (desarrollado por Hale y Webster en 2020)
+
+* *gdppercap*: PBI per cápita del país en dólares a niveles de 2010
+
+* *CESI_INDEX*: índice de estímulo económico (construido por los autores utilizando análisis de componentes principles).
+
+* *denspob*: densidad poblacional del país, medida como cantidad de personas por kilómetro cuadrado de área terrestre
+
+
+\underline{Cualitativas}
+
+* *othermonetary*: variable indicadora que indica si en el país se tomaron otras medidas monetarias
+
+* *otherbp*: variable indicadora que indica si en el país se tomaron otras medidas de políticas de balanza de pago
+
+
+## Datos faltantes
+
+```{r, results='asis', include=TRUE}
+cbind("Variable"=names(datos), "Nº de NA's"=NAcheck <- as.numeric(apply(is.na(datos), 2, sum))) %>% 
+  as.data.frame %>% 
+  filter(`Nº de NA's`!=0) %>% 
+  t() %>%
+    xtable(caption="Tabla de cantidad de observaciones faltables para las variables.") %>% 
+  print.xtable(include.colnames = FALSE)
+
+datos <- datos %>% select(-c(stringency))
+
+```
+
+
+
+```{r imputacion, echo=FALSE}
+
+dim(datos)
+(NAcheck <- as.numeric(apply(is.na(datos), 2, sum)))
+
+#Hay NAs en varias variables, una opcion de imputacion, en las cuantitativas imputar la media y en las cualitativas el modo. Stringency tiene 93 NAs (evaluar sacarla)
+
+#vector de valores medios
+
+vals_meds <- rep(0, dim(datos)[2])
+
+for(j in 1:dim(datos)[2]){
+  
+  vals_meds[j] <- mean(datos[,j], na.rm = TRUE)
+}
+
+#imputacion de vals medios en NAs
+
+for(j in 1:dim(datos)[2]){
+  if(NAcheck[j]>0){
+    
+    for(i in 1:dim(datos)[1]){
+      if(is.na(datos[i,j])==TRUE){
+       datos[i,j] <- vals_meds[j] 
+    }
+    }
+  }
+}
+
+
+```
+
+En primer lugar se aprecia que varias de las variables cuentan con datos faltantes, en particular las variables *total cases*, *medage*, *gpdpercapitaconstant2010us*, *healthexp*, *hospitalbed*, *stringency* e *infectionrate*. Para poder trabajar con las técnicas de análisis factorial es necesario que contemos con todos los datos, por lo que se tiene que considerar un método para imputar los valores faltantes. Una alternativa posible para el caso de las variables cuantitativas es imputar el valor medio de la variable cuando no contemos con el valor de dicha variable para una observación, opción por la cual optamos por su simplicidad y al no ser el foco del presente trabajo. Para el caso de las variables cualitativas una alternativa de imputación es emplear el modo de la variable cada vez que haya un dato faltante, pero en este caso no es necesario ya que no hay datos faltantes en las variables cualitativas.
+
+
+Debe destacarse que la variable *stringency* cuenta con 93 valores faltantes en las 166 observaciones, por lo que se tomó la decisión de dejar esta variable de lado para no emplear una variable cuya mayoría de valores serían imputados, a pesar de que los autores la emplearon para su análisis.
+
+
+
+## Análisis de correlaciones
+
+```{r correlaciones, include=TRUE, results='asis'}
+
+correl <- datos %>% select(-c(country, othermonetary, otherbop, CESI_INDEX)) %>% cor()
+
+correl %>% round(2) %>%  xtable(caption="Matriz de correlaciones") %>% print.xtable(include.rownames = FALSE)
+
+```
+
+Se destacan por ser altas las correlaciones entre *gdppercapita* y *fiscal* (`r correl["gdppercap", "fiscal"]`), *medage* y *gpdpercap* y entre *medage* y *hospitalbed*. Al realizar el análisis de componentes principales se buscará obtener un nuevo conjunto de variables incorrelacionadas entre si y posiblemente reducir su número con respecto al conjunto original.
+
