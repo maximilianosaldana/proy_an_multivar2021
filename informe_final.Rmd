@@ -324,3 +324,200 @@ correl %>% round(2) %>%  xtable(caption="Matriz de correlaciones") %>% print.xta
 
 Se destacan por ser altas las correlaciones entre *gdppercapita* y *fiscal* (`r correl["gdppercap", "fiscal"]`), *medage* y *gpdpercap* y entre *medage* y *hospitalbed*. Al realizar el análisis de componentes principales se buscará obtener un nuevo conjunto de variables incorrelacionadas entre si y posiblemente reducir su número con respecto al conjunto original.
 
+## Observación preliminar de valores atípicos
+
+Se realiza un sondeo de los valores atípicos de las variables, porque pueden afectar el ACP al confundirse las relaciones entre las variables. Esto se llama efecto tamaño, donde los valores atípicos causan que haya una estructura común al conjunto de variables que termina por ser expresada en la primer componente principal, al estar las proyecciones de las variables próximas entre sí.
+
+<!-- pregutar en consulta este concepto  -->
+
+```{r, results='asis'}
+datos %>% arrange(desc(bopgdp)) %>% head(11) %>% select(country, bopgdp) %>% xtable(caption = "Tabla de medidas de balanza de pago como porcentaje de PBI, ordenada de forma decreciente.")
+
+```
+
+En la tabla anterior podemos ver que solo hay 10 países que tomaron medidas de balanza de pago de este primer tipo, siendo Argelia el país que efectuo mayor cantidad de estas medidas como porcentaje de su PBI. 
+
+```{r}
+summary(as.factor(datos$otherbop))
+```
+Vemos que solo 32 países tomaron alguna otra medida de balanza de pagos, y los restantes 134 no lo hicieron.
+
+
+```{r}
+boxplot(datos$fiscal)
+
+datos %>% select(country, fiscal) %>% arrange(fiscal) %>% head(1)
+
+datos %>% filter(country!="Algeria") %>% select(fiscal) %>% boxplot()
+
+
+```
+Vemos que Argelia, que era la observación que tenía el mayor valor de la variable *bopgdp*, es también la observación que tiene el menor valor de la variable *fiscal*.
+
+
+```{r}
+boxplot(datos$ratecut)
+
+datos %>% select(country, ratecut) %>% arrange(desc(ratecut)) %>% head(20)
+
+datos %>% filter(ratecut < 0) %>% count()
+datos %>% filter(ratecut == 0) %>% count()
+
+
+bigote <- quantile(datos$ratecut, 0.75)+ 1.5*IQR(datos$ratecut)
+
+datos %>% filter(ratecut > bigote) %>% count()
+
+```
+
+
+
+Para la variable *ratecut* la mediana resulta cercana a 0, lo cual se deriva del hecho de que 95 países no experimentaron cambios en su tasa de interés, mientras que 5 tuvieron un aumento de la misma. Hay un conjunto de 21 países que superan el límite extremo superior (40% de disminución de la tasa de interés) y podrían ser considerados como atípicos. Entre estas observaciones se encuentran Estados Unidos, Reino Unido, Noruega, Croacia, Nueva Zelanda. Estados Unidos es el único país que tuvo una reducción del 100%.  
+
+
+
+```{r}
+boxplot(datos$macrofin)
+```
+
+Para la variable *macrofin* hay dos observaciones que se alejan incluso más que el resto de las atípicas, tomando valores próximos a 25, siendo que las siguientes observaciones más altas están en torno a 15. Estas dos observaciones con valores altos corresponden a los países Baréin y Oman.
+
+
+```{r}
+hist(datos$macrofin, breaks = 25)
+
+datos %>% filter(macrofin == 0) %>% count()
+```
+
+Cabe destacar que hay un conjunto de 102 países cuyo gasto en medidas macrofinancieras representó un 0% del PBI.
+
+
+
+
+
+```{r}
+datos %>% filter(bopgdp == 0) %>% count()
+```
+
+Considerando la variable bopgdp la mayoría de las observaciones tienen valor 0. Luego está Argelia que tiene el valor más alto próximo a 6, y las dos siguientes con valores próximos a 3 son Croacia y Suiza.
+
+
+```{r}
+boxplot(datos$gdppercap)
+```
+
+
+La variable gdppercap hay bastante dispersión como es de esperarse y un conjunto pequeño de países con valores altos de la variable. Las observaciones que toman los mayores valores son Luxemburgo, Noruega y Suiza. 
+
+```{r}
+datos %>% select(country, gdppercap) %>% arrange(desc(gdppercap)) %>% head(3)
+```
+
+
+## Foco en variables sanitarias
+
+
+
+```{r}
+
+boxplot(datos$medage)
+
+datos[which.max(datos$medage),]
+datos[which.min(datos$medage),]
+
+
+
+boxplot(datos$healthexp)
+
+datos[which.max(datos$healthexp),]
+
+```
+
+Al considerar las variables de caracter sanitarias-demográficas, se destaca una observación atípica en cuanto a la variable *healthexp*, el gasto en salud como porcentaje del PBI, que corresponde a Estados Unidos. En cuanto a la edad mediana, el rango intercuartílico va de los 25 a los 40 años aproximadente y la edad mediana mínima es de 15 años (Correspondiente a Nigeria) y la edad mediana máxima es de 48 años (correspondiete a Japón).
+
+
+```{r}
+boxplot(datos$hospitalbed)
+
+
+datos %>% select(country, hospitalbed) %>% arrange(desc(hospitalbed)) %>% head(10)
+
+
+```
+
+Considerando la variable *hospitalbed*, se aprecia que Japón, Corea del Sur y Bielorusia se separan del resto de los países por su mayor cantidad de camas de hospital cada 1000 habitantes.
+
+
+```{r}
+boxplot(datos$infectionrate)
+
+quantile(datos$infectionrate, 0.75)
+datos %>% select(country, infectionrate) %>% arrange(desc(infectionrate)) %>% head(20)
+
+```
+
+En cuanto a la tasa de infección respecto a la población (*infectionrate*), se observa en el gráfico que hay una grán acumulación de tasas de infección en torno a valores próximos a 0 y un 75% de las tasas son menores a 0.00025 (que representa un caso por cada 4000 habitantes aproximadamente). Se distinguen especialmente del resto de los países San Marino, Islandia y Luxemburgo. Aquí puede estar entrando en juego que dichos países cuentan con poblaciones muy reducidas, poblacionales acumuladas en ciudades y en el caso de San Marino y Luxemburgo, limítrofes con países que también contaban con tasas de infección altas (el primero con Italia y el segundo con Bélgica y Alemania). En particular, San Marino tiene una tasa de infección de 0.0068 que representa un caso por cada 150 habitantes aproximadamente.
+
+
+
+# Aplicación del Análisis de Componentes Principales
+
+Inicialmente, intentaremos replicar el índice de estímulo económico elaborado por los autores del artículo. Para esto, realizamos un análisis de componentes principales únicamente con las variables de índole económico *fiscal*, *ratecut*, *macrofin*, *bopgdp*, *othermonetary* y *otherbop*.
+
+```{r}
+vars.indice <- c("fiscal", "ratecut", "macrofin", "bopgdp", "othermonetary", "otherbop")
+
+acp_indice <- PCA(select(datos, vars.indice), ncp=6)
+
+summary(acp_indice)
+
+indice <- acp_indice$ind$coord[,1]
+
+cor(indice, datos$CESI_INDEX)
+
+sum(indice-datos$CESI_INDEX) #Llegamos a que son el mismo índice
+
+#No coinciden los componentes de las variables con los que presentan los autores en el artículo. # PREGUNTAR
+
+```
+
+Se puede apreciar que el Índice de Estímulo Económico que se obtuvo realizando el ACP y definiéndolo como los valores de la primera componente principal es equivalente al obtenido por los autores. Esto nos lleva a pensar que el procedimiento de imputación de valores faltantes fue el mismo, la imputación de la media de las variables.
+
+
+```{r}
+acp_indice$eig
+```
+
+La primer componente, que se toma para definir el índice, explica un 27,13% de la inercia total. No representa un porcentaje a nuestro juicio alto, pero en pos de seguir la línea de trabajo de los autores del artículo se trabajará con esta nueva variable como síntesis de las medidas económicas tomadas por los países.
+
+
+
+
+```{r}
+plot.PCA(acp_indice, choix = "var")
+
+
+##contrib
+```
+
+
+
+
+
+
+A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales.
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+#AL hacer indice de salud, considerar cambios de escala
+```
+
