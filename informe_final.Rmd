@@ -471,7 +471,7 @@ acp_indice <- PCA(select(datos, vars.indice), ncp=6)
 
 summary(acp_indice)
 
-indice <- acp_indice$ind$coord[,1]
+ind.est.econ <- acp_indice$ind$coord[,1]
 
 cor(indice, datos$CESI_INDEX)
 
@@ -488,24 +488,97 @@ Se puede apreciar que el Índice de Estímulo Económico que se obtuvo realizand
 acp_indice$eig
 ```
 
-La primer componente, que se toma para definir el índice, explica un 27,13% de la inercia total. No representa un porcentaje a nuestro juicio alto, pero en pos de seguir la línea de trabajo de los autores del artículo se trabajará con esta nueva variable como síntesis de las medidas económicas tomadas por los países.
+La primer componente, que se toma para definir el índice, explica un 27,13% de la inercia total. No representa un porcentaje a nuestro juicio alto, pero en pos de seguir la línea de trabajo de los autores del artículo se trabajará con esta nueva variable como síntesis de las medidas económicas tomadas por los países, definiéndolo como el índice de estimulo económico (*CESI_INDEX*).
+
+Al realizar el Análisis de Componentes Principales desde la perspectiva de la nube de variables, se proyecta el conjunto de variables en subespacio $W$ de dimensión menor $k$, $k < J$, de forma tal de minimizar la inercia del subespacio, ya que esta representa la variabilidad de la nube de puntos original que no queda explicada por el subespacio.
+
+Esto se logra representando esta nueva nube de puntos en un conjunto de ejes $(\Delta_1, ..., \Delta_J)$ que se construye como combinación lineal de los vectores de una base ortonormal del espacio, $W$, formada por los vectores propios asociados a la matriz $X^TDXM$. Las componentes principales son los coeficientes que permiten expresar a las variables como combinación lineal de los vectores propios ortonormales de esa base. La inercia del subespacio se minimiza eligiendo una base ortnonormal conformada por los $k$ vectores propios asociados a los $k$ valores propios de mayor magnitud.
+
+Así, es claro que cada coeficiente representa la correlación entre la variable asociada y el eje sobre el que se está proyectando, dado que si el valor de la variable aumenta en una unidad, el valor del eje aumenta en una cantidad igual al coeficiente.
 
 
+```{r, include=TRUE, results='asis'}
+#plot.PCA(acp_indice, choix = "var")
+
+summary(acp_indice)
+
+acp_indice$var$coord[,1] %>% as.data.frame %>% xtable(caption="Correlación de cada variable con el índice de estímulo económico.")
 
 
-```{r}
-plot.PCA(acp_indice, choix = "var")
-
-
-##contrib
 ```
 
+Podemos observar en la tabla anterior la correlación de cada una de las variables utilizadas en el análisis de componentes principales con el índice de estímulo económico definido. Las correlaciones, que nos permiten medir la calidad de representación de cada variable en el primer eje, resultan ser altas y con signo positivo para las variables *fiscal* y *macrofin*, lo cual significa que las medidas de tipo fiscal y macrofinanciero tienen un impacto positivo en el índice de estímulo económico construido.
 
+Las variables *ratecut* y *othermonetary* tienen correlaciones medias y de signo positivo, lo cual parece indicar que las otras medidas de tipo monetaria, así como también las medidas de reducción de tasa de interés, también tienen un impacto positivo en el índice de estímulo económico, si bien la magnitud de las correlaciones no son lo suficientemente altas como para poder afirmarlo.
+
+Por su parte, las variables asociadas a medidas de políticas de balanza de pago *bopgdp* y *otherbop* tienen correlaciones bajas, lo cual significa que no influyen demasiado en la construcción del índice de estímulo económico.
 
 
 
 
 A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales.
+
+Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados. Esto lo hacemos con la intención de que al realizar análisis de componentes principales y potencialmente crear un índice que resuma el comportamiento de país frente a la pandemia, un valor elevado de esta variable tenga un efecto positivo sobre el valor que toma el país en el índice en lugar de uno negativo.
+
+*preguntar en la consulta*
+
+```{r, include=TRUE, results='asis'}
+datos$noinfectionrate <- 1-datos$infectionrate
+
+datos$CESI_INDEX2 <- ind.est.econ
+
+
+#ANEXO vars.acp2 <- c("medage", "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX2", "denspob")
+
+#ANEXO acp2 <- PCA(datos[,vars.acp2], ncp=7)
+
+
+
+vars.acp3 <- c("medage", "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX2")
+
+acp3 <- PCA(datos[,vars.acp3], ncp=7)
+
+acp3$eig %>% round(2) %>%  as.data.frame() %>% rename(`Valor propio`="eigenvalue", `% de varianza`= "percentage of variance", `% acumulado de varianza`="cumulative percentage of variance") %>% xtable(caption="Valores propios asociados a las componentes principales y porcentajes de inercia de cada uno.")
+
+#gdppercap y cesi colineales porque probablemente los coeficientes son iguales
+
+#Rlos angulos de noinfectionrate y de hospitalbed son muy parecidos con el eje 2
+
+```
+
+En la tabla anterior podemos ver que la primer componente principal logra explicar un 50.37% de la variabilidad de la nube de puntos, y la segunda componente principal un 16.59%. Esto significa que con el primer plano principal logramos explicar prácticamente un 67% de la variabilidad total. Incluyendo la tercer componente principal este porcentaje asciende a casi 80% de la variabilidad explicada, una cantidad muy importante a nuestro punto de vista dado que tan solo incluimos la mitad de las variables de la matriz de datos.
+
+
+```{r}
+plot.PCA(acp3, axes= c(1,2), choix = c("var"))
+
+#ver como interpretar la ""colinealidad"" entre infectionrate y gdppercap en el primer plano principal
+```
+
+En el grafico anterior podemos ver representados los vectores asociados a las variables proyectadas en el primer plano principal, teniendo en cuenta que el largo del vector en relación al círculo unitario indica qué tan bien está representada esa variable en el primer plano principal. Podemos ver que en general los vectores son relativamente largos, destacándose las variables *medage*, *hospitalbed*, *noinfectionrate* y *gdppercap*.
+
+A excepción de *healthexp*, notamos que todas las variables "necesitan" de ambos ejes para poder estar bien representadas.
+<!-- Ver bien como podemos ver esto numericamente, sobre todo para poder descartar que no pase lo mismo con healthexp por ejemplo -->
+
+Además, vemos que todas las variables apuntan en la misma dirección del primer componente principal a excepción de *noinfectionrate* que apunta en sentido contrario. Esto quiere decir que un aumento en *noinfectionrate* lleva a una disminución del valor de la primera componente, mientras que un aumento en cualquiera de las demás variables lleva a un aumento en dicho componente.
+
+
+```{r, include=TRUE, results='asis'}
+acp3$var$coord %>% round(2) %>% as.data.frame() %>% select(Dim.1, Dim.2) %>% 
+  xtable(caption="Coordenadas de las variables originales en el primer plano principal")
+
+# acp3$var$cos2 %>% round(2) %>% as.data.frame() %>% select(Dim.1, Dim.2) %>%
+#   xtable(caption="cos2 de los ángulos de las variables con los ejes del primer plano principal")
+
+#CONSULTAR
+
+```
+
+En el cuadro anterior podemos ver que las variables *medage* y *gdppercap* tienen una correlación alta con la primera componente principal, lo cual ya veíamos en el gráfico anterior dado que los vectores tienen una longitud considerable y apuntan en la dirección de esta componente. Vemos también que sucede lo contrario con *noinfectionrate*, dado que tiene una correlación negativa con la primer componente principal lo cual veíamos en la dirección.
+
+En cuanto a la componente 2 vemos que con *medage* y *gdppercap* tiene la misma correlación. aunque una con signo positivo y la otra con signo negativo. Esto es fácil de ver en el gráfico, dado que los dos vectores tienen la misma longitud y ángulos opuestos respecto a la componente 2. Las correlaciones de las variables con esta componente son en general más bajas que con la componente 1, lo cual significa que no hay alguna variable en particular que esté explicada únicamente por ella. No obstante, vemos que la componente 2 es en el primer plano principal la que contribuye en mayor medida a explicar la variable *infectionrate*, puesto que la correlación es mayor.
+
+
 
 
 
