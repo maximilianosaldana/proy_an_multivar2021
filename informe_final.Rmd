@@ -462,6 +462,8 @@ En cuanto a la tasa de infección respecto a la población (*infectionrate*), se
 
 # Aplicación del Análisis de Componentes Principales
 
+## Construcción del Índice de Estímulo Económico 
+
 Inicialmente, intentaremos replicar el índice de estímulo económico elaborado por los autores del artículo. Para esto, realizamos un análisis de componentes principales únicamente con las variables de índole económico *fiscal*, *ratecut*, *macrofin*, *bopgdp*, *othermonetary* y *otherbop*.
 
 ```{r}
@@ -473,9 +475,9 @@ summary(acp_indice)
 
 ind.est.econ <- acp_indice$ind$coord[,1]
 
-cor(indice, datos$CESI_INDEX)
+cor(ind.est.econ, datos$CESI_INDEX)
 
-sum(indice-datos$CESI_INDEX) #Llegamos a que son el mismo índice
+sum(ind.est.econ-datos$CESI_INDEX) #Llegamos a que son el mismo índice
 
 #No coinciden los componentes de las variables con los que presentan los autores en el artículo. # PREGUNTAR
 
@@ -490,11 +492,11 @@ acp_indice$eig
 
 La primer componente, que se toma para definir el índice, explica un 27,13% de la inercia total. No representa un porcentaje a nuestro juicio alto, pero en pos de seguir la línea de trabajo de los autores del artículo se trabajará con esta nueva variable como síntesis de las medidas económicas tomadas por los países, definiéndolo como el índice de estimulo económico (*CESI_INDEX*).
 
-Al realizar el Análisis de Componentes Principales desde la perspectiva de la nube de variables, se proyecta el conjunto de variables en subespacio $W$ de dimensión menor $k$, $k < J$, de forma tal de minimizar la inercia del subespacio, ya que esta representa la variabilidad de la nube de puntos original que no queda explicada por el subespacio.
+Al realizar el Análisis de Componentes Principales desde la perspectiva de la nube de variables, se proyecta el conjunto de variables en el subespacio $W$ de dimensión  $k \le J$, de forma tal de minimizar la inercia del subespacio, ya que esta representa la variabilidad de la nube de puntos original que no queda explicada por el subespacio.
 
-Esto se logra representando esta nueva nube de puntos en un conjunto de ejes $(\Delta_1, ..., \Delta_J)$ que se construye como combinación lineal de los vectores de una base ortonormal del espacio, $W$, formada por los vectores propios asociados a la matriz $X^TDXM$. Las componentes principales son los coeficientes que permiten expresar a las variables como combinación lineal de los vectores propios ortonormales de esa base. La inercia del subespacio se minimiza eligiendo una base ortnonormal conformada por los $k$ vectores propios asociados a los $k$ valores propios de mayor magnitud.
+Esto se logra representando esta nueva nube de puntos en un conjunto de ejes $(\Delta_1, ..., \Delta_J)$ que se construye como combinación lineal de los vectores de una base ortonormal del subespacio, $W$, formada por los vectores propios asociados a la matriz $X^TDXM$ (siendo $X$ la matriz de datos, $D$ la matriz de métrica y $M$ la matriz de pesos de las variables). Las componentes principales son los coeficientes que permiten expresar a las variables como combinación lineal de los vectores propios ortonormales de esa base. La inercia del subespacio se minimiza eligiendo una base ortnonormal conformada por los $k$ vectores propios asociados a los $k$ valores propios de mayor magnitud.
 
-Así, es claro que cada coeficiente representa la correlación entre la variable asociada y el eje sobre el que se está proyectando, dado que si el valor de la variable aumenta en una unidad, el valor del eje aumenta en una cantidad igual al coeficiente.
+Así, es claro que cada coeficiente representa la correlación entre la variable asociada y el eje sobre el que se está proyectando, dado que si el valor de la variable aumenta en una unidad, el valor en el eje aumenta en una cantidad proporcional al coeficiente.
 
 
 ```{r, include=TRUE, results='asis'}
@@ -509,18 +511,22 @@ acp_indice$var$coord[,1] %>% as.data.frame %>% xtable(caption="Correlación de c
 
 Podemos observar en la tabla anterior la correlación de cada una de las variables utilizadas en el análisis de componentes principales con el índice de estímulo económico definido. Las correlaciones, que nos permiten medir la calidad de representación de cada variable en el primer eje, resultan ser altas y con signo positivo para las variables *fiscal* y *macrofin*, lo cual significa que las medidas de tipo fiscal y macrofinanciero tienen un impacto positivo en el índice de estímulo económico construido.
 
-Las variables *ratecut* y *othermonetary* tienen correlaciones medias y de signo positivo, lo cual parece indicar que las otras medidas de tipo monetaria, así como también las medidas de reducción de tasa de interés, también tienen un impacto positivo en el índice de estímulo económico, si bien la magnitud de las correlaciones no son lo suficientemente altas como para poder afirmarlo.
+Las variables *ratecut* y *othermonetary* tienen correlaciones menores a las variables previamente mencionadas, y de signo positivo, lo cual parece indicar que las otras medidas de tipo monetaria, así como también las medidas de reducción de tasa de interés, también tienen un impacto positivo en el índice de estímulo económico, si bien la magnitud de las correlaciones no son lo suficientemente altas como para poder afirmarlo.
 
-Por su parte, las variables asociadas a medidas de políticas de balanza de pago *bopgdp* y *otherbop* tienen correlaciones bajas, lo cual significa que no influyen demasiado en la construcción del índice de estímulo económico.
-
-
+Por su parte, las variables asociadas a medidas de políticas de balanza de pago *bopgdp* y *otherbop* tienen correlaciones bajas, lo cual significa que no influyen demasiado en la construcción del índice de estímulo económico y por lo tanto no están bien representadas por el mismo.
 
 
-A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales.
+## Análisis de Componentes Principales considerando el Índice de Estímulo Económico 
 
-Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados. Esto lo hacemos con la intención de que al realizar análisis de componentes principales y potencialmente crear un índice que resuma el comportamiento de país frente a la pandemia, un valor elevado de esta variable tenga un efecto positivo sobre el valor que toma el país en el índice en lugar de uno negativo.
+A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales. Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados. Esto lo hacemos con la intención de que al realizar análisis de componentes principales y potencialmente crear un índice que resuma el comportamiento de país frente a la pandemia, un valor elevado de esta variable tenga un efecto positivo sobre el valor que toma el país en el índice en lugar de uno negativo. El conjunto de variables empleado en este análisis esta conformado inicialmente por: *medage*, *gdppercap*, *healthexp*, *hospitalbed*, *noinfectionrate* y *CESI_INDEX*. No se consideran las variables empleadas para crear el índice de estímulo económico y tampoco la variable que indica la cantidad de casos totales de COVID-19 (*totalcases*), ya que la información ya se expresa en la variable *noinfectionrate* y además al estar medida en términos absolutos dificulta la comparación entre observaciones. Adicionalmente se hizo la prueba de incluir una variable que expresaba la densidad poblacional de los países, pero se concluyó que la misma no aportaba al análisis. Estos resultados se encuentran en el anexo.
 
-*preguntar en la consulta*
+*preguntar en la consulta la parte *
+
+### Primer Análisis
+
+**Perspectiva de la Nube de Variables**
+
+Se realiza un procedimiento análogo al explicado en la sección anterior para obtener las componentes principales en el conjunto de variables considerado.
 
 ```{r, include=TRUE, results='asis'}
 datos$noinfectionrate <- 1-datos$infectionrate
@@ -546,7 +552,7 @@ acp3$eig %>% round(2) %>%  as.data.frame() %>% rename(`Valor propio`="eigenvalue
 
 ```
 
-En la tabla anterior podemos ver que la primer componente principal logra explicar un 50.37% de la variabilidad de la nube de puntos, y la segunda componente principal un 16.59%. Esto significa que con el primer plano principal logramos explicar prácticamente un 67% de la variabilidad total. Incluyendo la tercer componente principal este porcentaje asciende a casi 80% de la variabilidad explicada, una cantidad muy importante a nuestro punto de vista dado que tan solo incluimos la mitad de las variables de la matriz de datos.
+En la tabla anterior podemos ver que la primer componente principal logra explicar un 50.37% de la variabilidad de la nube de puntos, y la segunda componente principal un 16.59%. Esto significa que con el primer plano principal logramos explicar prácticamente un 67% de la variabilidad total. Incluyendo la tercer componente principal este porcentaje asciende a casi 80% de la variabilidad explicada, una cantidad muy importante a nuestro juicio dado que tan solo incluimos la mitad de las variables de la matriz de datos.
 
 
 ```{r}
@@ -574,19 +580,73 @@ acp3$var$coord %>% round(2) %>% as.data.frame() %>% select(Dim.1, Dim.2) %>%
 
 ```
 
-En el cuadro anterior podemos ver que las variables *medage* y *gdppercap* tienen una correlación alta con la primera componente principal, lo cual ya veíamos en el gráfico anterior dado que los vectores tienen una longitud considerable y apuntan en la dirección de esta componente. Vemos también que sucede lo contrario con *noinfectionrate*, dado que tiene una correlación negativa con la primer componente principal lo cual veíamos en la dirección.
+En el cuadro anterior se puede ver que las variables *medage* y *gdppercap* tienen una correlación alta (en torno a 0,8) con la primera componente principal, lo cual ya veíamos en el gráfico anterior dado que los vectores tienen una longitud considerable y apuntan en la dirección de esta componente. Vemos también que sucede lo contrario con *noinfectionrate*, dado que tiene una correlación negativa con la primer componente principal lo cual veíamos en la dirección.
 
-En cuanto a la componente 2 vemos que con *medage* y *gdppercap* tiene la misma correlación. aunque una con signo positivo y la otra con signo negativo. Esto es fácil de ver en el gráfico, dado que los dos vectores tienen la misma longitud y ángulos opuestos respecto a la componente 2. Las correlaciones de las variables con esta componente son en general más bajas que con la componente 1, lo cual significa que no hay alguna variable en particular que esté explicada únicamente por ella. No obstante, vemos que la componente 2 es en el primer plano principal la que contribuye en mayor medida a explicar la variable *infectionrate*, puesto que la correlación es mayor.
+En cuanto a la componente 2, se aprecia que con *medage* y *gdppercap* tiene la misma correlación, aunque una con signo positivo y la otra con signo negativo. Esto es fácil de ver en el gráfico, dado que los dos vectores tienen la misma longitud y ángulos opuestos respecto a este eje.  También se ve que la componente 2 es en el primer plano principal la que contribuye en mayor medida a explicar la variable *infectionrate*, puesto que la correlación es mayor (0,63). Por otro lado las correlaciones de las demás variables con esta componente son en general más bajas que con la componente 1, lo cual significa que no representa esas variables tan bien como el otro eje.
 
-
-
-
+Como resultado a destacar de este primer análisis, no se llegó a que los dos primeros ejes tengan cada uno una interpretación clara, es decir, que explique cada uno un tipo de variable. Un resultado que ejemplifica esto es que la variable *noinfectionrate* está bien explicada por los dos primeros ejes en su conjunto pero no existe uno que la caracterice individualmente, dado que es la variable de mayor interés y resultaría deseable ver como se relaciona el resto de las variables con un eje que la caracteriza.
 
 
 
 
+**Perspectiva de la Nube de Individuos**
+
+```{r}
+summary(acp3)
 
 
+plot.PCA(acp3, choix = "ind")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+plot.PCA(acp3, axes= c(1,3), choix = c("var"))
+```
+
+
+
+```{r}
+vars.acp4 <- c( "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX2")
+
+acp4 <- PCA(datos[,vars.acp4], ncp=7)
+
+summary(acp4)
+```
+
+
+
+```{r}
+vars.acp5 <- c("medage", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX2")
+
+acp5 <- PCA(datos[,vars.acp5], ncp=7)
+
+summary(acp5)
+```
 
 
 
