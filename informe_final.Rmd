@@ -372,7 +372,7 @@ datos %>% filter(ratecut > bigote) %>% count()
 
 
 
-Para la variable *ratecut* la mediana resulta cercana a 0, lo cual se deriva del hecho de que 95 países no experimentaron cambios en su tasa de interés, mientras que 5 tuvieron un aumento de la misma. Hay un conjunto de 21 países que superan el límite extremo superior (40% de disminución de la tasa de interés) y podrían ser considerados como atípicos. Entre estas observaciones se encuentran Estados Unidos, Reino Unido, Noruega, Croacia, Nueva Zelanda. Estados Unidos es el único país que tuvo una reducción del 100%.  
+Para la variable *ratecut* la mediana resulta cercana a 0, lo cual se deriva del hecho de que 95 países no experimentaron cambios en su tasa de interés, mientras que 5 tuvieron un aumento de la misma y el resto una disminución. Hay un conjunto de 21 países que superan el límite extremo superior (40% de disminución de la tasa de interés) y podrían ser considerados como atípicos. Entre estas observaciones se encuentran Estados Unidos, Reino Unido, Noruega, Croacia, Nueva Zelanda. Estados Unidos es el único país que tuvo una reducción del 100%.  
 
 
 
@@ -399,7 +399,7 @@ Cabe destacar que hay un conjunto de 102 países cuyo gasto en medidas macrofina
 datos %>% filter(bopgdp == 0) %>% count()
 ```
 
-Considerando la variable bopgdp la mayoría de las observaciones tienen valor 0. Luego está Argelia que tiene el valor más alto próximo a 6, y las dos siguientes con valores próximos a 3 son Croacia y Suiza.
+Considerando la variable *bopgdp*, la mayoría de las observaciones tienen valor 0. Luego está Argelia que tiene el valor más alto próximo a 6, y las dos siguientes con valores próximos a 3 son Croacia y Suiza.
 
 
 ```{r}
@@ -407,7 +407,7 @@ boxplot(datos$gdppercap)
 ```
 
 
-La variable gdppercap hay bastante dispersión como es de esperarse y un conjunto pequeño de países con valores altos de la variable. Las observaciones que toman los mayores valores son Luxemburgo, Noruega y Suiza. 
+En la variable gdppercap hay bastante dispersión como es de esperarse y un conjunto pequeño de países con valores altos de la variable. Las observaciones que toman los mayores valores son Luxemburgo, Noruega y Suiza. 
 
 ```{r}
 datos %>% select(country, gdppercap) %>% arrange(desc(gdppercap)) %>% head(3)
@@ -430,10 +430,11 @@ datos[which.min(datos$medage),]
 boxplot(datos$healthexp)
 
 datos[which.max(datos$healthexp),]
+datos[which.max(datos$healthexp[-130]),]
 
 ```
 
-Al considerar las variables de caracter sanitarias-demográficas, se destaca una observación atípica en cuanto a la variable *healthexp*, el gasto en salud como porcentaje del PBI, que corresponde a Estados Unidos. En cuanto a la edad mediana, el rango intercuartílico va de los 25 a los 40 años aproximadente y la edad mediana mínima es de 15 años (Correspondiente a Nigeria) y la edad mediana máxima es de 48 años (correspondiete a Japón).
+Al considerar las variables de caracter sanitarias-demográficas, se destaca una observación atípica en cuanto a la variable *healthexp*, el gasto en salud como porcentaje del PBI, que corresponde a Estados Unidos (17,07 % del PBI, casi el doble que el país que le sigue). En cuanto a la edad mediana, el rango intercuartílico va de los 25 a los 40 años aproximadente y la edad mediana mínima es de 15 años (Correspondiente a Nigeria) y la edad mediana máxima es de 48 años (correspondiete a Japón).
 
 
 ```{r}
@@ -507,6 +508,8 @@ summary(acp_indice)
 acp_indice$var$coord[,1] %>% as.data.frame %>% xtable(caption="Correlación de cada variable con el índice de estímulo económico.")
 
 
+
+coords_art <- c(0.58,0.39,0.55,0.39,-0.17, -0.16)
 ```
 
 Podemos observar en la tabla anterior la correlación de cada una de las variables utilizadas en el análisis de componentes principales con el índice de estímulo económico definido. Las correlaciones, que nos permiten medir la calidad de representación de cada variable en el primer eje, resultan ser altas y con signo positivo para las variables *fiscal* y *macrofin*, lo cual significa que las medidas de tipo fiscal y macrofinanciero tienen un impacto positivo en el índice de estímulo económico construido.
@@ -520,7 +523,7 @@ Por su parte, las variables asociadas a medidas de políticas de balanza de pago
 
 A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales. Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados. Esto lo hacemos con la intención de que al realizar análisis de componentes principales y potencialmente crear un índice que resuma el comportamiento de país frente a la pandemia, un valor elevado de esta variable tenga un efecto positivo sobre el valor que toma el país en el índice en lugar de uno negativo. El conjunto de variables empleado en este análisis esta conformado inicialmente por: *medage*, *gdppercap*, *healthexp*, *hospitalbed*, *noinfectionrate* y *CESI_INDEX*. No se consideran las variables empleadas para crear el índice de estímulo económico y tampoco la variable que indica la cantidad de casos totales de COVID-19 (*totalcases*), ya que la información ya se expresa en la variable *noinfectionrate* y además al estar medida en términos absolutos dificulta la comparación entre observaciones. Adicionalmente se hizo la prueba de incluir una variable que expresaba la densidad poblacional de los países, pero se concluyó que la misma no aportaba al análisis. Estos resultados se encuentran en el anexo.
 
-*preguntar en la consulta la parte *
+
 
 ### Primer Análisis
 
@@ -550,6 +553,7 @@ acp3$eig %>% round(2) %>%  as.data.frame() %>% rename(`Valor propio`="eigenvalue
 
 #Rlos angulos de noinfectionrate y de hospitalbed son muy parecidos con el eje 2
 
+acp <- PCA(datos[,vars.acp3], quanti.sup = 6)
 ```
 
 En la tabla anterior podemos ver que la primer componente principal logra explicar un 50.37% de la variabilidad de la nube de puntos, y la segunda componente principal un 16.59%. Esto significa que con el primer plano principal logramos explicar prácticamente un 67% de la variabilidad total. Incluyendo la tercer componente principal este porcentaje asciende a casi 80% de la variabilidad explicada, una cantidad muy importante a nuestro juicio dado que tan solo incluimos la mitad de las variables de la matriz de datos.
@@ -564,7 +568,7 @@ plot.PCA(acp3, axes= c(1,2), choix = c("var"))
 En el grafico anterior podemos ver representados los vectores asociados a las variables proyectadas en el primer plano principal, teniendo en cuenta que el largo del vector en relación al círculo unitario indica qué tan bien está representada esa variable en el primer plano principal. Podemos ver que en general los vectores son relativamente largos, destacándose las variables *medage*, *hospitalbed*, *noinfectionrate* y *gdppercap*.
 
 A excepción de *healthexp*, notamos que todas las variables "necesitan" de ambos ejes para poder estar bien representadas.
-<!-- Ver bien como podemos ver esto numericamente, sobre todo para poder descartar que no pase lo mismo con healthexp por ejemplo -->
+
 
 Además, vemos que todas las variables apuntan en la misma dirección del primer componente principal a excepción de *noinfectionrate* que apunta en sentido contrario. Esto quiere decir que un aumento en *noinfectionrate* lleva a una disminución del valor de la primera componente, mientras que un aumento en cualquiera de las demás variables lleva a un aumento en dicho componente.
 
