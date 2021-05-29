@@ -2,18 +2,19 @@
 title: "Informe preliminar"
 author: "Emanuelle Marsella, Maximiliano Saldaña"
 date: "16/4/2020"
-output:
-  pdf_document:
-    toc: no
-    pandoc_args: [
+output: pdf_document
+toc: no
+pandoc_args: [
       "--number-sections",
       "--number-offset=1"
     ]
+
 header-includes:
   - \usepackage{float}
   - \usepackage[spanish]{babel}
 
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=FALSE,
@@ -31,16 +32,7 @@ options(xtable.comment=FALSE,
 ```
 
 
-```{r, include = FALSE}
-library(dplyr)
-library(ggplot2)
-library(readxl)
-library(xtable)
-library(FactoMineR)
-library(forcats)
 
-
-```
 
 \title{Proyecto Análisis Multivariado\\ 
 
@@ -61,6 +53,18 @@ library(forcats)
 \tableofcontents
 
 \newpage
+
+
+```{r, include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(xtable)
+library(FactoMineR)
+library(forcats)
+
+
+```
 
 
 ```{r PRUEBA OTRAS BASES, echo=FALSE}
