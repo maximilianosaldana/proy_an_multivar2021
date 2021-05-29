@@ -533,7 +533,13 @@ A continuación, se procede a emplear esta nueva variable en un análisis de com
 
 **Perspectiva de la Nube de Variables**
 
-Se realiza un procedimiento análogo al explicado en la sección anterior para obtener las componentes principales en el conjunto de variables considerado.
+Se realiza un procedimiento análogo al explicado en la sección anterior para obtener las componentes principales en el conjunto de variables considerado. 
+
+
+
+
+
+
 
 ```{r, include=TRUE, results='asis'}
 datos$noinfectionrate <- 1-datos$infectionrate
@@ -599,7 +605,7 @@ Como resultado a destacar de este primer análisis, no se llegó a que los dos p
 
 **Perspectiva de la Nube de Individuos**
 
-\underline{\textbf{Describir teóricamente}}
+El procedimiento de ACP desde esta perspectiva resulta simétrico al de la de la de la Nube de Columnas. Se proyecta el conjunto de observaciones en el subespacio $W^*$ de dimensión $k \le J$, siendo $J$ el número de variables, de manera de minimizar la inercia del subespacio. Desde esta perspectiva la métrica utilizada es la matriz $M$ y se emplea la matriz de pesos $D$, empleada como matriz de pesos y métrica respectivamente al proyectar la nube de variables.   
 
 
 ```{r}
@@ -614,11 +620,26 @@ En el gráfico anterior, podemos observar las proyecciones de los individuos en 
 
 Es deseable que ninguno de los individuos sea especialmente influyente a la hora de generar los componentes principales. Esa situación no deseada se da cuando el punto es lejano al baricentro y además el $cos^2(\theta)$ es próximo a 0. Podemos ver en el gráfico que esta situación no se da, puesto que hay un conjunto de puntos con $cos^2(\theta)$ próximos a 0 pero se encuentran cerca del baricentro; mientras que también hay un conjunto de puntos que se encuentran más apartados del baricentro, pero con $cos^2(\theta)$ relativamente altos.
 
-<!-- #####TABLA####### consultar como se hace -->
 
-La idea es que con la tabla vemos los valores numericos de los cos2 y que para los que tienen norma alta, los cos2 son bajos y por lo tanto no hay observaciones influyentes.
 
-\underline{\textbf{La idea es que con la tabla vemos los valores numericos de los cos2 y que para los que tienen norma alta, los cos2 son bajos y por lo tanto no hay observaciones influyentes.}}
+```{r}
+#se tiene el cos^2 en el plano
+
+mat_cos2  <-  apply(acp3$ind$cos2[,1:2],1, sum)
+
+
+
+mat_dist_cos2 <- cbind("cos2_plano" = mat_cos2, "norma"=  acp3$ind$dist) 
+
+mat_dist_cos2 %>% as.data.frame %>%  arrange(desc(norma)) %>% round(2) %>% xtable()
+
+```
+
+
+En la tabla anterior se presentan los valores de la suma de los cosenos al cuadrado de los ángulos que forman las observaciones con los dos primeros ejes y la norma respecto al baricentro, ordenando las observaciones decrecientemente según esta última. Se aprecia que la observación con mayor norma (9,7) tiene una suma de cosenos al cuadrado de 0,43, por lo que se debe tener en cuenta que podría estar afectando el análisis, disminuyendo la inercia global explicada, porque su calidad de representación en el primer plano no es alta. Sin embargo remover está observación no representa una ganancia en inercia explicada, por lo que se opta por conservarla. El resto de observaciones con norma alta cuentan con valores de la suma de cosenos al cuadrado superiores a 0,5 y en general mayores a 0,7 por lo que no les consideramos influyentes.
+
+
+
 
 
 
