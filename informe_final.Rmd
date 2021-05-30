@@ -388,7 +388,7 @@ En cuanto a la tasa de infección respecto a la población (*infectionrate*), se
 
 # Aplicación del Análisis de Componentes Principales
 
-Partimos de una matriz de datos centrados $X$, una matriz diagonal $D=\begin{pmatrix}1/I & 0 & 0 &\dots & 0 \\ 0 & 1/I & 0 & \dots & 0 \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 0 & 0 & 0 & \dots & 1/I \end{pmatrix}$ y una matriz diagonal igual a los inversos de las variables, $M=\begin{pmatrix} 1/s_1^2 & 0 & 0 &\dots & 0 \\ 0 & 1/s_2^2 & 0 & \dots & 0 \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 0 & 0 & 0 & \dots & 1/s_J^2 \end{pmatrix}$.
+Partimos de una matriz de datos centrados $X$, una matriz diagonal: $$D=\begin{pmatrix}1/I & 0 & 0 &\dots & 0 \\ 0 & 1/I & 0 & \dots & 0 \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 0 & 0 & 0 & \dots & 1/I \end{pmatrix}$$ y una matriz diagonal igual a los inversos de las variables: $$M=\begin{pmatrix} 1/s_1^2 & 0 & 0 &\dots & 0 \\ 0 & 1/s_2^2 & 0 & \dots & 0 \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 0 & 0 & 0 & \dots & 1/s_J^2 \end{pmatrix}$$.
 
 Al realizar el Análisis de Componentes Principales desde la perspectiva de la nube de variables, la matriz $D$ representa la métrica utilizada en el espacio vectorial euclidiano, y $M$ representa los pesos asociados a las variables. Utilizar esta métrica tiene la interpretación de que se están estandarizando las variables al dividirlas entre sus varianzas.
 
@@ -429,7 +429,6 @@ Al realizar el ACP observamos que la primera componente principal logra explicar
 ```{r, include=TRUE, results='asis'}
 #plot.PCA(acp_indice, choix = "var")
 
-summary(acp_indice)
 
 acp_indice$var$coord[,1] %>% as.data.frame %>% xtable(caption="Correlación de cada variable con el índice de estímulo económico.")
 
@@ -448,17 +447,18 @@ Por su parte, las variables asociadas a medidas de políticas de balanza de pago
 ## Análisis de Componentes Principales considerando el Índice de Estímulo Económico 
 
 
-A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales. Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados. Esto lo hacemos con el fin de facilitar la interpretación de la variable, dado que un valor elevado de esta variable representa en realidad una situación negativa de la situación del país frente a la pandemia en lugar de positiva. Por lo tanto, trabajamos con la tasa de no infección que sí representa una situación positiva, ya que consideramos que puede ser facilitar la lectura de los gráficos y la interpretación de lo que representa la dirección de esta variable en el subespacio de dimensión reducida respecto a la de las demás variables, así como también la interpretación de las coordenadas de la variable en los distintos ejes.
+A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales. Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados. Esto lo hacemos con el fin de facilitar la interpretación de la variable, dado que un valor elevado de esta variable representa en realidad una situación negativa de la situación del país frente a la pandemia en lugar de positiva. Por lo tanto, trabajamos con la tasa de no infección que sí representa una situación positiva, lo que consideramos que puede ser facilitar la lectura de los gráficos y la interpretación de lo que representa la dirección de esta variable en el subespacio de dimensión reducida respecto a la de las demás variables, así como también la interpretación de las coordenadas de la variable en los distintos ejes.
 
-El conjunto de variables empleado en este análisis esta conformado inicialmente por *medage*, *gdppercap*, *healthexp*, *hospitalbed*, *noinfectionrate*. La variable *CESI_INDEX*, el índice de estímulo económico obtenido a partir del ACP es utilizado como variable suplementaria en el análisis, y tampoco se consideran las variables empleadas para construirlo. Inicialmente sí había sido tenida en cuenta, pero vimos que se comportaba de forma muy parecida a otras variables de la base como *gdppercap*, por lo que optamos por un camino diferente, que es ver cómo es su proyección en el espacio construido a partir de las demás variables para ver cómo se relaciona con ellas.
+El conjunto de variables empleado en este análisis esta conformado inicialmente por *medage*, *gdppercap*, *healthexp*, *hospitalbed*, *noinfectionrate*. La variable *CESI_INDEX*, el índice de estímulo económico obtenido a partir del ACP es utilizado como variable suplementaria en el análisis, y tampoco se incluyen las variables empleadas para construirlo al ser la intención utilizar el índice como su representante. Inicialmente se había sido tenida en cuenta para la construcción de las componentes, pero al comportarse de forma similar a otras variables explicadas mayoritariamente por la segundo eje del análisis (en especial como *gdppercap*) 
+
+<!-- y debido a que resulta de interés hacer un análisis pseudoexplicativo, viendo como reacciona el índice ante las otras variables -->
+
+ se tomó como alternativa estudiar el comportamiento de su proyección en el espacio construido a partir de las demás variables para ver su interacción con ellas.
 
 Además, también es excluida la variable que indica la cantidad de casos totales de COVID-19 (*totalcases*), ya que la información ya se expresa en la variable *noinfectionrate* y además al estar medida en términos absolutos dificulta la comparación entre observaciones. Adicionalmente se hizo la prueba de incluir una variable que expresaba la densidad poblacional de los países, pero se concluyó que la misma no aportaba al análisis. Estos resultados se encuentran en el Anexo 2.
 
 
 **Perspectiva de la Nube de Variables**
-
-
-
 
 
 ```{r, include=TRUE, results='asis'}
@@ -487,7 +487,7 @@ acp3$eig %>% round(2) %>%  as.data.frame() %>% rename(`Valor propio`="eigenvalue
 
 ```
 
-En la tabla anterior podemos ver que la primer componente principal logra explicar un 53.32% de la variabilidad de la nube de puntos, y la segunda componente principal un 19.45%. Esto significa que con el primer plano principal logramos explicar prácticamente un 72.77% de la variabilidad total, una cantidad muy importante a nuestro juicio dado que reducimos la cantidad de dimensiones a dos, siendo 5 el número original de variables en la matriz de datos.
+En la tabla anterior podemos ver que la primer componente principal logra explicar un 53.32% de la variabilidad de la nube de puntos, y la segunda componente principal un 19.45%. Esto significa que con el primer plano principal logramos explicar prácticamente un 72.77% de la variabilidad total, una cantidad importante a nuestro juicio dado que reducimos la cantidad de dimensiones a dos, siendo 5 el número original de variables en la matriz de datos. Por este motivo y por el hecho de que permite una representación e interpretación gráfica clara se opta por trabajar con estos dos ejes. 
 
 
 ```{r}
@@ -497,9 +497,9 @@ plot.PCA(acp3, axes= c(1,2), choix = c("var"))
 ```
 
 
-En el grafico anterior podemos ver representados los vectores asociados a las variables proyectadas en el primer plano principal, teniendo en cuenta que el largo del vector en relación al círculo unitario indica qué tan bien está representada esa variable en el primer plano principal. Podemos ver que en general los vectores tienen una longitud relativamente cercana a la unidad, destacándose las variables *medage*, *hospitalbed*, *noinfectionrate* y *gdppercap*. A excepción de *healthexp*, notamos que todas las variables "necesitan" de ambos ejes para poder estar bien representadas.
+En el grafico anterior podemos ver representados los vectores asociados a las variables proyectadas en el primer plano principal, teniendo en cuenta que el largo del vector en relación al círculo unitario indica qué tan bien está representada esa variable en el primer plano principal y el valor sobre los ejes su correlación con la dimensión que representa cada uno. Podemos ver que en general los vectores tienen una longitud relativamente cercana al círculo, destacándose las variables *medage*, *hospitalbed*, *noinfectionrate* y *gdppercap*. A excepción de *healthexp*, notamos que todas las variables necesitan de ambos ejes para poder estar bien representadas.
 
-Por otro lado, vemos que todas las variables apuntan en la misma dirección del primer componente principal a excepción de *noinfectionrate* que apunta en sentido contrario. Esto quiere decir que un aumento en *noinfectionrate* se expresa con una disminución del valor de la primera componente, mientras que un aumento en cualquiera de las demás variables se expresa con un aumento en dicha componente.
+Por otro lado, vemos que todas las variables apuntan en la misma dirección del primer componente principal a excepción de *noinfectionrate* que apunta en sentido contrario. Esto quiere decir que un valor mayor en *noinfectionrate* se expresa con una disminución del valor de la primera componente, mientras que un valor mayor en cualquiera de las demás variables se expresa con un aumento en dicha componente. Esto implica que aquellos países con menores tasas de infección van a tender ser a su vez los que tengan menores valores de las demás variables. 
 
 
 ```{r, include=TRUE, results='asis'}
@@ -513,34 +513,31 @@ acp3$var$coord %>% round(2) %>% as.data.frame() %>% select(Dim.1, Dim.2) %>%
 
 ```
 
-En el cuadro anterior se puede ver que las variables *medage* y *gdppercap* tienen una correlación alta (en torno a 0,8) con la primera componente principal, lo cual ya veíamos en el gráfico anterior dado que los vectores tienen una longitud considerable y apuntan en la dirección de esta componente. Vemos también que sucede lo contrario con *noinfectionrate*, dado que tiene una correlación negativa con la primer componente principal lo cual veíamos en la dirección.
+En el cuadro anterior se puede ver que las variables *medage* y *gdppercap* tienen una correlación alta (en torno a 0,8) con la primera componente principal, lo cual ya se identificaba en el gráfico anterior dado que los vectores tienen una longitud considerable y apuntan en la dirección de esta componente. Sucede lo contrario con *noinfectionrate*, dado que tiene una correlación negativa con la primer componente principal lo cual se identificaba en la dirección del vector.
 
-Se aprecia que *medage* y *gdppercap* tienen correlaciones similares con la componente 2, aunque una con signo positivo y la otra con signo negativo. Esto es fácil de ver en el gráfico, dado que los dos vectores tienen longitud similares y ángulos opuestos respecto a este eje.  También se ve que la componente 2 es en el primer plano principal la que contribuye en mayor medida a explicar la variable *noinfectionrate*, puesto que la correlación es mayor (0,76). Por otro lado las correlaciones de las demás variables con esta componente son en general más bajas que con la componente 1, lo cual significa que no representa esas variables tan bien como el otro eje.
+Las variables *medage* y *gdppercap* tienen correlaciones similares con la componente 2, aunque una con signo positivo y la otra con signo negativo. Esto es fácil de ver en el gráfico, dado que los dos vectores tienen longitud similares y ángulos opuestos respecto a este eje. La componente 2 es la que contribuye en mayor medida a explicar la variable *noinfectionrate* en el primer plano principal, puesto que su correlación es mayor (0,76). Por otro lado las correlaciones de las demás variables con esta componente son en general más bajas que con la componente 1, lo cual significa que no representa esas variables tan bien como sí lo hace el otro eje, que se podría asociar como representante de características del país (económicas y respecto al sistema de salud).
 
 ```{r}
 coord.ind.1 <- round(cor(datos$CESI_INDEX, acp3$ind$coord[,1]), 2)
 coord.ind.2 <- round(cor(datos$CESI_INDEX, acp3$ind$coord[,2]), 2)
 
 ```
-Por otro lado, calculamos las correlaciones del índice de estímulo económico utilizado como variable suplementaria con los dos ejes principales, siendo la correlación con el primer eje de `r coord.ind.1` y con el segundo eje de `r coord.ind.2`. Esto significa que el eje construido por las variables *medage*, *gdppercap*, *healthexp* y *hospitalbed* se comporta de manera relativamente similar al índice de estímulo económico; no así con el eje construido principalmente a partir de las variables *noinfectionrate* y *hospitalbed*. 
+Considerando ahora la variable *CESI_INDEX* incluida como suplementaria, las correlaciones del índice de estímulo económico con los dos ejes principales, son `r coord.ind.1` y `r coord.ind.2`, con el primer y segundo eje respectivamente. Esto significa que dicha variable se ve más representada por el eje que a su vez representa mejor a las variables *medage*, *gdppercap*, *healthexp* y *hospitalbed*. Aún así debe ser tenido en cuenta que la correlación no resulta muy alta con dicho eje, lo que compromete la interpretación de la variable en el subespacio considerado.  
 
 
 ```{r}
 cors.ind.org <- round(cor(select(datos, medage, gdppercap, healthexp, hospitalbed, CESI_INDEX2, noinfectionrate))["CESI_INDEX2",],2)
 ```
 
-Calculamos también las correlaciones con las variables originales, y vemos que las más altas son de `r cors.ind.org["gdppercap"]` con *gdppercap* y `r cors.ind.org["medage"]` con *medage*, que resultaban también las variables con correlaciones más altas con ese índice. Esto se puede interpretar como que los países que tienen un mayor desarrollo tuvieron las capacidad de realizar un mayor gasto de estímulo económico, si bien esta apreciación debe ser tomada con cautela debido a que las correlaciones no son demasiado altas.
+Las correlaciones de *CESI_INDEX* más altas con las variables originales son de `r cors.ind.org["gdppercap"]` con *gdppercap* y `r cors.ind.org["medage"]` con *medage*. Esto puede ser interpretado como que los países que tienen un mayor desarrollo tuvieron las capacidad de realizar un mayor gasto de estímulo económico, si bien esta apreciación debe ser tomada con cautela debido a que las correlaciones no son demasiado altas.
 
-
-Como resultado a destacar de este primer análisis, se llegó a que el segundo eje es el que caracteriza principalmente a la variable *noinfectionrate*; mientras que el primer eje caracteriza sobre todo a las demás variables, y a *noinfectionrate* en menor medida. Además, observando cómo se comporta la variable *CESI_INDEX* al proyectarla sobre el primer plano principal, vemos que se correlaciona principalmente con el eje que describe a las variables de índole económico y social, no así con el eje que describe a las variables sanitarias.
+Como resultado a destacar de este primer análisis, se llegó a que el segundo eje es el que caracteriza principalmente a la variable *noinfectionrate*; mientras que el primer eje caracteriza sobre todo a las demás variables, y a *noinfectionrate* en menor medida. Además, observando cómo se comporta la variable *CESI_INDEX* al proyectarla sobre el primer plano principal, vemos que se correlaciona principalmente con el eje que describe a las variables de características del país.
 
 
 
 **Perspectiva de la Nube de Individuos**
 
-El procedimiento de ACP desde esta perspectiva resulta simétrico al de la de la de la Nube de Columnas. Se proyecta el conjunto de observaciones en el subespacio $W^*$ de dimensión $k \le J$, siendo $J$ el número de variables, de manera de minimizar la inercia del subespacio. Desde esta perspectiva la métrica utilizada es la matriz $M$ y se emplea la matriz de pesos $D$, empleada como matriz de pesos y métrica respectivamente al proyectar la nube de variables.   
-
-
+  
 ```{r}
 summary(acp3)
 
@@ -549,9 +546,8 @@ plot.PCA(acp3, choix = "ind", habillage="cos2")
 
 #steam_ncp sirve para estimar la cantidad de componentes con la cual quedarse
 ```
-En el gráfico anterior, podemos observar las proyecciones de los individuos en el primer plano principal, los cuales se encuentran coloreados en función del $cos^2(\theta)$, es decir, el coseno al cuadrado del ángulo que forman los vectores originales de los individuos con este plano. Un $cos^2(\theta)$ próximo a 0 significa que el ángulo $theta$ está próximo a un múltiplo de $\pi/2$, es decir, es casi ortogonal al plano, y en consecuencia el punto no se encuentra bien explicado por el mismo. Por otro lado, un $cos^2(\theta)$ próximo a 1 signfica que el punto original es casi colineal con el plano y que por lo tanto se encuentra bien explicado, y la proyección es buena.
 
-Es deseable que ninguno de los individuos sea especialmente influyente a la hora de generar los componentes principales. Esa situación no deseada se da cuando el punto es lejano al baricentro y además el $cos^2(\theta)$ es próximo a 0. Podemos ver en el gráfico que esta situación no se da, puesto que hay un conjunto de puntos con $cos^2(\theta)$ próximos a 0 pero se encuentran cerca del baricentro; mientras que también hay un conjunto de puntos que se encuentran más apartados del baricentro, pero con $cos^2(\theta)$ relativamente altos.
+En el gráfico anterior, podemos observar las proyecciones de los individuos en el primer plano principal, los cuales se encuentran coloreados en función del $cos^2(\theta)$, es decir, el coseno al cuadrado del ángulo que forman los vectores originales de los individuos con este plano. Un $cos^2(\theta)$ próximo a 0 significa que el ángulo $theta$ está próximo a un múltiplo de $\pi/2$, es decir, es casi ortogonal al plano, y en consecuencia el individuo no se encuentra bien explicado por el mismo. Por otro lado, un $cos^2(\theta)$ próximo a 1 signfica que el punto original es casi colineal con el plano y que por lo tanto se encuentra bien explicado, y la proyección es buena. Es deseable que ninguno de los individuos sea especialmente influyente a la hora de generar los componentes principales. Se da que un punto resulta se da cuando el punto es lejano al baricentro y además el $cos^2(\theta)$ es próximo a 0. Podemos ver en el gráfico que esta situación no se da, puesto que hay un conjunto de puntos con $cos^2(\theta)$ próximos a 0 pero se encuentran cerca del baricentro; mientras que también hay un conjunto de puntos que se encuentran más apartados del baricentro, pero con $cos^2(\theta)$ relativamente altos.
 
 
 
@@ -628,3 +624,17 @@ summary(acp5)
 #AL hacer indice de salud, considerar cambios de escala
 ```
 
+
+
+
+
+
+
+
+
+
+
+# Conclusiones
+
+
+# Anexo
