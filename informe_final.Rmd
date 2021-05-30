@@ -550,8 +550,16 @@ Como resultado a destacar de este primer análisis, se llegó a que el segundo e
 El procedimiento del ACP desde esta perspectiva resulta simétrico al de la de la de la Nube de Columnas. Se proyecta el conjunto de observaciones en el subespacio $W^*$ de dimensión $k \le J$, siendo $J$ el número de variables, de manera de minimizar la inercia del subespacio. Desde esta perspectiva la métrica utilizada es la matriz $M$ y se emplea la matriz de pesos $D$, empleada como matriz de pesos y métrica respectivamente al proyectar la nube de variables.   
 
 
+```{r}
+datos$country
+```
+
+
+
 ```{r, include=TRUE, fig.cap="Proyecciones de los individuos en el primer plano principal."}
+
 plot.PCA(acp3, choix = "ind", habillage="cos2", graph.type = "ggplot")
+
 
   #steam_ncp sirve para estimar la cantidad de componentes con la cual quedarse
 
@@ -562,9 +570,12 @@ plot.PCA(acp3, axes= c(1,2), choix = c("var"), graph.type = "ggplot") +
         axis.title = element_text(size=10)
         )
 
-```
-En el gráfico anterior, podemos observar las proyecciones de los individuos en el primer plano principal, los cuales se encuentran coloreados en función del $cos^2(\theta)$, es decir, el coseno al cuadrado del ángulo que forman los vectores originales de los individuos con este plano. Un $cos^2(\theta)$ próximo a 0 significa que el ángulo $theta$ está próximo a un múltiplo de $\pi/2$, es decir, es casi ortogonal al plano, y en consecuencia el individuo no se encuentra bien explicado por el mismo. Por otro lado, un $cos^2(\theta)$ próximo a 1 signfica que el punto original es casi colineal con el plano y que por lo tanto se encuentra bien explicado, y la proyección es buena. Es deseable que ninguno de los individuos sea especialmente influyente a la hora de generar los componentes principales. Se da que un punto resulta se da cuando el punto es lejano al baricentro y además el $cos^2(\theta)$ es próximo a 0. Podemos ver en el gráfico que esta situación no se da, puesto que hay un conjunto de puntos con $cos^2(\theta)$ próximos a 0 pero se encuentran cerca del baricentro; mientras que también hay un conjunto de puntos que se encuentran más apartados del baricentro, pero con $cos^2(\theta)$ relativamente altos.
 
+```
+
+En el gráfico anterior, podemos observar las proyecciones de los individuos en el primer plano principal, los cuales se encuentran coloreados en función del $cos^2(\theta)$, es decir, el coseno al cuadrado del ángulo que forman los vectores originales de los individuos con este plano. Un $cos^2(\theta)$ próximo a 0 significa que el ángulo $theta$ está próximo a un múltiplo de $\pi/2$, es decir, es casi ortogonal al plano, y en consecuencia el individuo no se encuentra bien explicado por el mismo. Por otro lado, un $cos^2(\theta)$ próximo a 1 signfica que el punto original es casi colineal con el plano y que por lo tanto se encuentra bien explicado, y la proyección es buena. Es deseable que ninguno de los individuos sea especialmente influyente a la hora de generar los componentes principales. Un punto resulta influyente cuando es lejano al baricentro y además el $cos^2(\theta)$ es próximo a 0, lo que puede tener como consecuencia una disminución en la inercia explicada por el subespacio considerado. A primera vista el gráfico indicaría que esta situación no se da, puesto que hay un conjunto de puntos con $cos^2(\theta)$ próximos a 0 pero se encuentran cerca del baricentro; mientras que también hay un conjunto de puntos que se encuentran más apartados del baricentro, pero con $cos^2(\theta)$ relativamente altos.
+
+A primera vista el primer eje tiende a dar menores valores a países de menor desarrollo económico y mayores a países de menor desarrollo económico (que se corresponden con valores mayores en el conjunto de variables que se usaron para caracterizarlos). Mientras tanto el segundo eje tiende a dar valores menores a países con mayor tasa de infección y mayores a países con valores menores de dicha variable.
 
 
 
@@ -575,85 +586,86 @@ mat_cos2  <-  apply(acp3$ind$cos2[,1:2],1, sum)
 
 
 
-mat_dist_cos2 <- cbind("cos2_plano" = mat_cos2, "norma"=  acp3$ind$dist) 
+mat_dist_cos2 <- cbind(`País`= datos$country   ,"cos2_plano" = mat_cos2, "norma"=  acp3$ind$dist) 
+
+
 
 mat_dist_cos2 %>% as.data.frame %>%  arrange(desc(norma)) %>% round(2) %>% 
   head(10) %>% 
   xtable("Cosenos de los ángulos al plano, y normas, para los 10 individuos con mayor norma.")
 
+
 ```
 Revisar esto porque creo que el ángulo de la obs 130 quedó desactualizado.
 
-En la tabla anterior se presentan los valores de los cosenos al cuadrado de los ángulos que forman las observaciones con el primer plano principal, y la norma respecto al baricentro, ordenando las observaciones decrecientemente según esta última. Se aprecia que la observación con mayor norma (9,7) tiene una suma de cosenos al cuadrado de 0,43, por lo que se debe tener en cuenta que podría estar afectando el análisis, disminuyendo la inercia global explicada, porque su calidad de representación en el primer plano no es alta. Sin embargo, tras remover esta observación y observar que tiene poco efecto sobre el resultado del análisis y no representa una ganancia en inercia explicada, se opta por conservarla. El resto de observaciones con norma alta cuentan con valores de la cosenos al cuadrado superiores a 0,5 y en general mayores a 0,7 por lo que no les consideramos influyentes.
-
-
-
-
-
-
-
-
-
-### Segundo Análisis (Creo que esto ya no iría)
-
-**Perspectiva de la Nube de Variables**
-
-Se realiza un nuevo análisis de componentes principales, esta vez eliminando la variable *medage* 
 
 ```{r, include=TRUE, results='asis'}
-vars.acp4 <- c("healthexp", "medage", "noinfectionrate", "CESI_INDEX2", "hospitalbed")
-
-acp4 <- PCA(datos[,vars.acp4], ncp=7)
-
-# acp3$eig %>% round(2) %>%  as.data.frame() %>% rename(`Valor propio`="eigenvalue", `% de varianza`= "percentage of variance", `% acumulado de varianza`="cumulative percentage of variance") %>% xtable(caption="Valores propios asociados a las componentes principales y porcentajes de inercia de cada uno.")
-
-#gdppercap y cesi colineales porque probablemente los coeficientes son iguales
-
-#Rlos angulos de noinfectionrate y de hospitalbed son muy parecidos con el eje 2
+mat_dist_cos2 %>% as.data.frame %>% mutate(cos2_plano = round(as.numeric(cos2_plano), 2), norma = round(as.numeric(norma), 2)) %>%  arrange(desc(norma)) %>% head(20)%>% xtable()
 ```
+
+
+
+
+```{r}
+acp4 <- PCA(datos[, vars.acp3], ind.sup = 130, quanti.sup = 6)
+```
+
+
+En la tabla anterior se presentan los valores de la suma de los cosenos al cuadrado de los ángulos que forman las observaciones con los dos primeros ejes y la norma respecto al baricentro, ordenando las observaciones decrecientemente según esta última. Se aprecia que la observación correspondiente a San Marino tiene la mayor norma (9,7) y una suma de cosenos al cuadrado de 0,67, se debe tener en cuenta que podría estar afectando el análisis teniendo en cuenta que su calidad de representación en el primer plano no es alta y su norma es particularmente alta. Efectuar el ACP considerando la observación influyente como un dato suplementario representa una ganancia en inercia explicada en el plano del 4% aproximadamente, por lo que esto puede ser viable para tener una mejor descripción de las variables/individuos en las dimensiones elegidas. El resto de observaciones con norma alta cuentan con valores de la suma de cosenos al cuadrado superiores a 0,5 y en general mayores a 0,7 por lo que a priori no se pensarían influyentes.
 
 
 ```{r, include=TRUE, results='asis'}
-plot.PCA(acp3, axes= c(1,3), choix = c("var"))
+mat_dist_cos2 %>% as.data.frame %>% mutate(cos2_plano = round(as.numeric(cos2_plano), 2), norma = round(as.numeric(norma), 2)) %>%  arrange(cos2_plano) %>%  head(20) %>% xtable()
 ```
 
+En la anterior tabla se presentan las 20 observaciones con las menor calidad de representación en el plano. Se destaca que practicamente todos son países en vías de desarrollo. No obstante, todos estos países se encuentran muy cercanos al baricentro, por lo que su influencia es limitada, simplemente es dificil distinguirlos del individuo medio. En un principio se podría pensar que es un problema de representación de este tipo de países en general, pero al identificar los valores del $cos^2(\theta)$ del resto de las observaciones en el plano podemos ver que a su vez hay países en desarrollo bien representados y países desarrollados con mala representación.  
 
-
-```{r}
-vars.acp4 <- c( "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX2")
-
-acp4 <- PCA(datos[,vars.acp4], ncp=7)
-
-summary(acp4)
-```
-
-
-
-```{r}
-vars.acp5 <- c("medage", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX2")
-
-acp5 <- PCA(datos[,vars.acp5], ncp=7)
-
-summary(acp5)
-```
-
-
-
-```{r}
-#AL hacer indice de salud, considerar cambios de escala
-```
 
 
 
 # Conclusiones
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Conclusiones
+
+# Bibliografía
+
+
 # Anexos
 
 ## Anexo 1: gráficos para el análisis de observacoines atípicas
 
-```{r, include=TRUE, fig.cap="Gráfico de caja de las medidas de políticas fiscales adoptadas."}
-boxplot.fiscal + ylab("Políticas fiscales adoptadas (% PBI)")
-```
+
+
+
+
+
+
+
+
+
+
 
 
 ```{r, include=TRUE, fig.cap="Gráfico de caja del recorte de la tasa de interés respecto a la de febrero de 2020."}
