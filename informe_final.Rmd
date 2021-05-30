@@ -103,13 +103,12 @@ datos <- datos %>% left_join(datospob, by="country")
 
 # Introducción
 
-El objetivo de este trabajo es aplicar las técnicas de Análisis Factorial a la base de datos que surgen del trabajo **Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index** (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020). En dicho artículo los autores bucan explicar cuáles fueron las medidas económicas que tomaron los distintos países del mundo frente a la pandemia de covid-19. Elaboran un índice de estímulo económico el cual buscan explicar a través de las demás variables de la base, que son de índole sanitario y demográfico. Como primer objetivo de nuestro trabajo se busca reproducir el índice creado por los autores, y posteriormente utilizar dicho índice para un análisis de componentes principales que involucre a su vez variables de índole sanitaria, económica y sociodemográfica.
+El objetivo de este trabajo es aplicar las técnicas de Análisis Factorial a la base de datos que surgen del trabajo **Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index** (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020). En dicho artículo los autores bucan explicar cuáles fueron las medidas económicas que tomaron los distintos países del mundo frente a la pandemia de covid-19. Elaboran un índice de estímulo económico a partir del Análisis de Componentes Principales el cual buscan explicar a través de las demás variables de la base, que son de índole sanitario y demográfico. Como primer objetivo de nuestro trabajo se busca reproducir el índice creado por los autores a través de emplear la misma técnica que usaron, y posteriormente utilizar dicho índice en otro ACP que involucre las variables de índole sanitaria, económica y sociodemográfica, estudiando el comportamiento de los individuos y las variables y relación entre estas últimas. 
 
 
 # Descripción de los datos
 
-Los datos disponibles fueron elaborados por los autores a partir de una recopilación de distintas fuentes. La principal es el FMI (Fondo Monetario Internacional), pero algunos datos fueron reemplazados por otros provenientes de páginas gubernamentales o canales de noticias con el fin de que toda la información estuviese actualizada. La información es de la situación al 31 de marzo de 2020.
-Por nuestra parte, se incluye además la variable densidad poblacional, con datos extraídos del Banco Mundial actualizados a 2018, pues consideramos que la variable puede ser de interés en el análisis.
+Los datos utilizados fueron elaborados por los autores a partir de una recopilación de distintas fuentes. La principal es el FMI (Fondo Monetario Internacional), pero algunos valores fueron reemplazados por otros provenientes de páginas gubernamentales o canales de noticias con el fin de que toda la información estuviese actualizada. La información es de la situación al 31 de marzo de 2020. Por nuestra parte incluimos además la variable densidad poblacional, con datos extraídos del Banco Mundial actualizados a 2018, al considerarse que la variable puede ser de interés en el análisis.
 
 
 
@@ -454,7 +453,7 @@ Por su parte, las variables asociadas a medidas de políticas de balanza de pago
 
 A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales. Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados. Esto lo hacemos con el fin de facilitar la interpretación de la variable, dado que un valor elevado de esta variable representa en realidad una situación negativa de la situación del país frente a la pandemia en lugar de positiva. Por lo tanto, trabajamos con la tasa de no infección que sí representa una situación positiva, lo que consideramos que puede ser facilitar la lectura de los gráficos y la interpretación de lo que representa la dirección de esta variable en el subespacio de dimensión reducida respecto a la de las demás variables, así como también la interpretación de las coordenadas de la variable en los distintos ejes.
 
-El conjunto de variables empleado en este análisis esta conformado inicialmente por *medage*, *gdppercap*, *healthexp*, *hospitalbed*, *noinfectionrate*. La variable *CESI_INDEX*, el índice de estímulo económico obtenido a partir del ACP es utilizado como variable suplementaria en el análisis, y tampoco se incluyen las variables empleadas para construirlo al ser la intención utilizar el índice como su representante. Inicialmente se había sido tenida en cuenta para la construcción de las componentes, pero al comportarse de forma similar a otras variables explicadas mayoritariamente por la segundo eje del análisis (en especial como *gdppercap*) se tomó como alternativa estudiar el comportamiento de su proyección en el espacio construido a partir de las demás variables para ver su interacción con ellas.
+El conjunto de variables empleado en este análisis esta conformado inicialmente por *medage*, *gdppercap*, *healthexp*, *hospitalbed*, *noinfectionrate*. La variable *CESI_INDEX*, el índice de estímulo económico obtenido a partir del ACP es utilizado como variable suplementaria en el análisis, y tampoco se incluyen las variables empleadas para construirlo al ser la intención utilizar el índice como su representante. Inicialmente se había sido tenida en cuenta para la construcción de las componentes, pero al ser la variable peor representada en el plano principal y comportarse de forma similar a otras variables explicadas mayoritariamente por el segundo eje del análisis (en especial como *gdppercap*) se tomó como alternativa estudiar el comportamiento de su proyección en el espacio construido a partir de las demás variables para ver su interacción con ellas.
 
 
 <!-- y debido a que resulta de interés hacer un análisis pseudoexplicativo, viendo como reacciona el índice ante las otras variables -->
@@ -590,10 +589,6 @@ mat_dist_cos2 <- cbind(`País`= datos$country   ,"cos2_plano" = mat_cos2, "norma
 
 
 
-mat_dist_cos2 %>% as.data.frame %>%  arrange(desc(norma)) %>% round(2) %>% 
-  head(10) %>% 
-  xtable("Cosenos de los ángulos al plano, y normas, para los 10 individuos con mayor norma.")
-
 
 ```
 Revisar esto porque creo que el ángulo de la obs 130 quedó desactualizado.
@@ -618,43 +613,26 @@ En la tabla anterior se presentan los valores de la suma de los cosenos al cuadr
 mat_dist_cos2 %>% as.data.frame %>% mutate(cos2_plano = round(as.numeric(cos2_plano), 2), norma = round(as.numeric(norma), 2)) %>%  arrange(cos2_plano) %>%  head(20) %>% xtable()
 ```
 
-En la anterior tabla se presentan las 20 observaciones con las menor calidad de representación en el plano. Se destaca que practicamente todos son países en vías de desarrollo. No obstante, todos estos países se encuentran muy cercanos al baricentro, por lo que su influencia es limitada, simplemente es dificil distinguirlos del individuo medio. En un principio se podría pensar que es un problema de representación de este tipo de países en general, pero al identificar los valores del $cos^2(\theta)$ del resto de las observaciones en el plano podemos ver que a su vez hay países en desarrollo bien representados y países desarrollados con mala representación.  
+En la anterior tabla se presentan las 20 observaciones con la menor calidad de representación en el plano. Se destaca que practicamente todos son países en vías de desarrollo. No obstante, todos estos países se encuentran muy cercanos al baricentro, por lo que su influencia es limitada, simplemente es dificil distinguirlos del individuo medio. En un principio se podría pensar que es un problema de representación de este tipo de países en general, pero al identificar los valores del $cos^2(\theta)$ del resto de las observaciones en el plano podemos ver que a su vez hay países en desarrollo bien representados y países desarrollados con mala representación.  
 
 
 
 
 # Conclusiones
 
+Se logró recrear con éxito el Índice de Éstimulo Económico de los países generado en *(Elgin, Basbug y Yalaman, 2020)*, encontrándose únicamente una diferencia de estandarización en los factores de las variables. Al proceder con el objetivo de realizar un ACP considerando el índice y un conjunto de las variables de los datos se consideró pertinente íncluir el índice como variable suplementaria en lugar de considerarla dentro de las variables activas, debido a su pobre representación en los primeros ejes. Con esta configuración de los datos se llega a que los primeros dos ejes explican un 72,77% de la inercia total, por lo que se optó por trabajar en el análisis con este plano.    
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Conclusiones
 
 # Bibliografía
 
 
 # Anexos
 
-## Anexo 1: gráficos para el análisis de observacoines atípicas
+## Anexo 1: gráficos para el análisis de observaciones atípicas
 
 
 
