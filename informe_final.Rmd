@@ -101,7 +101,7 @@ datospob$country <-  recode(datospob$country,
 
 # Resumen ejecutivo
 
-En este proyecto se aplican a una base de datos que recoge la información económica y sanitaria de 166 países las técnicas de Análisis de Componentes Principales (ACP) para construir un Índice de Estímulo Económico, recreando el trabajo hecho en (Elgin, Nasbug y Yalaman, 2020) y a su vez para realizar un análisis exploratorio con el resto de variables de la base. Se logra recrear el Índice con éxito y mediante el análisis posterior se llega a representación en el plano con alto nivel de variabilidad explicada, a través del cual se puede apreciar que aquellos países con mayor desarrollo económico tendieron a tener una tasa de infección más alta al 31 de marzo de 2020.  
+En este proyecto se aplican las técnicas de Análisis de Componentes Principales (ACP) a una base de datos que recoge la información económica y sanitaria de 166 países para construir un Índice de Estímulo Económico, recreando el trabajo hecho en (Elgin, Nasbug y Yalaman, 2020) y a su vez para realizar un análisis exploratorio con el resto de variables de la base. Se logra recrear el Índice con éxito y mediante el análisis posterior se llega a una representación en el plano con alto nivel de variabilidad explicada, a través del cual se puede apreciar que aquellos países con mayor desarrollo económico tendieron a tener una tasa de infección más alta al 31 de marzo de 2020.  
 
 
 
