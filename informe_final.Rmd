@@ -101,14 +101,18 @@ datospob$country <-  recode(datospob$country,
 
 # Resumen ejecutivo
 
+En este proyecto se aplican a una base de datos que recoge la información económica y sanitaria de 166 países las técnicas de Análisis de Componentes Principales (ACP) para construir un Índice de Estímulo Económico, recreando el trabajo hecho en (Elgin, Nasbug y Yalaman, 2020) y a su vez para realizar un análisis exploratorio con el resto de variables de la base. Se logra recrear el Índice con éxito y mediante el análisis posterior se llega a representación en el plano con alto nivel de variabilidad explicada, a través del cual se puede apreciar que aquellos países con mayor desarrollo económico tendieron a tener una tasa de infección más alta al 31 de marzo de 2020.  
+
+
+
 # Introducción
 
-El objetivo de este trabajo es aplicar las técnicas de Análisis Factorial a la base de datos que surgen del trabajo **Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index** (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020). En dicho artículo los autores bucan explicar cuáles fueron las medidas económicas que tomaron los distintos países del mundo frente a la pandemia de covid-19. Elaboran un índice de estímulo económico a partir del Análisis de Componentes Principales (ACP) el cual buscan explicar a través de las demás variables de la base, que son de índole sanitario y demográfico. Como primer objetivo de nuestro trabajo se busca reproducir el índice creado por los autores a través de emplear la misma técnica que usaron, y posteriormente utilizar dicho índice en otro ACP que involucre las variables de índole sanitaria, económica y sociodemográfica, estudiando el comportamiento de los individuos y las variables y relación entre estas últimas. 
+El objetivo de este trabajo es aplicar las técnicas de Análisis Factorial a la base de datos que surgen del trabajo **Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index** (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020). En dicho artículo los autores bucan explicar cuáles fueron las medidas económicas que tomaron los distintos países del mundo frente a la pandemia de COVID-19. Elaboran un índice de estímulo económico a partir del Análisis de Componentes Principales (ACP) el cual buscan explicar a través de las demás variables de la base, que son de índole sanitario y demográfico. Como primer objetivo de nuestro trabajo se busca reproducir el índice creado por los autores a través de emplear la misma técnica que usaron, y posteriormente utilizar dicho índice en otro ACP que involucre las variables de índole sanitaria, económica y sociodemográfica, estudiando el comportamiento de los individuos y las variables y relación entre estas últimas. 
 
 
 # Descripción de los datos
 
-Los datos utilizados fueron elaborados por los autores a partir de una recopilación de distintas fuentes. La principal es el FMI (Fondo Monetario Internacional), pero algunos valores fueron reemplazados por otros provenientes de páginas gubernamentales o canales de noticias con el fin de que toda la información estuviese actualizada. La información es de la situación al 31 de marzo de 2020. Por nuestra parte incluimos además la variable densidad poblacional, con datos extraídos del Banco Mundial actualizados a 2018, al considerarse que la variable puede ser de interés en el análisis.
+Los datos utilizados fueron elaborados por los autores del artículo de referencia a partir de una recopilación de distintas fuentes. La principal es el FMI (Fondo Monetario Internacional), pero algunos valores fueron reemplazados por otros provenientes de páginas gubernamentales o canales de noticias con el fin de que toda la información estuviese actualizada. La información es de la situación al 31 de marzo de 2020. Por nuestra parte incluimos además la variable densidad poblacional, con datos extraídos del Banco Mundial actualizados a 2018, al considerarse que la variable puede ser de interés en el análisis.
 
 
 
@@ -129,11 +133,11 @@ Se cuenta con datos para 166 observaciones (países) y 14 variables. Estas últi
 
 * *bopgdp*: políticas de balanza de pago, expresadas como porcentaje del PBI
 
-* *totalcases*: cantidad de casos totales de covid-19
+* *totalcases*: cantidad de casos totales de COVID-19
 
-* *medage*: edad mediana en el país (a 2019)
+* *medage*: edad mediana en el país
 
-* *infectionrate*: tasa de infección, representa la proporción de la población total infectada de covid-19
+* *infectionrate*: tasa de infección, representa la proporción de la población total infectada de COVID-19
 
 * *hospitalbed*: camas de hospital por cada 1000 personas
 
@@ -143,16 +147,16 @@ Se cuenta con datos para 166 observaciones (países) y 14 variables. Estas últi
 
 * *gdppercap*: PBI per cápita del país en dólares a niveles de 2010
 
-* *CESI_INDEX*: índice de estímulo económico (construido por los autores utilizando análisis de componentes principles).
+* *CESI_INDEX*: índice de estímulo económico (construido por los autores utilizando análisis de componentes principles)
 
-* *denspob*: densidad poblacional del país, medida como cantidad de personas por kilómetro cuadrado de área terrestre
+* *denspob*: densidad poblacional del país, medida como cantidad de personas por kilómetro cuadrado de área terrestre.
 
 
 \underline{Cualitativas}
 
 * *othermonetary*: variable indicadora que indica si en el país se tomaron otras medidas monetarias
 
-* *otherbop*: variable indicadora que indica si en el país se tomaron otras medidas de políticas de balanza de pago
+* *otherbop*: variable indicadora que indica si en el país se tomaron otras medidas de políticas de balanza de pago.
 
 
 ## Datos faltantes
@@ -217,13 +221,13 @@ correl %>% round(2) %>%  xtable(caption="Matriz de correlaciones") %>% print.xta
 
 ```
 
-En el Cuadro 2 se destacan por ser altas las correlaciones entre *gdppercapita* y *fiscal* (`r round(correl["gdppercap", "fiscal"],2)`), *medage* y *gpdpercap* y entre *medage* y *hospitalbed*. Al realizar el análisis de componentes principales se buscará obtener un nuevo conjunto de variables incorrelacionadas entre si y posiblemente reducir su número con respecto al conjunto original.
+En el Cuadro 2 se presentan las correlaciones entre las variables de la base (el orden de las variables en las filas es el mismo que el de las columnas). Se destacan por ser altas las correlaciones entre *gdppercap* y *fiscal* (`r round(correl["gdppercap", "fiscal"],2)`), *medage* y *gdppercap* y entre *medage* y *hospitalbed*. Al realizar el análisis de componentes principales se buscará obtener un nuevo conjunto de variables incorrelacionadas entre si y posiblemente reducir su número con respecto al conjunto original.
 
 ## Observación preliminar de valores atípicos
 
-Se realiza un sondeo de los valores atípicos de las variables, porque pueden afectar el ACP al confundirse las relaciones entre las variables. Esto se llama efecto tamaño, donde los valores atípicos causan que haya una estructura común al conjunto de variables que termina por ser expresada en la primer componente principal.
+Se realiza un sondeo de los valores atípicos de las variables, porque pueden afectar el ACP al confundirse las relaciones entre las variables. Esto se llama efecto tamaño, donde los valores atípicos causan que haya una estructura común al conjunto de variables que termina por ser expresada en la primer componente principal (Blanco, 2006).
 
-Para buscar las posibles observaciones que se puedan considerar atípicas, se realiza un análisis exploratorio a partir de medidas de resumen aplicadas sobre las variables como el mínimo, el máximo, la media, la mediana y el rango intercuartílico. Además, se utilizan gráficos (*boxplots* e histogramas) y tablas; la mayor parte de estos elementos no se incluyen en el cuerpo del texto y pueden encontrarse en el Anexo 1. 
+Para buscar las posibles observaciones que se puedan considerar atípicas, se realiza un análisis exploratorio a partir de medidas de resumen aplicadas sobre las variables como el mínimo, el máximo, la media, la mediana y el rango intercuartílico. Además, se utilizan gráficos (*boxplots* e histogramas) y tablas. 
 
 ```{r, results='asis', include=TRUE}
 datos %>%
@@ -249,7 +253,7 @@ boxplot.fiscal <- datos %>% ggplot() + geom_boxplot(aes(y=fiscal))
 fiscal.argelia <- datos %>% select(country, fiscal) %>% arrange(fiscal) %>% head(1)
 
 ```
-Argelia, que era la observación que tenía el mayor valor de la variable *bopgdp*, es también la observación que tiene el menor valor de la variable *fiscal*, con un porcentaje de medidas fiscales de `r as.numeric(fiscal.argelia[1,2])`. Existe además un conjunto de países que toman un valor de la variable por encima del límite máximo superior definido por el boxplot como $Q_3 + 1.5 \cdot RI$, donde $RI$ es el rango intercuartílico.
+Argelia, que era la observación que tenía el mayor valor de la variable *bopgdp*, es también la observación que tiene el menor valor de la variable *fiscal*, con un porcentaje de medidas fiscales de `r as.numeric(fiscal.argelia[1,2])`. Existe además un conjunto de países que toman un valor de la variable por encima del límite máximo superior definido por el boxplot como $Q_3 + 1.5 \cdot RI$, donde $RI$ es el rango intercuartílico. (Figura 4, Anexo 1)
 
 
 ```{r}
@@ -271,7 +275,7 @@ quantile(datos$ratecut, 0.5)
 ```
 
 
-Para la variable *ratecut* tanto el primer cuartil como la mediana coinciden con 0, lo cual indica una acumulación de países que toman ese valor, derivándose esto del hecho de que 95 países no experimentaron cambios en su tasa de interés respecto a febrero de 2020. Mientras tanto, 5 tuvieron un aumento de la misma y el resto una disminución. Hay un conjunto de 21 países que superan el límite extremo superior (calculado como un 40% de disminución de la tasa de interés) y podrían ser considerados como atípicos. Entre estas observaciones se encuentran Reino Unido, Noruega, Croacia, Nueva Zelanda y Estados Unidos, siendo este último el único país que tuvo una reducción del 100 de su tasa de interés.  
+Para la variable *ratecut* tanto el primer cuartil como la mediana coinciden con 0, lo cual indica una acumulación de países que toman ese valor, derivándose esto del hecho de que 95 países no experimentaron cambios en su tasa de interés respecto a febrero de 2020. Mientras tanto, 5 tuvieron un aumento de la misma y el resto una disminución. Hay un conjunto de 21 países que superan el límite extremo superior (calculado como un 40% de disminución de la tasa de interés) y podrían ser considerados como atípicos. Entre estas observaciones se encuentran Reino Unido, Noruega, Croacia, Nueva Zelanda y Estados Unidos, siendo este último el único país que tuvo una reducción del 100 de su tasa de interés. (Figura 5, Anexo 1). 
 
 
 
@@ -286,7 +290,7 @@ datos %>% filter(macrofin == 0) %>% count()
 
 ```
 
-Para la variable *macrofin* también hay una gran cantidad de observaciones atípicas, destacándose en particular dos de ellas que se alejan incluso más que el resto, tomando valores próximos a 25, siendo que las siguientes observaciones más altas están en torno a 15. Estas dos observaciones con valores altos corresponden a los países Baréin y Oman. En cuanto al resto de los países, vemos una acumulación de observaciones con valores en torno al 0, valor que toman 102 países, más del 60% del total.
+Para la variable *macrofin* también hay una gran cantidad de observaciones atípicas, destacándose en particular dos de ellas que se alejan incluso más que el resto, tomando valores próximos a 25, siendo que las siguientes observaciones más altas están en torno a 15. Estas dos observaciones con valores altos corresponden a los países Baréin y Oman. En cuanto al resto de los países, vemos una acumulación de observaciones con valores en torno al 0, valor que toman 102 países, más del 60% del total. (Figura 6, Anexo 1).
 
 
 
@@ -308,7 +312,7 @@ q3.gdp <- quantile(datos$gdppercap, 0.75)
 ```
 
 
-En la variable *gdppercap* hay bastante dispersión como es de esperarse y un 75% de los países cuentan con un país menor o igual a `r q3.gdp` También se observa que hay un conjunto de países con valores atípicos de la variable, siendo la observación que toma el mayor valor es Luxemburgo, con un PBI per cápita de `r as.numeric(pbi.lux)` dólares que podemos atribuir al pequeño número de habitantes pero gran desarrollo económico de este país.
+En la variable *gdppercap* hay bastante dispersión como es de esperarse y un 75% de los países cuentan con un país menor o igual a `r q3.gdp` También se observa que hay un conjunto de países con valores atípicos de la variable, siendo la observación que toma el mayor valor es Luxemburgo, con un PBI per cápita de `r prettyNum(as.numeric(pbi.lux))` dólares que podemos atribuir al pequeño número de habitantes pero gran desarrollo económico de este país. (Figura 7, Anexo 1).
 
 
 
@@ -324,7 +328,7 @@ median(datos$medage)
 max.ind.medage <- datos[which.max(datos$medage),]
 min.ind.medage <- datos[which.min(datos$medage),]
 ```
-La variable medage toma un rango de valores entre `r min.medage` y `r max.medage`, y muestra una gran simetría siendo que tanto la media como la mediana toman el valor de `r round(media.medage, 2)`, lo cual atribuímos en parte a la imputación en esta variable utilizando la media. El país con menor edad mediana es `r unname(select(min.ind.medage, country))` con un valor de `r unname(select(min.ind.medage, medage))` años, y el país con mayor edad mediana es `r unname(select(max.ind.medage, country))` con `r unname(select(max.ind.medage, medage))` años.
+La variable medage toma un rango de valores entre `r min.medage` y `r max.medage`, y muestra una gran simetría siendo que tanto la media como la mediana toman el valor de `r round(media.medage, 2)`, lo cual atribuímos en parte a la imputación en esta variable utilizando la media. El país con menor edad mediana es `r unname(select(min.ind.medage, country))` con un valor de `r unname(select(min.ind.medage, medage))` años, y el país con mayor edad mediana es `r unname(select(max.ind.medage, country))` con `r unname(select(max.ind.medage, medage))` años. (Figura 8, Anexo 1).
 
 
 ```{r}
@@ -337,7 +341,7 @@ mean(datos$healthexp)
 median(datos$healthexp)
 ```
 
-En la variable *healthexp*, se destaca una observación atípica que corresponde a Estados Unidos con un gasto en salud del `r unname(select(max.healthexp, healthexp))` % del PBI, casi el doble que el país que le sigue, Reino Unido con un valor de `r unname(select(max.healthexp2, healthexp))`. Al igual que con *medage* nuevamente los datos son simétricos, ya que la media coincide con la mediana, y lo atribumos al mismo motivo.
+En la variable *healthexp*, se destaca una observación atípica que corresponde a Estados Unidos con un gasto en salud del `r unname(select(max.healthexp, healthexp))` % del PBI, casi el doble que el país que le sigue, Reino Unido con un valor de `r unname(select(max.healthexp2, healthexp))`. Al igual que con *medage* nuevamente los datos son simétricos, ya que la media coincide con la mediana, y lo atribumos al mismo motivo. (Figura 9, Anexo 1).
 
 
 
@@ -354,7 +358,7 @@ hospitalbed.japon <- datos %>% select(country, hospitalbed) %>% arrange(desc(hos
 
 ```
 
-Considerando la variable *hospitalbed*, observamos nuevamente cierta simetría ya que la media toma el valor de `r round(hospitalbed.mean,2)` y la mediana toma el valor de `r hospitalbed.median`. Se aprecia además la presencia de algunas observaciones atípicas, seindo Japón la que toma el mayor valor con un número de `r as.numeric(select(hospitalbed.japon, hospitalbed))` camas de hospital por cada 1000 habitantes.
+Considerando la variable *hospitalbed*, observamos nuevamente cierta simetría ya que la media toma el valor de `r round(hospitalbed.mean,2)` y la mediana toma el valor de `r hospitalbed.median`. Se aprecia además la presencia de algunas observaciones atípicas, siendo Japón la que toma el mayor valor con un número de `r as.numeric(select(hospitalbed.japon, hospitalbed))` camas de hospital por cada 1000 habitantes. (Figura 10, Anexo 1).
 
 
 ```{r, include=TRUE, fig.cap="Gráfico de caja de la tasa de infección de los países.", out.width="50%"}
@@ -373,7 +377,7 @@ datos %>% select(country, infectionrate) %>% arrange(desc(infectionrate)) %>% he
 
 ```
 
-En cuanto a la tasa de infección respecto a la población (*infectionrate*), se observa en el gráfico que hay una gran acumulación de tasas de infección en torno a valores próximos a 0, y un 75% de las tasas son menores a 0.00025 (que representa un caso por cada 4000 habitantes aproximadamente). Se distinguen especialmente del resto de los países San Marino, Islandia y Luxemburgo. Aquí puede estar entrando en juego que dichos países cuentan con poblaciones muy reducidas, poblacionales acumuladas en ciudades y en el caso de San Marino y Luxemburgo, limítrofes con países que también contaban con tasas de infección altas (el primero con Italia y el segundo con Bélgica y Alemania). En particular, San Marino tiene una tasa de infección de 0.0068 que representa un caso por cada 150 habitantes aproximadamente.
+En cuanto a la tasa de infección respecto a la población (*infectionrate*), se observa en la Figura 1 que hay una gran acumulación de tasas de infección en torno a valores próximos a 0, y un 75% de las tasas son menores a 0.00025 (que representa un caso por cada 4000 habitantes aproximadamente). Se distinguen especialmente del resto de los países San Marino, Islandia y Luxemburgo. Aquí puede estar entrando en juego que dichos países cuentan con poblaciones muy reducidas, acumuladas en ciudades y en el caso de San Marino y Luxemburgo, limítrofes con países que también contaban con tasas de infección altas (el primero con Italia y el segundo con Bélgica y Alemania). En particular, San Marino tiene una tasa de infección de 0.0068 que representa un caso por cada 150 habitantes aproximadamente.
 
 
 
@@ -388,12 +392,12 @@ Se proyecta el conjunto de variables en el subespacio $W$ de dimensión  $k \le 
 
 De esto, se desprende claramente que cada coeficiente representa la correlación entre la variable asociada y el eje sobre el que se está proyectando, dado que si el valor de la variable aumenta en una unidad, el valor en el eje aumenta en una cantidad proporcional al coeficiente.
 
-El análisis desde la perspectiva de los individuos es análogo al anterior, solo que la matriz $M$ representa la métrica y la matriz $D$ representa los pesos asociados a los indiviuos, y los factores son los vectores propios asociados a la matriz $XMX^TD$.
+El análisis desde la perspectiva de los individuos es análogo al anterior, solo que la matriz $M$ representa la métrica y la matriz $D$ representa los pesos asociados a los individuos, y los factores son los vectores propios asociados a la matriz $XMX^TD$.
 
 
 ## Construcción del Índice de Estímulo Económico 
 
-Inicialmente, intentaremos replicar el índice de estímulo económico elaborado por los autores del artículo. Para esto, realizamos un análisis de componentes principales únicamente con las variables de índole económico *fiscal*, *ratecut*, *macrofin*, *bopgdp*, *othermonetary* y *otherbop*.
+Inicialmente, intentaremos replicar el índice de estímulo económico elaborado por los autores del artículo. Para esto, realizamos un análisis de componentes principales únicamente con las variables de índole económico *fiscal*, *ratecut*, *macrofin*, *bopgdp*, *othermonetary* y *otherbop*. Si bien *othermonetary* y *otherbop* son variables cualitativas al ser indicadoras resulta adecuado incluirlas en el análisis al tener su media una interpretación clara, es la proporción de países que que toman el valor 1 en estas variables (tomaron medidas de este tipo).
 
 ```{r}
 vars.indice <- c("fiscal", "ratecut", "macrofin", "bopgdp", "othermonetary", "otherbop")
@@ -436,7 +440,7 @@ data.frame(Variable = names(acp_indice$var$coord[,1]), `Correlación` = acp_indi
 coords_art <- c(0.58,0.39,0.55,0.39,-0.17, -0.16)
 ```
 
-Podemos observar en la tabla anterior la correlación de cada una de las variables utilizadas en el análisis de componentes principales con el índice de estímulo económico definido. Las correlaciones, que nos permiten medir la calidad de representación de cada variable en el primer eje, resultan ser altas y con signo positivo para las variables *fiscal* y *macrofin*, lo cual significa que las medidas de tipo fiscal y macrofinanciero tienen un impacto positivo en el índice de estímulo económico construido.
+Podemos observar en el Cuadro 4 la correlación de cada una de las variables utilizadas en el análisis de componentes principales con el índice de estímulo económico definido. Las correlaciones, que nos permiten medir la calidad de representación de cada variable en el primer eje, resultan ser altas y con signo positivo para las variables *fiscal* y *macrofin*, lo cual significa que las medidas de tipo fiscal y macrofinanciero tienen un impacto positivo en el índice de estímulo económico construido.
 
 Las variables *ratecut* y *othermonetary* tienen correlaciones menores a las variables previamente mencionadas, y de signo positivo, lo cual parece indicar que las otras medidas de tipo monetaria, así como también las medidas de reducción de tasa de interés, también tienen un impacto positivo en el índice de estímulo económico, si bien la magnitud de las correlaciones no son lo suficientemente altas como para poder afirmarlo.
 
@@ -446,7 +450,7 @@ Por su parte, las variables asociadas a medidas de políticas de balanza de pago
 ## Análisis de Componentes Principales considerando el Índice de Estímulo Económico 
 
 
-A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales. Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados. Esto lo hacemos con el fin de facilitar la interpretación de la variable, dado que un valor elevado de esta variable representa en realidad una situación negativa de la situación del país frente a la pandemia en lugar de positiva. Por lo tanto, trabajamos con la tasa de no infección que sí representa una situación positiva, lo que consideramos que puede ser facilitar la lectura de los gráficos y la interpretación de lo que representa la dirección de esta variable en el subespacio de dimensión reducida respecto a la de las demás variables, así como también la interpretación de las coordenadas de la variable en los distintos ejes.
+A continuación, se procede a emplear esta nueva variable en un análisis de componentes principales. Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados. Esto lo hacemos con el fin de facilitar la interpretación de la variable, dado que un valor elevado de esta variable representa en realidad una situación negativa de la situación del país frente a la pandemia en lugar de positiva. Por lo tanto, trabajamos con la tasa de no infección que sí representa una situación positiva, lo que consideramos que puede facilitar la lectura de los gráficos y la interpretación de lo que representa la dirección de esta variable en el subespacio de dimensión reducida respecto a la de las demás variables, así como también la interpretación de las coordenadas de la variable en los distintos ejes.
 
 El conjunto de variables empleado en este análisis esta conformado inicialmente por *medage*, *gdppercap*, *healthexp*, *hospitalbed*, *noinfectionrate*. La variable *CESI_INDEX*, el índice de estímulo económico obtenido a partir del ACP es utilizado como variable suplementaria en el análisis, y tampoco se incluyen las variables empleadas para construirlo al ser la intención utilizar el índice como su representante. Inicialmente se había sido tenida en cuenta para la construcción de las componentes, pero al ser la variable peor representada en el plano principal y comportarse de forma similar a otras variables explicadas mayoritariamente por el segundo eje del análisis (en especial como *gdppercap*) se tomó como alternativa estudiar el comportamiento de su proyección en el espacio construido a partir de las demás variables para ver su interacción con ellas.
 
@@ -473,11 +477,11 @@ acp3$eig %>% round(2) %>%  as.data.frame() %>% rename(`Valor propio`="eigenvalue
 
 ```
 
-En la tabla anterior podemos ver que la primer componente principal logra explicar un 53.32% de la variabilidad de la nube de puntos, y la segunda componente principal un 19.45%. Esto significa que con el primer plano principal logramos explicar prácticamente un 72.77% de la variabilidad total, una cantidad importante a nuestro juicio dado que reducimos la cantidad de dimensiones a dos, siendo 5 el número original de variables en la matriz de datos. Por este motivo y por el hecho de que permite una representación e interpretación gráfica clara se opta por trabajar con estos dos ejes.
+En el Cuadro 5 podemos ver que la primer componente principal logra explicar un 53.32% de la variabilidad de la nube de puntos, y la segunda componente principal un 19.45%. Esto significa que con el primer plano principal logramos explicar prácticamente un 72.77% de la variabilidad total, una cantidad importante a nuestro juicio dado que reducimos la cantidad de dimensiones a dos, siendo 5 el número original de variables en la matriz de datos. Por este motivo y por el hecho de que permite una representación e interpretación gráfica clara se opta por trabajar con estos dos ejes.
 
 
 
-
+\newpage
 
 **Perspectiva de la Nube de Individuos**
 
@@ -487,15 +491,19 @@ datos$country
 
 
 
-```{r, include=TRUE, fig.cap="Proyecciones de los individuos en el primer plano principal."}
+```{r, include=TRUE, fig.cap="Proyecciones de los individuos en el primer plano principal.", out.width= "75%"}
 
-plot.PCA(acp3, choix = "ind", habillage="cos2", graph.type = "ggplot")
+plot.PCA(acp3, choix = "ind", habillage="cos2", graph.type = "ggplot") +
+  ggtitle(NULL) +
+  theme(axis.text = element_text(size=10),
+        axis.title = element_text(size=10)
+        ) + theme_gray() 
 
 ```
 
-En el gráfico anterior, podemos observar las proyecciones de los individuos en el primer plano principal, los cuales se encuentran coloreados en función del $cos^2(\theta)$, es decir, el coseno al cuadrado del ángulo que forman los vectores originales de los individuos con este plano. Un $cos^2(\theta)$ próximo a 0 significa que el ángulo $theta$ está próximo a un múltiplo de $\pi/2$, es decir, es casi ortogonal al plano, y en consecuencia el individuo no se encuentra bien explicado por el mismo. Por otro lado, un $cos^2(\theta)$ próximo a 1 signfica que el punto original es casi colineal con el plano y que por lo tanto se encuentra bien explicado, y la proyección es buena. Es deseable que ninguno de los individuos sea especialmente influyente a la hora de generar los componentes principales. Un punto resulta influyente cuando es lejano al baricentro y además el $cos^2(\theta)$ es próximo a 0, lo que puede tener como consecuencia una disminución en la inercia explicada por el subespacio considerado. A primera vista el gráfico indicaría que esta situación no se da, puesto que hay un conjunto de puntos con $cos^2(\theta)$ próximos a 0 pero se encuentran cerca del baricentro; mientras que también hay un conjunto de puntos que se encuentran más apartados del baricentro, pero con $cos^2(\theta)$ relativamente altos.
+En la Figura 2, podemos observar las proyecciones de los individuos en el primer plano principal, los cuales se encuentran coloreados en función del $cos^2(\theta)$, es decir, el coseno al cuadrado del ángulo que forman los vectores originales de los individuos con este plano. Un $cos^2(\theta)$ próximo a 0 significa que el ángulo $\theta$ está próximo a un múltiplo de $\pi/2$, es decir, es casi ortogonal al plano, y en consecuencia el individuo no se encuentra bien explicado por el mismo. Por otro lado, un $cos^2(\theta)$ próximo a 1 signfica que el vector original es casi colineal con el plano y que por lo tanto se encuentra bien explicado, y la proyección es buena. Es deseable que ninguno de los individuos sea especialmente influyente a la hora de generar los componentes principales. Un punto resulta influyente cuando es lejano al baricentro y además el $cos^2(\theta)$ es próximo a 0, lo que puede tener como consecuencia una disminución en la inercia explicada por el subespacio considerado. A primera vista la Figura 2 indicaría que esta situación no se da, puesto que hay un conjunto de puntos con $cos^2(\theta)$ próximos a 0 pero se encuentran cerca del baricentro; mientras que también hay un conjunto de puntos que se encuentran más apartados del baricentro, pero con $cos^2(\theta)$ relativamente altos.
 
-Gráficamente el primer eje tiende a dar menores valores a países de menor desarrollo económico y mayores a países de menor desarrollo económico (que se corresponden con valores mayores en el conjunto de variables que se usaron para caracterizarlos). Mientras tanto el segundo eje tiende a dar valores menores a países con mayor tasa de infección y mayores a países con valores menores de dicha variable.
+Gráficamente se puede notar que el primer eje tiende a dar menores valores a países de menor desarrollo económico y mayores a países de menor desarrollo económico (que se corresponden con valores mayores en el conjunto de variables que se usaron para caracterizarlos). Mientras tanto el segundo eje tiende a dar valores menores a países con mayor tasa de infección y mayores a países con valores menores de dicha variable.
 
 
 
@@ -515,7 +523,7 @@ mat_dist_cos2 <- cbind(`País`= datos$country   ,"cos2_plano" = mat_cos2, "norma
 
 
 ```{r, include=TRUE, results='asis'}
-mat_dist_cos2 %>% as.data.frame %>% mutate(cos2_plano = round(as.numeric(cos2_plano), 2), norma = round(as.numeric(norma), 2)) %>%  arrange(desc(norma)) %>% head(20)%>% xtable()
+mat_dist_cos2 %>% as.data.frame %>% mutate(cos2_plano = round(as.numeric(cos2_plano), 2), norma = round(as.numeric(norma), 2)) %>%  arrange(desc(norma)) %>% head(10)%>% xtable( caption= "Coseno al cuadrado con el plano principal y norma de las observaciones (10 países con mayores valores de la norma)")
 ```
 
 
@@ -523,18 +531,21 @@ mat_dist_cos2 %>% as.data.frame %>% mutate(cos2_plano = round(as.numeric(cos2_pl
 
 ```{r}
 acp4 <- PCA(datos[, vars.acp3], ind.sup = 130, quanti.sup = 6)
+
+acp5 <- PCA(datos[, vars.acp3], ind.sup = c(130,140), quanti.sup = 6)
 ```
 
 
-En la tabla anterior se presentan los valores de la suma de los cosenos al cuadrado de los ángulos que forman las observaciones con los dos primeros ejes y la distancia respecto al baricentro, ordenando las observaciones decrecientemente según esta última. Se aprecia que la observación correspondiente a San Marino (que ya se había identificado como atípica en la descripción de los datos) tiene la mayor norma, con un valor de 9,69 y una suma de cosenos al cuadrado de 0,67. Se debe tener en cuenta que podría estar afectando el análisis teniendo en cuenta que su calidad de representación en el primer plano no es muy alta y su norma es particularmente alta. Efectuar el ACP considerando la observación influyente como un dato suplementario representa una ganancia en inercia explicada en el plano del 4% aproximadamente, por lo que se toma la decisión de considerarla como una observación suplementaria en el resto del análisis para tener una mejor descripción de las variables/individuos en las dimensiones elegidas. El resto de observaciones con norma alta cuentan con valores del coseno al cuadrado superiores a 0,5 y en general mayores a 0,7 por lo que a priori no se pensarían influyentes.
+En el Cuadro 6 se presentan los valores de la suma de los cosenos al cuadrado de los ángulos que forman las observaciones con los dos primeros ejes y la distancia respecto al baricentro, ordenando las observaciones decrecientemente según esta última. Se aprecia que la observación correspondiente a San Marino (que ya se había identificado como atípica en la descripción de los datos) tiene la mayor norma, con un valor de 9,69 y una suma de cosenos al cuadrado de 0,67. Se debe tener en cuenta que podría estar afectando el análisis teniendo en cuenta que su calidad de representación en el primer plano no es muy alta y su norma es particularmente alta. Efectuar el ACP considerando la observación influyente como un dato suplementario representa una ganancia en inercia explicada en el plano del 4% aproximadamente (queda en 76,63%), por lo que se toma la decisión de considerarla como una observación suplementaria en el resto del análisis para tener una mejor descripción de las variables/individuos en las dimensiones elegidas. El resto de observaciones con norma alta cuentan con valores del coseno al cuadrado en general maores a 0,6 por lo que no se pensarían influyentes. Estados Unidos tiene un valor de este indicador de la calidad de representación de 0,47, pero incluirla como complementaria no supone un aumento de la inercia explicada considerable, por lo que no se toma como atípica influyente.
 
 
 ```{r, include=TRUE, results='asis'}
-mat_dist_cos2 %>% as.data.frame %>% mutate(cos2_plano = round(as.numeric(cos2_plano), 2), norma = round(as.numeric(norma), 2)) %>%  arrange(cos2_plano) %>%  head(20) %>% xtable()
+mat_dist_cos2 %>% as.data.frame %>% mutate(cos2_plano = round(as.numeric(cos2_plano), 2), norma = round(as.numeric(norma), 2)) %>%  arrange(cos2_plano) %>%  head(10) %>% xtable(caption= "Coseno al cuadrado del ángulo con el plano principal y norma de las observaciones (10 países con mayores valores del coseno cuadrado)")
 ```
 
-En la anterior tabla se presentan las 20 observaciones con la menor calidad de representación en el plano. Se destaca que practicamente todos son países en vías de desarrollo. No obstante, todos estos países se encuentran muy cercanos al baricentro, por lo que su influencia es limitada, simplemente es dificil distinguirlos del individuo medio. En un principio se podría pensar que es un problema de representación de este tipo de países en general, pero al identificar los valores del $cos^2(\theta)$ del resto de las observaciones en el plano podemos ver que a su vez hay países en desarrollo bien representados y países desarrollados con mala representación. 
+En el Cuadro 7 anterior se presentan las 10 observaciones con la menor calidad de representación en el plano. Se destaca que practicamente todos son países en vías de desarrollo. No obstante, todos estos países se encuentran muy cercanos al baricentro, por lo que su influencia es limitada, simplemente es dificil distinguirlos del individuo medio. En un principio se podría pensar que es un problema de representación de este tipo de países en general, pero al identificar los valores del $cos^2(\theta)$ del resto de las observaciones en el plano podemos ver que a su vez hay países en desarrollo bien representados y países desarrollados con mala representación. 
 
+\newpage
 
 **Perspectiva de la Nube de Variables**
 
@@ -543,12 +554,12 @@ plot.PCA(acp4, axes= c(1,2), choix = c("var"), graph.type = "ggplot") +
   ggtitle(NULL) +
   theme(axis.text = element_text(size=10),
         axis.title = element_text(size=10)
-        )
+        ) + theme_grey() 
 
 ```
 
 
-En el grafico anterior podemos ver representados los vectores asociados a las variables proyectadas en el primer plano principal, teniendo en cuenta que el largo del vector en relación al círculo unitario indica qué tan bien está representada esa variable en el primer plano principal y el valor sobre los ejes su correlación con la dimensión que representa cada uno. Podemos ver que en general los vectores tienen una longitud relativamente cercana al círculo, destacándose las variables *medage*, *hospitalbed*, *noinfectionrate* y *gdppercap*. A excepción de *healthexp*, notamos que todas las variables necesitan de ambos ejes para poder estar bien representadas.
+La Figura 3 permite ver representados los vectores asociados a las variables proyectadas en el primer plano principal, teniendo en cuenta que el largo del vector en relación al círculo unitario indica qué tan bien está representada esa variable en el primer plano principal y el valor sobre los ejes su correlación con la dimensión que representa cada uno. Podemos ver que en general los vectores tienen una longitud relativamente cercana al círculo, destacándose las variables *medage*, *hospitalbed*, *noinfectionrate* y *gdppercap*. A excepción de *healthexp*, notamos que todas las variables necesitan de ambos ejes para poder estar bien representadas.
 
 Por otro lado, vemos que todas las variables apuntan en la misma dirección del primer componente principal a excepción de *noinfectionrate* que apunta en sentido contrario. Esto quiere decir que un valor mayor en *noinfectionrate* se expresa con una disminución del valor de la primera componente, mientras que un valor mayor en cualquiera de las demás variables se expresa con un aumento en dicha componente. Esto implica que aquellos países con menores tasas de infección van a tender ser a su vez los que tengan menores valores de las demás variables. La segunda componente explica principalmente a *noinfectionrate* y *hospitalbed* y observando las direcciones de las proyecciones de las variables un aumento en cualquiera de las dos variables se expresa en un aumento en el valor de esta componente.  
 
@@ -564,7 +575,7 @@ acp4$var$coord %>% round(2) %>% as.data.frame() %>% select(Dim.1, Dim.2) %>%
 
 ```
 
-En el cuadro anterior se puede ver que las variables *medage* y *gdppercap* tienen una correlación alta (entre 0,8 y 0,9) con la primera componente principal, lo cual ya se identificaba en el gráfico anterior dado que los vectores tienen una longitud considerable y apuntan en la dirección de esta componente. Sucede lo contrario con *noinfectionrate*, dado que tiene una correlación negativa con la primer componente principal lo cual se identificaba en la dirección del vector.
+En el Cuadro 8 se puede ver que las variables *medage* y *gdppercap* tienen una correlación alta (entre 0,8 y 0,9) con la primera componente principal, lo cual ya se identificaba en el gráfico anterior dado que los vectores tienen una longitud considerable y apuntan en la dirección de esta componente. Sucede lo contrario con *noinfectionrate*, dado que tiene una correlación negativa con la primer componente principal lo cual se identificaba en la dirección del vector.
 
 Las variables *medage* y *gdppercap* tienen correlaciones similares con la componente 2, aunque una con signo positivo y la otra con signo negativo. Esto es fácil de ver en el gráfico, dado que los dos vectores tienen longitud similares y ángulos opuestos respecto a este eje. Las variables *hospitalbed* y *noinfectionrate* tienen correlaciones similares en magnitud con cada uno de los ejes, a excepción del signo de la correlación con el primer eje (en el caso de *noinfectionrate* es negativa).   
 
@@ -575,7 +586,7 @@ coord.ind.1 <- round(cor(datos$CESI_INDEX[-130], acp4$ind$coord[,1]), 2)
 coord.ind.2 <- round(cor(datos$CESI_INDEX[-130], acp4$ind$coord[,2]), 2)
 
 ```
-Considerando ahora la variable *CESI_INDEX* incluida como suplementaria, las correlaciones del índice de estímulo económico con los dos ejes principales, son `r coord.ind.1` y `r coord.ind.2`, con el primer y segundo eje respectivamente. Esto significa que dicha variable se ve más representada por el eje que a su vez representa mejor a las variables *medage*, *gdppercap* y *healthexp*. Aún así debe ser tenido en cuenta que la correlación no resulta muy alta con dicho eje, lo que compromete la interpretación de la variable en el subespacio considerado.  
+Considerando ahora la variable *CESI_INDEX* incluida como suplementaria, las correlaciones del índice de estímulo económico con los dos ejes principales, son `r coord.ind.1` y `r coord.ind.2`, con el primer y segundo eje respectivamente. Esto significa que dicha variable se ve más relacionada con el eje que a su vez representa mejor a las variables *medage*, *gdppercap* y *healthexp*. Aún así debe ser tenido en cuenta que la correlación no resulta muy alta con dicho eje, lo que compromete la interpretación de la variable en el subespacio considerado.  
 
 
 ```{r, include=TRUE, results='asis'}
@@ -590,40 +601,37 @@ data.frame("Variable"=names(cors.ind.org), "Correlación"=cors.ind.org) %>%
 
 ```
 
-Las correlaciones de *CESI_INDEX* más altas con las variables originales son de `r cors.ind.org["gdppercap"]` con *gdppercap* y `r cors.ind.org["medage"]` con *medage*. Esto puede ser interpretado como que los países que tienen un mayor desarrollo tuvieron las capacidad de realizar un mayor gasto de estímulo económico, si bien esta apreciación debe ser tomada con cautela debido a que las correlaciones no son demasiado altas.
+Las correlaciones de *CESI_INDEX* más altas con las variables originales son de `r cors.ind.org["gdppercap"]` con *gdppercap* y `r cors.ind.org["medage"]` con *medage* (Cuadro 9). Esto puede ser interpretado como que los países que tienen un mayor desarrollo tuvieron la capacidad de realizar un mayor gasto de estímulo económico, si bien esta apreciación debe ser tomada con cautela debido a que las correlaciones no son demasiado altas.
 
 
-Como resultado a destacar de este primer análisis, se llegó a que el segundo eje es el que caracteriza principalmente a las variable *noinfectionrate* y *hospitalbed*; mientras que el primer eje caracteriza sobre todo a las demás variables, y también a las anteriormente mencionadas. Además, observando cómo se comporta la variable *CESI_INDEX* al proyectarla sobre el primer plano principal, vemos que se correlaciona principalmente con el eje que describe a las variables de características del país.
+Como resultado a destacar de este análisis, se llegó a que el segundo eje es el que caracteriza principalmente a las variable *noinfectionrate* y *hospitalbed*; mientras que el primer eje caracteriza sobre todo a las demás variables, y también a las anteriormente mencionadas. Además, observando cómo se comporta la variable *CESI_INDEX* al proyectarla sobre el primer plano principal, vemos que se correlaciona principalmente con el eje que describe a las variables de características del país.
 
 
 # Conclusiones
 
-Se logró recrear con éxito el Índice de Éstimulo Económico de los países generado en *(Elgin, Basbug y Yalaman, 2020)*, encontrándose únicamente una diferencia de estandarización en los factores de las variables. Al proceder con el objetivo de realizar un ACP considerando el índice y un conjunto de las variables de los datos se consideró pertinente íncluir el índice como variable suplementaria en lugar de considerarla dentro de las variables activas, debido a su pobre representación en los primeros ejes. Con esta configuración de los datos se llega a que los primeros dos ejes explican un 72,77% de la inercia total, por lo que se optó por trabajar en el análisis con este plano. Si bien todas las variables necesitan de ambas componentes consideradas para ser explicadas, la primera explica más el conjunto de las variables que expresan características económicas, del sistema de salud y demográficas y la segunda la tasa de no infección. La proyección del índice de estímulo se comporta como el primer grupo de variables, aunque su correlación con la primer componente no resulta muy elevada en comparación con las variables que si formaron parte del ACP. En la representación de las variables en el primer plano principal se puede observar que la dirección de la tasa de no infección es opuesta a la de las variables socioeconómicas, incluyendo el índice de estímulo económico. Es decir, los países con una mayor población infectada fueron aquellos con un mayor PBI per cápita, una mayor edad mediana, un mayor número de camas de hospital, y que tomaron un mayor número de medidas económicas. La conclusión de esto es, a grandes rasgos, que los países con un mayor nivel de desarrollo socioeconómico fueron aquellos que presentaron altas tasas de infección. Este resultado, que puede resultar poco intuitivo, en realidad se debe a que los datos utilizados son al 31 de marzo de 2020, cuando muchos de los países desarrollados se enfrentaban a una ola de infecciones. En consecuencia, vemos la dirección similar del índice de estímulo económico con las variables sociodemográfica: países más desarrollados, que fueron de los primeros en infectarse, fueron los que se vieron forzados a tomar medidas de estímulo económico para intentar enfrentarse a los estragos de la pandemia. Analizando la nube de individuos, se encontraron países que se sitúan lejanos al baricentro y de ellos San Marino era el más lejano y a su vez estaba peor representado. 
+Se logró recrear con éxito el Índice de Éstimulo Económico de los países generado en el artículo de referencia *(Elgin, Basbug y Yalaman, 2020)*, encontrándose únicamente una diferencia de estandarización en los factores de las variables. Al proceder con el objetivo de realizar un ACP considerando el índice y un conjunto de las variables de los datos se consideró pertinente íncluir el índice como variable suplementaria en lugar de considerarla dentro de las variables activas, debido a su pobre representación en los primeros ejes. Al analizar la nube de individuos proyectada se excluyó la observación correspondiente a San Marino al ser atípica y resultar influyente, lográndose así una ganancia del 4% de inercia explicada en el primer plano aproximadamente. Con el plano principal se logró inicialmente una inercia explicada del 72.77% por lo que se optó por trabajar en el análisis con las primeras dos dimensiones, y posteriormente al excluir a San Marino de las observaciones activas se llega a que los primeros dos ejes explican un 76,63% de la inercia total, por lo que se conserva esta configuración del ACP. Si bien todas las variables necesitan de ambas componentes consideradas para ser explicadas, la primera explica más el conjunto de las variables que expresan características económicas, del sistema de salud y demográficas; la segunda la tasa de no infección y la cantidad de camas de hospital cada 1000 habitantes. La proyección del índice de estímulo se comporta como el primer grupo de variables, aunque su correlación con la primer componente no resulta muy elevada en comparación con las variables que sí formaron parte del ACP. En la representación de las variables en el primer plano principal se puede observar que la dirección de la tasa de no infección es opuesta a la de las variables socioeconómicas, incluyendo el índice de estímulo económico. Es decir, los países con una mayor población infectada fueron aquellos que cuentan con un mayor PBI per cápita, una mayor edad mediana, un mayor número de camas de hospital, y que tomaron un mayor número de medidas económicas. La conclusión de esto es, a grandes rasgos, que los países con un mayor nivel de desarrollo socioeconómico fueron aquellos que presentaron altas tasas de infección. Este resultado, que puede resultar poco intuitivo, en realidad se debe a que los datos utilizados son al 31 de marzo de 2020, cuando muchos de los países desarrollados se enfrentaban a una ola de infecciones. En consecuencia, vemos la dirección similar del índice de estímulo económico con las variables sociodemográfica: países más desarrollados, que fueron de los primeros en infectarse, tendieron a ser los que se vieron forzados a tomar medidas de estímulo económico para intentar enfrentarse a los estragos de la pandemia. 
 
-
-
-
-
-
-
+\newpage
 
 # Bibliografía
 
+* Jorge Blanco. (2006). *Introducción al Análisis Multivariado*. Montevideo: IESTA.
+
+* C. Elgin, G. Basbug y A. Salaman. (2020). *Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index*. CEPR Press.
+
+* Marco Scavino. (2020). Análisis Multivariado I - Análisis Factorial de una nube de puntos en un espacio vectorial euclidiano. Montevideo: IESTA.
+
+
+\newpage
 
 # Anexos
 
-## Anexo 1: gráficos para el análisis de observaciones atípicas
+## Anexo 1: Gráficos para el análisis de observaciones atípicas
 
 
-
-
-
-
-
-
-
-
-
+```{r, include=TRUE, fig.cap="Gráfico de caja de medidas fiscales."}
+boxplot.fiscal + ylab("% del PBI")
+```
 
 
 ```{r, include=TRUE, fig.cap="Gráfico de caja del recorte de la tasa de interés respecto a la de febrero de 2020."}
@@ -661,31 +669,78 @@ boxplot.hospitalbed + ylab("Camas de hospital por cada 1000 personas")
 
 ## Anexo 2: Inclusión de la variable densidad poblacional
 
-```{r, include=TRUE, fig.cap="Proyecciones de las variables en el primer plano principal utilizando denspob."}
+```{r, include=FALSE, fig.cap="Proyecciones de las variables en el primer plano principal utilizando denspob."}
 datos <- datos %>% left_join(datospob, by="country")
 
 vars.acp <- c("medage", "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX2", "denspob")
 
-acp <- PCA(datos[,vars.acp], ncp=7)
+acp <- PCA(datos[,vars.acp], ncp=7, graph = FALSE)
 
 #summary(acp)
 ```
+
+
+```{r, include=TRUE, fig.cap="Proyecciones de los individuos en el primer plano principal utilizando denspob.", out.width="75%"}
+
+plot.PCA(acp, choix = "ind", habillage="cos2", graph.type = "ggplot") +
+  ggtitle(NULL) +
+  theme(axis.text = element_text(size=10),
+        axis.title = element_text(size=10)
+        ) + theme_gray() 
+
+```
+
+```{r, include=TRUE, fig.cap="Proyecciones de las variables en el primer plano principal utilizando denspob.", out.width="75%"}
+
+plot.PCA(acp, choix = "var",  graph.type = "ggplot") +
+  ggtitle(NULL) +
+  theme(axis.text = element_text(size=10),
+        axis.title = element_text(size=10)
+        ) + theme_gray() 
+
+```
+
+
 
 
 ```{r, include=TRUE, results='asis'}
 acp$var$coord[,c(1,2)] %>% as.data.frame() %>% xtable("Coordenadas de las variables en los ejes del primer plano principal.")
 ```
 
-Podemos observar en el gráfico anterior que al realizar un Análisis de Componentes Principales incluyendo la variable densidad poblacional, solo logramos explicar con el primer plano principal un 50.03% de la inercia total de la nube de puntos, bastante inferior que el 72.77% de inercia explicada por el plano principal del ACP que finalmente optamos por mantener.
+Podemos observar en las Figuras 11 y 12 que al realizar un Análisis de Componentes Principales incluyendo la variable densidad poblacional, solo logramos explicar con el primer plano principal un 50.03% de la inercia total de la nube de puntos, bastante inferior que el 72.77% de inercia explicada por el plano principal del ACP que finalmente optamos por mantener.
 
-Vemos que el segundo eje explica principalmente la variable *denspob*, teniendo con la misma una correlación de 0.847, mientras que el resto de las variables tienen una correlación baja con ese eje,siendo -0.340 la segunda mayor en términos absolutos. Por otro lado, el primer eje es en el plano principal el que explica en mayor medida a todas las demás variables, incluyendo a *noinfectionrate*, con una correlación baja en magnitud de tan solo -0.479. 
+En la Figura 12 Vemos que el segundo eje explica principalmente la variable *denspob*, teniendo con la misma una correlación de 0.847, mientras que el resto de las variables tienen una correlación baja con ese eje,siendo -0.340 la segunda mayor en términos absolutos. Por otro lado, el primer eje es en el plano principal el que explica en mayor medida a todas las demás variables, incluyendo a *noinfectionrate*, con una correlación baja en magnitud de tan solo -0.479. 
 
 La conclusión que obtenemos de esto es que el segundo eje se incluye principalmente para explicar a la variable *denspob*, que fue incluída por nuestra parte porque creímos que podía resultar valiosa en el análisis al presuntamente relacionarse con la tasa de infecciónn, lo cual no fue así. Más aún, su inclusión perjudica el resultado del ACP dado que la inercia explicada por el primer plano principal resultante de explicar a esta variable es pobre, y no permite un segundo eje que explique en mayor medida otras variables como *noinfectionrate*, resultado al que llegamos en el cuerpo del texto. Por lo tanto, optamos por finalmente no incluir esta variable en la base. 
 
 
-```{r}
-#ANEXO vars.acp2 <- c("medage", "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX2")
+```{r, include=FALSE}
+vars.acp2 <- c("medage", "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX2")
 
-#ANEXO acp2 <- PCA(datos[,vars.acp2], ncp=6)
+acp2 <- PCA(datos[,vars.acp2], ncp=6)
 ```
 
+
+```{r, include=TRUE, fig.cap="Proyecciones de las variables en el primer plano principal utilizando Índice de Estímulo Económico como variable activa.", out.width="75%"}
+
+plot.PCA(acp2, choix = "var", graph.type = "ggplot") +
+  ggtitle(NULL) +
+  theme(axis.text = element_text(size=10),
+        axis.title = element_text(size=10)
+        ) + theme_gray() 
+
+```
+
+Como se mencionó en el cuerpo del texto, en primera instancia se incluyó a *CESI_INDEX* como variable activa para construir los ejes, opción que fue descartada debido a su pobre representación en los mismo y a su comportamiento similar al resto de las variables representadas principalmente por la primera componente (Figura 13). En lugar de esto se la incluyó como variable suplementaria.
+
+
+## Anexo 3: Gráfico de las proyecciones de los individuos en el plano, con San Marino como observación complementaria
+
+```{r, include=TRUE, fig.cap="Proyecciones de los individuos en el primer plano principal, con la observación San Marino como suplementaria.", out.width="75%"}
+
+plot.PCA(acp4, choix = "ind", graph.type = "ggplot") + ggtitle(NULL) +
+  theme(axis.text = element_text(size=10),
+        axis.title = element_text(size=10)
+        ) + theme_gray() 
+
+```
