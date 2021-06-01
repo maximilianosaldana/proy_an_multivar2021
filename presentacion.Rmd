@@ -1,8 +1,11 @@
 ---
-title: "presentación"
+title: "Aplicación del Análisis de Componentes Principales a Variables Económicas y Vinculadas al COVID-19"
+subtitle: "Análisis Multivariado"
 author: "Emanuelle Marsella, Maximiliano Saldaña"
-date: "5/31/2021"
+date: "Junio 2021"
 output: beamer_presentation
+theme: "Madrid" 
+colortheme: "beaver" 
 ---
 
 ```{r setup, include=FALSE}
@@ -10,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-## Introducción
+# Introducción
 
 * Aplicamos ACP a una base de datos sobre variables económicas y sanitarias en el contexto del COVID-19. 
 
@@ -20,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 * Datos al 31 de marzo de 2020, fuente: FMI principalmente.
 
-## Variables
+# Variables
 
 * Se cuenta con datos para 166 observaciones (países) y 14 variables. 
 
@@ -38,7 +41,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
   * *otherbop*: variable indicadora que indica si en el país se tomaron otras medidas de políticas de balanza de pago.
 
-## Variables empleadas en el ACP posterior:
+# Variables empleadas en el ACP posterior:
 
   * *medage*: edad mediana en el país
 
@@ -53,7 +56,7 @@ knitr::opts_chunk$set(echo = TRUE)
   * *CESI_INDEX*: índice de estímulo económico (construido por los autores utilizando análisis de componentes principles)
 
 
-## Variables no consideradas en el análisis final
+# Variables no consideradas en el análisis final
 
 * *totalcases*: cantidad de casos totales de COVID-19
 
@@ -62,7 +65,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 * *denspob*: densidad poblacional del país, medida como cantidad de personas por kilómetro cuadrado de área terrestre.
 
-## Datos Faltantes
+# Datos Faltantes
 
 \begin{table}[H]
 \centering
@@ -82,48 +85,39 @@ knitr::opts_chunk$set(echo = TRUE)
 \caption{Tabla de cantidad de observaciones faltables para las variables.} 
 \end{table}
 
-## Correlaciones entre las variables
+# Correlaciones entre las variables
 
 * Se destacan por ser altas las correlaciones entre: 
   * *gdppercap* y *fiscal*: 0.6 
   * *medage* y *gdppercap*:  0.6 
   * *medage* y *hospitalbed*: 0.71. 
   
-* Al realizar el análisis de componentes principales se buscará obtener un nuevo conjunto de variables incorrelacionadas entre si y posiblemente reducir su número con respecto al conjunto original.
-
-## Principales resultados del análisis descriptivo
+# Principales resultados del análisis descriptivo
 
 * Argelia toma el valor más alto de *bopgdp* (6%, el país que le sigue es Croacia con 2.94%, para la mayoría de los países es 0%) y el más bajo de *fiscal* (-7.2% ) 
 
-* 21 observaciones con valores altos de *ratecut*, entre estas observaciones se encuentran Reino Unido, Noruega, Croacia, Nueva Zelanda y Estados Unidos, siendo este último el único país que tuvo una reducción del 100 de su tasa de interés. La mediana de *ratecut* es 0%, 95 países toman este valor.
+* 21 observaciones con valores altos de *ratecut*, destacándose particularmente Estados Unidos, que tuvo una reducción del 100% de su tasa de interés. La mediana de *ratecut* es 0%, 95 países toman este valor.
 
-* *macrofin* cuenta con un conjunto de observaciones atípicas, destacándose en particular dos de ellas que se alejan incluso más que el resto, tomando valores próximos a 25 (Baréin y Oman), siendo que las siguientes observaciones más altas están en torno a 15. 102 países toman el valor 0 de esta variable.
+* En *macrofin* 102 países toman el valor 0 de esta variable.
 
-* En *gdppercap* hay bastante dispersión. Hay un conjunto de países con valores atípicamente altos, siendo la 101 observación que toma el mayor valor es Luxemburgo, con un PBI per cápita de 110742.
-
-## Principales resultados del análisis descriptivo
-
-* *medage* presenta gran simetría, una media de  31.52  y no cuenta con atípicos
+* En *gdppercap* la observación que toma el mayor valor es Luxemburgo, con un PBI per cápita de 110742 USD.
 
 * En *healthexp*, se destaca una la observación correspondiente a Estados Unidos con un gasto en salud del 17.07% del PBI, casi el doble que el país que le sigue.
 
-*  Japón es el país que toma el mayor valor de *hospitalbed* con 13.4. 
-
-
-## Boxplot de *infectionrate*
+# Boxplot de *infectionrate*
 
 
 ![](boxinfrate.png)
 
-## Principales resultados del análisis descriptivo
+# Principales resultados del análisis descriptivo
 
 * *infectionrate* cuenta una gran acumulación de tasas de infección en torno a valores próximos a 0, y un 75% de las tasas son menores a 0,025% (que representa un caso por cada 4000 habitantes aproximadamente). 
 
 * Se destaca especialmente San Marino, con una tasa de infección del 0,68% que representa un caso por cada 150 habitantes aproximadamente.  
 
-## Construcción del Índice de Estímulo Económico 
+# Construcción del Índice de Estímulo Económico 
 
-* Se usa FactomineR para recrear el Índice que los autores del artículo de referencia emplearon.
+* Se usa *FactomineR* para recrear el Índice que los autores del artículo de referencia emplearon.
 
 * Se pudo comprobar que el Índice de Estímulo Económico de los países que se obtuvo realizando el ACP y definiéndolo como los valores de la primera componente principal es equivalente al obtenido por los autores. Esto nos lleva a pensar que el procedimiento de imputación de valores faltantes fue el mismo, la imputación de la media de las variables.
 
@@ -132,7 +126,7 @@ knitr::opts_chunk$set(echo = TRUE)
 * El porcentaje explicado explicado por la primera componente es bajo pero acorde al uso que le dan los autores.
 
 
-## Coordenadas de las variables en el primer eje
+# Coordenadas de las variables en el primer eje
 
 \begin{table}[H]
 \centering
@@ -151,7 +145,7 @@ fiscal & 0.74 \\
 \caption{Correlación de cada variable con el índice de estímulo económico.} 
 \end{table}
 
-## ACP considerando el Índice de Estímulo Económico
+# ACP considerando el Índice de Estímulo Económico
 
 * Como primer paso, creamos a partir de *infectionrate* la variable *noinfectionrate*, para indicar la proporción de habitantes del país no infectados en lugar de los infectados.
 
@@ -159,9 +153,7 @@ fiscal & 0.74 \\
 
 * La variable *CESI_INDEX*, el índice de estímulo económico obtenido a partir del ACP es utilizado como variable suplementaria en el análisis, y tampoco se incluyen las variables empleadas para construirlo al ser la intención utilizar el índice como su representante. 
 
-* También es excluida la variable que indica la cantidad de casos totales de COVID-19 (*totalcases*)
-
-## ACP considerando Índice de Estímulo Económico
+# ACP considerando Índice de Estímulo Económico
 
 \begin{table}[H]
 \centering
@@ -179,20 +171,20 @@ comp 1 & 2.67 & 53.32 & 53.32 \\
 \caption{Valores propios asociados a las componentes principales y porcentajes de inercia de cada uno.} 
 \end{table}
 
-## Perspectiva de la nube de individuos
+# Perspectiva de la nube de individuos
 
 ![Proyecciones de los individuos en el primer plano principal.](acpinds.png)
 
-## Perspectiva de la nube de individuos
+# Perspectiva de la nube de individuos
 
-* Es deseable que ninguno de los individuos sea especialmente influyente a la hora de generar los componentes principales. A primera vista la Figura 2 indicaría que esta situación no se da.
+* Es deseable que ninguno de los individuos sea especialmente influyente a la hora de generar los componentes principales. A primera vista la figura anterior indicaría que esta situación no se da.
 
-* En el primer eje tiende a dar mayores valores a países de mayor desarrollo económico (que se corresponden con valores mayores en el conjunto de variables que se usaron para caracterizarlos). 
+* El primer eje tiende a dar mayores valores a países de mayor desarrollo económico (que se corresponden con valores mayores en el conjunto de variables que se usaron para caracterizarlos). 
 
 * Mientras tanto el segundo eje tiende a dar valores mayores a países con menor tasa de infección.
 
 
-## Perspectiva de la nube de individuos
+# Perspectiva de la nube de individuos
 
 \begin{table}[H]
 \centering
@@ -217,7 +209,7 @@ comp 1 & 2.67 & 53.32 & 53.32 \\
 
 San Marino es una observación influyente, al considerarla como complementaria se gana un 4% de inercia total explicada. Estados Unidos tiene un bajo $cos^2(\theta)$ pero no es influyente.
 
-## Perspectiva de la nube de individuos
+# Perspectiva de la nube de individuos
 
 \begin{table}[H]
 \centering
@@ -241,3 +233,79 @@ San Marino es una observación influyente, al considerarla como complementaria s
 \end{table}
 
 Se destaca que practicamente todos son países en vías de desarrollo. No obstante, todos estos países se encuentran muy cercanos al baricentro, por lo que su influencia es limitada.
+
+# Perspectiva de la Nube de Variables
+
+![Proyecciones de las variables en el primer plano principal.](acpvars.png)
+
+
+# Perspectiva de la Nube de Variables
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rrr}
+  \hline
+ & Dim.1 & Dim.2 \\ 
+  \hline
+medage & 0.87 & 0.31 \\ 
+  gdppercap & 0.82 & -0.37 \\ 
+  healthexp & 0.69 & 0.03 \\ 
+  hospitalbed & 0.69 & 0.62 \\ 
+  noinfectionrate & -0.69 & 0.60 \\ 
+   \hline
+\end{tabular}
+\caption{Coordenadas de las variables originales en el primer plano principal} 
+\end{table}
+
+# Perspectiva de la Nube de Variables
+
+* Las correlaciones del índice de estímulo económico con los dos ejes principales, son 0.53 y -0.14, con el primer y segundo eje respectivamente. Esto significa que dicha variable se ve más relacionada con el eje que a su vez representa mejor a las variables *medage*, *gdppercap* y *healthexp*. 
+
+* Aún así debe ser tenido en cuenta que la correlación no resulta muy alta con el primer eje, lo que compromete la interpretación de la variable en el subespacio considerado.  
+
+# Perspectiva de la Nube de Variables
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lr}
+  \hline
+Variable & Correlación \\ 
+  \hline
+medage & 0.49 \\ 
+  gdppercap & 0.58 \\ 
+  healthexp & 0.31 \\ 
+  hospitalbed & 0.22 \\ 
+  noinfectionrate & -0.22 \\ 
+   \hline
+\end{tabular}
+\caption{Correlación del índice de estímulo económico construido con las variables originales de la base.} 
+\end{table}
+
+# Conclusiones
+
+* Se logró recrear con éxito el Índice de Éstimulo Económico.  
+
+* Inicialmente en el ACP posterior  se logró una inercia explicada del 72.77% con el plano principal.
+
+* San Marino resultó ser un país influyente en el análisis y al excluirlo de las observaciones activas la inercia total explicada por los primeros dos ejes aumentó a 76.63%.
+
+* Si bien todas las variables necesitan de ambas componentes consideradas para ser explicadas, la primera explica más el conjunto de las variables que expresan características económicas, del sistema de salud y demográficas; la segunda la tasa de no infección y la cantidad de camas de hospital cada 1000 habitantes. 
+
+* La proyección del índice de estímulo se comporta como el primer grupo de variables, aunque su correlación con la primer componente no resulta muy elevada en comparación con las variables que sí formaron parte del ACP. 
+
+# Conclusiones
+
+* De acuerdo a las direcciones y las correlaciones de las variables proyectadas en el primer plano principal, donde la tasa de no infección es opuesta a las variables socioeconómicas, los países con un mayor nivel de desarrollo socioeconómico fueron aquellos que presentaron altas tasas de infección. 
+
+* Esto representa la situación al 31 de marzo de 2020, cuando muchos de los países desarrollados se enfrentaban a una ola de infecciones. 
+
+* En consecuencia, vemos la dirección similar del índice de estímulo económico con las variables sociodemográfica: países más desarrollados, que fueron de los primeros en infectarse, tendieron a ser los que se vieron forzados a tomar medidas de estímulo económico para intentar enfrentarse a los estragos de la pandemia. 
+
+# Bibliografía
+
+* Jorge Blanco. (2006). *Introducción al Análisis Multivariado*. Montevideo: IESTA.
+
+* C. Elgin, G. Basbug y A. Salaman. (2020). *Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index*. CEPR Press.
+
+* Marco Scavino. (2020). *Análisis Multivariado I - Análisis Factorial de una nube de puntos en un espacio vectorial euclidiano*. Montevideo: IESTA.
+

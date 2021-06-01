@@ -165,9 +165,9 @@ Se cuenta con datos para 166 observaciones (países) y 14 variables. Estas últi
 cbind("Variable"=names(datos), "Datos faltantes"=NAcheck <- as.numeric(apply(is.na(datos), 2, sum))) %>% 
   as.data.frame %>% 
   filter(`Datos faltantes`!=0)  %>% 
-  t() %>%
+#  t() %>%
     xtable(caption="Tabla de cantidad de observaciones faltables para las variables.") %>% 
-  print.xtable(include.colnames = FALSE)
+  print.xtable(include.colnames = TRUE)
 
 datos <- datos %>% select(-c(stringency))
 
