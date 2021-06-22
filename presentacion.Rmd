@@ -51,9 +51,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
   * *healthexp*: gastos en salud, expresados como porcentaje del PBI
 
-  * *gdppercap*: PBI per cápita del país en dólares a niveles de 2010
+  * *gdppercap*: PBI per cápita del país en dólares a niveles de 2020
 
-  * *CESI_INDEX*: índice de estímulo económico (construido por los autores utilizando análisis de componentes principles)
+  * *CESI_INDEX*: índice de estímulo económico (construido por los autores utilizando análisis de componentes principales)
 
 
 # Variables no consideradas en el análisis final
@@ -289,7 +289,7 @@ medage & 0.49 \\
 
 * San Marino resultó ser un país influyente en el análisis y al excluirlo de las observaciones activas la inercia total explicada por los primeros dos ejes aumentó a 76.63%.
 
-* Si bien todas las variables necesitan de ambas componentes consideradas para ser explicadas, la primera explica más el conjunto de las variables que expresan características económicas, del sistema de salud y demográficas; la segunda la tasa de no infección y la cantidad de camas de hospital cada 1000 habitantes. 
+* Si bien en general las variables necesitan de ambas componentes consideradas para ser explicadas, la primera explica más el conjunto de las variables que expresan características económicas, del sistema de salud y demográficas; la segunda la tasa de no infección y la cantidad de camas de hospital cada 1000 habitantes. 
 
 * La proyección del índice de estímulo se comporta como el primer grupo de variables, aunque su correlación con la primer componente no resulta muy elevada en comparación con las variables que sí formaron parte del ACP. 
 

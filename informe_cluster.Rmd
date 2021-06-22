@@ -1,0 +1,98 @@
+---
+title: "Aplicación del Análisis de Cluster a Variables Económicas y Vinculadas al COVID-19"
+subtitle: "Análisis Multivariado, Proyecto de Fin de Curso"
+author: "Emanuelle Marsella, Maximiliano Saldaña"
+date: "Julio, 2020"
+output: pdf_document
+toc: no
+pandoc_args: [
+      "--number-sections",
+      "--number-offset=1"
+    ]
+
+header-includes:
+  - \usepackage{float}
+  - \usepackage[spanish]{babel}
+
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE,
+                      include=FALSE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.pos = 'H',
+                      fig.align = 'center',
+                      out.extra = '',
+                      fig.hold = 'hold',
+                      out.width = "50%"
+                      )
+options(xtable.comment=FALSE,
+        xtable.table.placement="H")
+```
+
+
+
+
+
+\newpage
+
+
+```{r, include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(xtable)
+library(FactoMineR)
+library(forcats)
+library(gridExtra)
+
+```
+
+
+
+
+```{r lectura de datos, echo=FALSE}
+#Lectura de los datos
+
+datos <- read.table("corona.txt", sep = "\t", header = TRUE)
+
+datos <- datos  %>% rename(healthexp= "currenthealthexpenditureofgdpshx", gdppercap = "gdppercapitaconstant2010us" )
+```
+
+
+
+```{r densidad poblacional}
+datospob <- read_xls("datospob.xls") %>% 
+  select(`Country Name`, `2018`) %>%
+  rename(country = `Country Name`, denspob = `2018` )
+
+
+faltan <- datos$country %in% datos$country
+datos$country[which(faltan == FALSE)]
+
+
+datospob$country <-  recode(datospob$country,
+                    `Bahamas, The` = "Bahamas",
+                    `Brunei Darussalam` = "Brunei",
+                    `Congo, Rep.` = "Congo, R",
+                    `Cote d'Ivoire` = "Cote Ivory",
+                    `Congo, Dem. Rep.` = "Democratic Republic of Congo",
+                    `Egypt, Arab Rep.` = "Egypt",
+                    `Gambia, The` = "Gambia",
+                    `Guinea-Bissau` = "Guinea Bissau",
+                    `Hong Kong SAR, China` = "Hong Kong",
+                    `Iran, Islamic Rep.` = "Iran",
+                    `Kyrgyz Republic` = "Kyrgyzstan",
+                    `Lao PDR` = "Laos",
+                    `Russian Federation` = "Russia",
+                    `Korea, Rep.` = "South Korea",
+                    `Tajikistan` = "Taijikistan",
+                    `Yemen, Rep.` = "Yemen"
+                    )
+
+#sum(datos$country %in% datospob$country)-length(datos$country %in% datospob$country) control
+
+
+```
