@@ -47,6 +47,12 @@ library(xtable)
 library(FactoMineR)
 library(forcats)
 library(gridExtra)
+library(factoextra)
+library(ggdendro)
+library(NbClust)
+library(cluster)
+
+source("indicadores.R")
 
 ```
 
@@ -61,38 +67,87 @@ datos <- read.table("corona.txt", sep = "\t", header = TRUE)
 datos <- datos  %>% rename(healthexp= "currenthealthexpenditureofgdpshx", gdppercap = "gdppercapitaconstant2010us" )
 ```
 
+```{r imputacion, echo=FALSE}
 
+dim(datos)
+(NAcheck <- as.numeric(apply(is.na(datos), 2, sum)))
 
-```{r densidad poblacional}
-datospob <- read_xls("datospob.xls") %>% 
-  select(`Country Name`, `2018`) %>%
-  rename(country = `Country Name`, denspob = `2018` )
+#Hay NAs en varias variables, una opcion de imputacion, en las cuantitativas imputar la media y en las cualitativas el modo. Stringency tiene 93 NAs (evaluar sacarla)
 
+#vector de valores medios
 
-faltan <- datos$country %in% datos$country
-datos$country[which(faltan == FALSE)]
+vals_meds <- rep(0, dim(datos)[2])
 
+for(j in 1:dim(datos)[2]){
+  
+  vals_meds[j] <- mean(datos[,j], na.rm = TRUE)
+}
 
-datospob$country <-  recode(datospob$country,
-                    `Bahamas, The` = "Bahamas",
-                    `Brunei Darussalam` = "Brunei",
-                    `Congo, Rep.` = "Congo, R",
-                    `Cote d'Ivoire` = "Cote Ivory",
-                    `Congo, Dem. Rep.` = "Democratic Republic of Congo",
-                    `Egypt, Arab Rep.` = "Egypt",
-                    `Gambia, The` = "Gambia",
-                    `Guinea-Bissau` = "Guinea Bissau",
-                    `Hong Kong SAR, China` = "Hong Kong",
-                    `Iran, Islamic Rep.` = "Iran",
-                    `Kyrgyz Republic` = "Kyrgyzstan",
-                    `Lao PDR` = "Laos",
-                    `Russian Federation` = "Russia",
-                    `Korea, Rep.` = "South Korea",
-                    `Tajikistan` = "Taijikistan",
-                    `Yemen, Rep.` = "Yemen"
-                    )
+#imputacion de vals medios en NAs
 
-#sum(datos$country %in% datospob$country)-length(datos$country %in% datospob$country) control
-
+for(j in 1:dim(datos)[2]){
+  if(NAcheck[j]>0){
+    
+    for(i in 1:dim(datos)[1]){
+      if(is.na(datos[i,j])==TRUE){
+       datos[i,j] <- vals_meds[j] 
+    }
+    }
+  }
+}
 
 ```
+
+```{r}
+
+vars.acp3 <- c("medage", "gdppercap", "healthexp", "hospitalbed", "infectionrate", "CESI_INDEX")
+acp4 <- PCA(datos[, vars.acp3], ind.sup = 130, quanti.sup = 6)
+
+acp5 <- PCA(datos[, vars.acp3], ind.sup = c(130,140), quanti.sup = 6)
+```
+
+# Resumen ejecutivo
+
+# Introducción
+
+# Análisis de Cluster
+
++ Podemos plantear por un lado un análisis de cluster con las vars originales y otro con las obtenidas mediante el ACP y luego comparar.
+
+## Análisis de cluster 
+
+### Análisis de cluster jerárquico
+
+Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos. En este método se trabaja con particiones encajadas del conjunto de observaciones, pudiendo ser el método de carácter agregativo o divisivo. En el primer caso se parte de un conjunto de I clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las I observaciones. Por otra parte, en el caso de los clusters jerárquicos divisivos se parte de un grupo de I observaciones y se llega a I grupos donde cada uno está conformado por una observación. Esta última estrategia de agrupación puede resultar mejor para casos con gran número de observaciones, en nuestro caso esto no resulta problemático por lo que podríamos seguir con la estrategia divisiva. En ambos métodos se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, para esto se recurre a definir distancias, que para ser calculadas se tomaran en cuenta los valores de las variables con las que se cuentan para las observaciones.
+
+```{r cluster1}
+vars_cluster1 <- c("fiscal", "ratecut", "macrofin", "bopgdp", "medage", "gdppercap", "healthexp", "hospitalbed", "infectionrate")
+vars_cluster2 <- vars.acp3
+
+
+
+#ver que hacer con las cualitativas
+#ver el conjunto de variables que se eligen para hacer grupos en esta primera en general
+#hablar de covarianzas referenciando al primer proyecto, puede afectar si son altas
+
+
+#estandariza datos
+datos_estc1<-scale()
+
+clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
+
+```
+
+
+```{r dendrograma1}
+fviz_dend(clust1,cex=0.4)
+
+#se puede ver un problema de atipicos que conforman un cluster separado
+```
+
+
+# Conclusiones
+
+# Anexos
+
+# Referencias
