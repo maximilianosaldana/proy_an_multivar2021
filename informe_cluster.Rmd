@@ -99,7 +99,6 @@ for(j in 1:dim(datos)[2]){
 ```
 
 ```{r}
-
 vars.acp3 <- c("medage", "gdppercap", "healthexp", "hospitalbed", "infectionrate", "CESI_INDEX")
 acp4 <- PCA(datos[, vars.acp3], ind.sup = 130, quanti.sup = 6)
 
@@ -132,15 +131,13 @@ vars_cluster2 <- vars.acp3
 
 
 #estandariza datos
-datos_estc1<-scale()
-
 clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
 
 ```
 
 
 ```{r dendrograma1}
-fviz_dend(clust1,cex=0.4)
+fviz_dend(clust1,cex=0.4, xlab = )
 
 #se puede ver un problema de atipicos que conforman un cluster separado
 ```
