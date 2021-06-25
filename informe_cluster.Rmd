@@ -102,7 +102,7 @@ for(j in 1:dim(datos)[2]){
 vars.acp3 <- c("medage", "gdppercap", "healthexp", "hospitalbed", "infectionrate", "CESI_INDEX")
 acp4 <- PCA(datos[, vars.acp3], ind.sup = 130, quanti.sup = 6)
 
-acp5 <- PCA(datos[, vars.acp3], ind.sup = c(130,140), quanti.sup = 6)
+
 ```
 
 # Resumen ejecutivo
@@ -119,22 +119,38 @@ acp5 <- PCA(datos[, vars.acp3], ind.sup = c(130,140), quanti.sup = 6)
 
 Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos. En este método se trabaja con particiones encajadas del conjunto de observaciones, pudiendo ser el método de carácter agregativo o divisivo. En el primer caso se parte de un conjunto de I clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las I observaciones. Por otra parte, en el caso de los clusters jerárquicos divisivos se parte de un grupo de I observaciones y se llega a I grupos donde cada uno está conformado por una observación. Esta última estrategia de agrupación puede resultar mejor para casos con gran número de observaciones, en nuestro caso esto no resulta problemático por lo que podríamos seguir con la estrategia divisiva. En ambos métodos se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, para esto se recurre a definir distancias, que para ser calculadas se tomaran en cuenta los valores de las variables con las que se cuentan para las observaciones.
 
+Como conjunto inicial de variables para agrupar las observaciones elegimos:
+
+* *fiscal* 
+* *ratecut*
+* *macrofin* 
+* *bopgdp* 
+* *medage* 
+* *gdppercap*
+* *healthexp* 
+* *hospitalbed*
+* *infectionrate*
+
+Que es casi todo el conjunto empleado en el *Primer Proyecto* para el análisis de componentes principales donde se replicó el índice de estímulo económico y el posterior ACP que se hizo con dicho índice y el resto de las variables. No se consideran en este primer intento de conformar clusters las variables *otherbop* y *othermonetary* por ser cualitativas (posteriormente se verá como incluirlas), *stringency* por su cantidad de valores faltantes y *totalcases* por ser una variable que dificulta la comparación entre observaciones al estar medida en términos absolutos y no relativos.
+
+
 ```{r cluster1}
 vars_cluster1 <- c("fiscal", "ratecut", "macrofin", "bopgdp", "medage", "gdppercap", "healthexp", "hospitalbed", "infectionrate")
 vars_cluster2 <- vars.acp3
 
-
+round(cor(datos[,vars_cluster1], ),2)
 
 #ver que hacer con las cualitativas
 #ver el conjunto de variables que se eligen para hacer grupos en esta primera en general
 #hablar de covarianzas referenciando al primer proyecto, puede afectar si son altas
 
+row.names(datos) <- datos$country
 
-#estandariza datos
+#primer cluster, la función ya de por si estandariza
 clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
 
 ```
-
+Se debe destacar que las variables *fiscal* y *gdppercap* tienen una correlación de 0.6 mientras que *medage* y *hospitalbed* tienen una correlación de 0.71.  
 
 ```{r dendrograma1}
 fviz_dend(clust1,cex=0.4, xlab = )
