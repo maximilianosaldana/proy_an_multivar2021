@@ -113,11 +113,11 @@ acp4 <- PCA(datos[, vars.acp3], ind.sup = 130, quanti.sup = 6)
 
 + Podemos plantear por un lado un análisis de cluster con las vars originales y otro con las obtenidas mediante el ACP y luego comparar.
 
-## Análisis de cluster 
-
-### Análisis de cluster jerárquico
+## Análisis de cluster jerárquico
 
 Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos. En este método se trabaja con particiones encajadas del conjunto de observaciones, pudiendo ser el método de carácter agregativo o divisivo. En el primer caso se parte de un conjunto de I clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las I observaciones. Por otra parte, en el caso de los clusters jerárquicos divisivos se parte de un grupo de I observaciones y se llega a I grupos donde cada uno está conformado por una observación. Esta última estrategia de agrupación puede resultar mejor para casos con gran número de observaciones, en nuestro caso esto no resulta problemático por lo que podríamos seguir con la estrategia divisiva. En ambos métodos se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, para esto se recurre a definir distancias, que para ser calculadas se tomaran en cuenta los valores de las variables con las que se cuentan para las observaciones.
+
+### Primer análisis: Variables originales
 
 Como conjunto inicial de variables para agrupar las observaciones elegimos:
 
@@ -153,10 +153,38 @@ clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TR
 Se debe destacar que las variables *fiscal* y *gdppercap* tienen una correlación de 0.6 mientras que *medage* y *hospitalbed* tienen una correlación de 0.71.  
 
 ```{r dendrograma1}
-fviz_dend(clust1,cex=0.4, xlab = )
+fviz_dend(clust1,cex=0.4)
 
 #se puede ver un problema de atipicos que conforman un cluster separado
+
+clust1_nroclust <- indicadores(clust1$merge ,datos[,vars_cluster1] ,10 )
+
 ```
+
+
+### Segundo análisis: Componentes principales
+
++ En este análisis empleamos las componentes principales obtenidas en el priemr proyecto como variables para agrupar las observaciones.
+
+```{r clust compprin}
+datos_acp <- acp4$ind$coord[,1:2]
+
+
+
+rownames(datos_acp) <- datos$country[-130]
+clust2 <- agnes(datos_acp, method = "ward", diss = FALSE, stand = TRUE)
+```
+
+```{r dendrograma2}
+fviz_dend(clust2,cex=0.4)
+
+#se puede ver un problema de atipicos que conforman un cluster separado
+
+clust2_nroclust <- indicadores(clust2$merge ,datos_acp ,10 )
+
+```
+
++ Tomando en cuenta las reglas de detención se podría considerar 3 clusters.
 
 
 # Conclusiones
