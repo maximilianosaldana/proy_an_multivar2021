@@ -111,7 +111,7 @@ acp4 <- PCA(datos[, vars.acp3], ind.sup = 130, quanti.sup = 6)
 
 # Análisis de Cluster
 
-+ Podemos plantear por un lado un análisis de cluster con las vars originales y otro con las obtenidas mediante el ACP y luego comparar.
++ Podemos plantear por un lado un análisis de cluster con las variables originales y otro con las obtenidas mediante el ACP en el primer trabajo y luego comparar.
 
 ## Análisis de cluster jerárquico
 
@@ -134,11 +134,20 @@ Como conjunto inicial de variables para agrupar las observaciones elegimos:
 Que es casi todo el conjunto empleado en el *Primer Proyecto* para el análisis de componentes principales donde se replicó el índice de estímulo económico y el posterior ACP que se hizo con dicho índice y el resto de las variables. No se consideran en este primer intento de conformar clusters las variables *otherbop* y *othermonetary* por ser cualitativas (posteriormente se verá como incluirlas), *stringency* por su cantidad de valores faltantes y *totalcases* por ser una variable que dificulta la comparación entre observaciones al estar medida en términos absolutos y no relativos.
 
 
-```{r cluster1}
+```{r correlaciones}
 vars_cluster1 <- c("fiscal", "ratecut", "macrofin", "bopgdp", "medage", "gdppercap", "healthexp", "hospitalbed", "infectionrate")
 vars_cluster2 <- vars.acp3
 
 round(cor(datos[,vars_cluster1], ),2)
+```
+
+Se debe destacar que las variables *fiscal* y *gdppercap* tienen una correlación de 0.6 mientras que *medage* y *hospitalbed* tienen una correlación de 0.71. Para considerar esto en la formación de clusters se puede emplear como distancia la de Mahalanobis, que incluye la matriz de varianzas y covarianzas en su fórmula que es:
+
+$$d_{ij}^2 = (x_{ik} - x_{jk})'\Sigma^{-1}(x_{ik} - x_{jk})$$
+Donde $i$ y $j$ son dos individuos y $\Sigma$ es la matriz de varianzas y covarianzas de las variables. 
+
+```{r cluster1}
+
 
 #ver que hacer con las cualitativas
 #ver el conjunto de variables que se eligen para hacer grupos en esta primera en general
@@ -150,7 +159,7 @@ row.names(datos) <- datos$country
 clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
 
 ```
-Se debe destacar que las variables *fiscal* y *gdppercap* tienen una correlación de 0.6 mientras que *medage* y *hospitalbed* tienen una correlación de 0.71.  
+
 
 ```{r dendrograma1}
 fviz_dend(clust1,cex=0.4)
