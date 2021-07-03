@@ -109,13 +109,17 @@ acp4 <- PCA(datos[, vars.acp3], ind.sup = 130, quanti.sup = 6)
 
 # Introducción
 
+Se busca aplicar el análisis de cluster al conjunto de países estudiado en *ARTICULO*, con la intención de clasificarlos y hacer una tipología según el conjunto de variables de índole económica y sanitaria que se dispone.
+
 # Análisis de Cluster
 
 + Podemos plantear por un lado un análisis de cluster con las variables originales y otro con las obtenidas mediante el ACP en el primer trabajo y luego comparar.
 
+<!-- (tiene sentido emplear solo las 2 componentes del acp?) -->
+
 ## Análisis de cluster jerárquico
 
-Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos. En este método se trabaja con particiones encajadas del conjunto de observaciones, pudiendo ser el método de carácter agregativo o divisivo. En el primer caso se parte de un conjunto de I clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las I observaciones. Por otra parte, en el caso de los clusters jerárquicos divisivos se parte de un grupo de I observaciones y se llega a I grupos donde cada uno está conformado por una observación. Esta última estrategia de agrupación puede resultar mejor para casos con gran número de observaciones, en nuestro caso esto no resulta problemático por lo que podríamos seguir con la estrategia divisiva. En ambos métodos se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, para esto se recurre a definir distancias, que para ser calculadas se tomaran en cuenta los valores de las variables con las que se cuentan para las observaciones.
+Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos. En este método se trabaja con particiones encajadas del conjunto de observaciones, pudiendo ser el método de carácter agregativo o divisivo. En el primer caso se parte de un conjunto de I clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las I observaciones. Por otra parte, en el caso de los clusters jerárquicos divisivos se parte de un grupo de I observaciones y se llega a I grupos donde cada uno está conformado por una observación. Esta última estrategia de agrupación puede resultar mejor para casos con gran número de observaciones, en nuestro caso esto no resulta problemático por lo que podríamos seguir con la estrategia agregativa. En ambos métodos se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, para esto se recurre a definir distancias, que para ser calculadas se tomaran en cuenta los valores de las variables con las que se cuentan para las observaciones.
 
 ### Primer análisis: Variables originales
 
@@ -131,7 +135,7 @@ Como conjunto inicial de variables para agrupar las observaciones elegimos:
 * *hospitalbed*
 * *infectionrate*
 
-Que es casi todo el conjunto empleado en el *Primer Proyecto* para el análisis de componentes principales donde se replicó el índice de estímulo económico y el posterior ACP que se hizo con dicho índice y el resto de las variables. No se consideran en este primer intento de conformar clusters las variables *otherbop* y *othermonetary* por ser cualitativas (posteriormente se verá como incluirlas), *stringency* por su cantidad de valores faltantes y *totalcases* por ser una variable que dificulta la comparación entre observaciones al estar medida en términos absolutos y no relativos.
+Que es casi todo el conjunto empleado en el *Primer Proyecto* para el análisis de componentes principales donde se replicó el índice de estímulo económico y el posterior ACP que se hizo con dicho índice y el resto de las variables. No se consideran en este primer intento de conformar clusters las variables *otherbop* y *othermonetary* por ser cualitativas y entonces no poder aplicarse la misma distancia que en el resto de las variables (posteriormente se verá como incluirlas) , *stringency* por su cantidad de valores faltantes y *totalcases* por ser una variable que dificulta la comparación entre observaciones al estar medida en términos absolutos y no relativos.
 
 
 ```{r correlaciones}
@@ -145,6 +149,10 @@ Se debe destacar que las variables *fiscal* y *gdppercap* tienen una correlació
 
 $$d_{ij}^2 = (x_{ik} - x_{jk})'\Sigma^{-1}(x_{ik} - x_{jk})$$
 Donde $i$ y $j$ son dos individuos y $\Sigma$ es la matriz de varianzas y covarianzas de las variables. 
+
+<!-- como nos afecta tener correlacion alta entre variables? -->
+
+Emplear esta distancia es equivalente a estandarizar los datos y después aplicar la distancia euclidea.
 
 ```{r cluster1}
 
@@ -171,9 +179,118 @@ clust1_nroclust <- indicadores(clust1$merge ,datos[,vars_cluster1] ,10 )
 ```
 
 
-### Segundo análisis: Componentes principales
+### Segundo análisis: CESI_INDEX y otras variables
 
-+ En este análisis empleamos las componentes principales obtenidas en el priemr proyecto como variables para agrupar las observaciones.
+```{r cluster2}
+
+
+#primer cluster, la función ya de por si estandariza
+clust2 <- agnes(datos[,vars_cluster2], method = "ward", diss = FALSE, stand = TRUE)
+
+
+
+
+```
+
+
+```{r dendrograma2}
+fviz_dend(clust2,cex=0.4)
+
+#se puede ver un problema de atipicos que conforman un cluster separado
+
+clust2_nroclust <- indicadores(clust2$merge ,datos[,vars_cluster2] ,10 )
+
+
+grupos2 <- cutree(clust2, 2)
+
+datos$grupo2 <- grupos2
+
+datos %>% filter(grupos2 == 2)
+datos %>% filter(grupos2 == 1)
+
+datos %>% arrange(desc(infectionrate))
+
+
+distancias <- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE)
+silueta2<-silhouette(cutree(clust2 , 2) , distancias)
+
+
+#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
+fviz_silhouette(silueta2, print.summary = TRUE)
+
+
+#vemos cuales son los paises con valores negativos de la silueta
+a <- rep(0,166)
+a[which(silueta2[1:166,3]<0)] <- 1
+
+datos$aux <- a
+
+
+datosaux <- datos %>% filter(grupos2 == 2)
+
+
+#se puede apreciar que considerando la variable infectionrate se diferencian en varianza del conjunto del resto de los paises y los valores se acumulan mas cercanamente al cero. 
+ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = infectionrate))
+
+
+ggplot(datosaux) + geom_point(aes(x = as.factor(aux), y = infectionrate))
+
+
+
+
+asd <- cbind(acp4$ind$coord[,1:2],  "grupo"  = grupos2[-130]) 
+
+
+
+
+ggplot(as.data.frame(asd)) + geom_point(aes(x = Dim.1, y = Dim.2, color = grupo ))
+
+
+
+```
+
+
+
+
+
+```{r vecinomcerc}
+clust2.1 <- agnes(datos[,vars_cluster2], method = "single", diss = FALSE, stand = TRUE)
+
+clust2.2 <- agnes(datos[,vars_cluster2], method = "complete", diss = FALSE, stand = TRUE)
+
+#se puede notar a san marino como outlier
+fviz_dend(clust2.1,cex=0.4)
+
+
+#se pueden notar que san marino islandia y luxemburgo son los ultimos en agruparse
+fviz_dend(clust2.2,cex=0.4)
+
+clust2.3 <- agnes(datos[-c(130, 92,70),vars_cluster2], method = "complete", diss = FALSE, stand = TRUE)
+
+fviz_dend(clust2.3,cex=0.4)
+
+clust2.3_nroclust <- indicadores(clust2.3$merge ,datos[-c(130, 92,70),vars_cluster2] ,10 )
+
+
+
+distancias3 <- get_dist(datos[-c(130, 92,70),vars_cluster2], method = "euclidean", stand = TRUE)
+silueta2.3<-silhouette(cutree(clust2.3 , 3) , distancias3)
+
+
+#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
+fviz_silhouette(silueta2.3, print.summary = TRUE)
+
+
+#con este metodo de union de grupos no obtenemos buenos resultado
+```
+
+Se aprecia que retomando el gráfico de las proyecciones de
+
+
+
+### Tercer análisis: Componentes principales
+
++ En este análisis empleamos las componentes principales obtenidas en el primer proyecto como variables para agrupar las observaciones.
 
 ```{r clust compprin}
 datos_acp <- acp4$ind$coord[,1:2]
@@ -181,15 +298,15 @@ datos_acp <- acp4$ind$coord[,1:2]
 
 
 rownames(datos_acp) <- datos$country[-130]
-clust2 <- agnes(datos_acp, method = "ward", diss = FALSE, stand = TRUE)
+clust3<- agnes(datos_acp, method = "ward", diss = FALSE, stand = TRUE)
 ```
 
-```{r dendrograma2}
+```{r dendrograma3}
 fviz_dend(clust2,cex=0.4)
 
 #se puede ver un problema de atipicos que conforman un cluster separado
 
-clust2_nroclust <- indicadores(clust2$merge ,datos_acp ,10 )
+clust3_nroclust <- indicadores(clust2$merge ,datos_acp ,10 )
 
 ```
 
