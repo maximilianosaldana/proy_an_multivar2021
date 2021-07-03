@@ -52,6 +52,7 @@ library(ggdendro)
 library(NbClust)
 library(cluster)
 
+
 source("indicadores.R")
 
 ```
@@ -117,7 +118,7 @@ Se busca aplicar el análisis de cluster al conjunto de países estudiado en *AR
 
 <!-- (tiene sentido emplear solo las 2 componentes del acp?) -->
 
-## Análisis de cluster jerárquico
+## Cluster jerárquico
 
 Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos. En este método se trabaja con particiones encajadas del conjunto de observaciones, pudiendo ser el método de carácter agregativo o divisivo. En el primer caso se parte de un conjunto de I clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las I observaciones. Por otra parte, en el caso de los clusters jerárquicos divisivos se parte de un grupo de I observaciones y se llega a I grupos donde cada uno está conformado por una observación. Esta última estrategia de agrupación puede resultar mejor para casos con gran número de observaciones, en nuestro caso esto no resulta problemático por lo que podríamos seguir con la estrategia agregativa. En ambos métodos se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, para esto se recurre a definir distancias, que para ser calculadas se tomaran en cuenta los valores de las variables con las que se cuentan para las observaciones.
 
@@ -165,18 +166,43 @@ row.names(datos) <- datos$country
 
 #primer cluster, la función ya de por si estandariza
 clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
+clust1.1<- agnes(datos[-130, vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
 
 ```
 
 
 ```{r dendrograma1}
+#con san marino
 fviz_dend(clust1,cex=0.4)
 
 #se puede ver un problema de atipicos que conforman un cluster separado
 
-clust1_nroclust <- indicadores(clust1$merge ,datos[,vars_cluster1] ,10 )
+clust1_indicadores <- indicadores(clust1$merge ,datos[,vars_cluster1] ,10 )
 
+
+distancias1 <- get_dist(datos[,vars_cluster1], method = "euclidean", stand = TRUE)
+silueta1<-silhouette(cutree(clust1 ,3) , distancias1)
+
+fviz_silhouette(silueta1, print.summary = TRUE)
 ```
+
+
+```{r dendrograma1.1}
+#con san marino
+fviz_dend(clust1.1,cex=0.4)
+
+#se puede ver un problema de atipicos que conforman un cluster separado
+
+clust1.1_indicadores <- indicadores(clust1.1$merge ,datos[-130,vars_cluster1] ,10 )
+
+
+distancias1.1 <- get_dist(datos[-130,vars_cluster1], method = "euclidean", stand = TRUE)
+silueta1.1<-silhouette(cutree(clust1.1 ,3) , distancias1.1)
+
+fviz_silhouette(silueta1.1, print.summary = TRUE)
+```
+
+Considerando este conjunto de variables, tanto conservando o exluyendo la observación que en el primer proyecto se encontró influyente (San Marino) los indicadores (ver valores) nos llevan a quedarnos con 3 clusters. Pero a la hora de analizar la silueta vemos que en los grupos 2 y 3 hay observaciones que se encuentran en promedio más cercanos en didstancia a las observaciones de alguno de los otros grupos.
 
 
 ### Segundo análisis: CESI_INDEX y otras variables
@@ -198,7 +224,7 @@ fviz_dend(clust2,cex=0.4)
 
 #se puede ver un problema de atipicos que conforman un cluster separado
 
-clust2_nroclust <- indicadores(clust2$merge ,datos[,vars_cluster2] ,10 )
+clust2_indicadores <- indicadores(clust2$merge ,datos[,vars_cluster2] ,10 )
 
 
 grupos2 <- cutree(clust2, 2)
@@ -231,7 +257,7 @@ datosaux <- datos %>% filter(grupos2 == 2)
 
 #se puede apreciar que considerando la variable infectionrate se diferencian en varianza del conjunto del resto de los paises y los valores se acumulan mas cercanamente al cero. 
 ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = infectionrate))
-
+ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = gdppercap))
 
 ggplot(datosaux) + geom_point(aes(x = as.factor(aux), y = infectionrate))
 
@@ -249,9 +275,9 @@ ggplot(as.data.frame(asd)) + geom_point(aes(x = Dim.1, y = Dim.2, color = grupo 
 
 ```
 
+Se aprecia que retomando el gráfico de las proyecciones de
 
-
-
+<!-- añadir comparacion con usar todas las variables y usar el cesi_index  -->
 
 ```{r vecinomcerc}
 clust2.1 <- agnes(datos[,vars_cluster2], method = "single", diss = FALSE, stand = TRUE)
@@ -284,7 +310,7 @@ fviz_silhouette(silueta2.3, print.summary = TRUE)
 #con este metodo de union de grupos no obtenemos buenos resultado
 ```
 
-Se aprecia que retomando el gráfico de las proyecciones de
+
 
 
 
@@ -311,6 +337,58 @@ clust3_nroclust <- indicadores(clust2$merge ,datos_acp ,10 )
 ```
 
 + Tomando en cuenta las reglas de detención se podría considerar 3 clusters.
+
++ Pero tiene sentido emplear el análisis de cluster para este par de variables?
+
+
+## Cluster no jerarquico
+
+```{r clustnojer}
+set.seed(3652)
+
+
+datos2$grupo1 <- cutree(clust1, 3)
+
+centroide1 <- datos2 %>% filter(grupo1 == 1) %>% select(vars_cluster1) %>% colMeans()
+centroide2 <- datos2 %>% filter(grupo1 == 2) %>% select(vars_cluster1) %>% colMeans()
+centroide3 <- datos2 %>% filter(grupo1 == 3) %>% select(vars_cluster1) %>% colMeans()
+
+clusnoj <- kmeans(datos[,vars_cluster1], centers = rbind(centroide1, centroide2, centroide3))
+summary(clusnoj)
+
+
+
+compnoj <- as.data.frame(cbind(acp4$ind$coord[,1:2],  "grupo"  = as.factor(clusnoj[-130]$cluster))) 
+
+
+
+ggplot(compnoj) + geom_point(aes(x = Dim.1, y = Dim.2, color = as.factor(grupo) ))
+
+
+
+distancias4 <- daisy(datos[,vars_cluster1], metric = "euclidean", stand = TRUE)
+silueta4<-silhouette(clusnoj$cluster , distancias4)
+
+
+#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
+fviz_silhouette(silueta4, print.summary = TRUE)
+
+```
+
+```{r fuzzy y medoides}
+
+medoid <- pam(datos[,vars_cluster1],2)
+
+distancias5<- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE)
+silueta5<-silhouette(medoid$clustering , distancias5)
+
+
+fviz_silhouette(silueta5, print.summary = TRUE)
+
+
+
+fuzz <- fanny(datos[,vars_cluster1], k = 2)
+```
 
 
 # Conclusiones
