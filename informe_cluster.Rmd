@@ -110,17 +110,19 @@ acp4 <- PCA(datos[, vars.acp3], ind.sup = 130, quanti.sup = 6)
 
 # Introducción
 
-Se busca aplicar el análisis de cluster al conjunto de países estudiado en *ARTICULO*, con la intención de clasificarlos y hacer una tipología según el conjunto de variables de índole económica y sanitaria que se dispone.
+Se busca aplicar el análisis de cluster al conjunto de países estudiado en (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020), con la intención de clasificarlos y hacer una tipología según el conjunto de variables de índole económica y sanitaria que se dispone.
 
 # Análisis de Cluster
 
-+ Podemos plantear por un lado un análisis de cluster con las variables originales y otro con las obtenidas mediante el ACP en el primer trabajo y luego comparar.
++ Inicialmente son planteados varios tipos de análisis de cluster y se analiza mediante las siluetas que tan buena es la clasificación.
+
++ Se aplica cluster agregativo, empleando el método de ward y el del vecino más cercano (este último permite observar más facilmente los atípicos), también no jerárquico considerando los centroides, medoides y fuzzy. Se tienen en cuenta conjuntos distintos de variables, las originales de la base, el conjunto empleado para realizar análisis de componentes principales en Marsella y Saldaña (2021) y otro compuesto por las componentes principales obtenidas en ese mismo trabajo.
 
 <!-- (tiene sentido emplear solo las 2 componentes del acp?) -->
 
 ## Cluster jerárquico
 
-Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos. En este método se trabaja con particiones encajadas del conjunto de observaciones, pudiendo ser el método de carácter agregativo o divisivo. En el primer caso se parte de un conjunto de I clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las I observaciones. Por otra parte, en el caso de los clusters jerárquicos divisivos se parte de un grupo de I observaciones y se llega a I grupos donde cada uno está conformado por una observación. Esta última estrategia de agrupación puede resultar mejor para casos con gran número de observaciones, en nuestro caso esto no resulta problemático por lo que podríamos seguir con la estrategia agregativa. En ambos métodos se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, para esto se recurre a definir distancias, que para ser calculadas se tomaran en cuenta los valores de las variables con las que se cuentan para las observaciones.
+Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos. En este método se trabaja con particiones encajadas del conjunto de observaciones, pudiendo ser el método de carácter agregativo o divisivo. En el primer caso se parte de un conjunto de I clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las I observaciones. Por otra parte, en el caso de los clusters jerárquicos divisivos se parte de un grupo de I observaciones y se llega a I grupos donde cada uno está conformado por una observación. Esta última estrategia de agrupación puede resultar mejor para casos con gran número de observaciones, en el conjunto de datos no contamos con esta situación por lo que podríamos seguir con la estrategia agregativa. En ambos métodos se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, que para ser calculadas seran tomados en cuenta los valores de las variables de las observaciones. Adicionalmente debe ser elegido un algoritmo para unir grupos entre si y observaciones a grupos.
 
 ### Primer análisis: Variables originales
 
@@ -136,7 +138,7 @@ Como conjunto inicial de variables para agrupar las observaciones elegimos:
 * *hospitalbed*
 * *infectionrate*
 
-Que es casi todo el conjunto empleado en el *Primer Proyecto* para el análisis de componentes principales donde se replicó el índice de estímulo económico y el posterior ACP que se hizo con dicho índice y el resto de las variables. No se consideran en este primer intento de conformar clusters las variables *otherbop* y *othermonetary* por ser cualitativas y entonces no poder aplicarse la misma distancia que en el resto de las variables (posteriormente se verá como incluirlas) , *stringency* por su cantidad de valores faltantes y *totalcases* por ser una variable que dificulta la comparación entre observaciones al estar medida en términos absolutos y no relativos.
+Que es casi todo el conjunto empleado en Marsella y Saldaña (2021) para el análisis de componentes principales donde se replicó el índice de estímulo económico y el posterior ACP que se hizo con dicho índice y el resto de las variables. No se consideran en este primer intento de conformar clusters las variables *otherbop* y *othermonetary* por ser cualitativas y entonces no poder aplicarse la misma distancia que en el resto de las variables (posteriormente se verá como incluirlas) , *stringency* por su cantidad de valores faltantes ya discutida en el proyecto anteriormente citado y *totalcases* por ser una variable cuya información ya está expresada en *infectionrate* y porque dificulta la comparación entre observaciones al estar medida en términos absolutos y no relativos.
 
 
 ```{r correlaciones}
@@ -146,14 +148,18 @@ vars_cluster2 <- vars.acp3
 round(cor(datos[,vars_cluster1], ),2)
 ```
 
-Se debe destacar que las variables *fiscal* y *gdppercap* tienen una correlación de 0.6 mientras que *medage* y *hospitalbed* tienen una correlación de 0.71. Para considerar esto en la formación de clusters se puede emplear como distancia la de Mahalanobis, que incluye la matriz de varianzas y covarianzas en su fórmula que es:
+Se debe destacar que las variables *fiscal* y *gdppercap* tienen una correlación de 0.6 mientras que *medage* y *hospitalbed* tienen una correlación de 0.71. Para considerar estas correlaciones más altas que el resto en la formación de clusters se puede emplear como distancia la de Mahalanobis, que incluye la matriz de varianzas y covarianzas en su fórmula que es:
 
 $$d_{ij}^2 = (x_{ik} - x_{jk})'\Sigma^{-1}(x_{ik} - x_{jk})$$
 Donde $i$ y $j$ son dos individuos y $\Sigma$ es la matriz de varianzas y covarianzas de las variables. 
 
 <!-- como nos afecta tener correlacion alta entre variables? -->
 
-Emplear esta distancia es equivalente a estandarizar los datos y después aplicar la distancia euclidea.
+Emplear esta distancia es equivalente a estandarizar los datos y después aplicar la distancia euclidea, cuya fórmula es:
+
+$$d_{ij}^2 = \sum_{k=1}^J(x_{ik} - x_{jk})^2$$
+Donde $J$ es el número de variables. Como fue anteriormente mencionado, además de la métrica es necesario optar por un algoritmo para definir como unir grupos y observaciones a grupos. Inicialmente se considerará el método de Ward, el cuál se basa en agregar grupos minimizando la variabilidad dentro de los nuevos grupos formados, que necesariamente aumenta al realizar la unión de objetos heterogeneos pero se busca que aumente lo menos posible. Como contraparte se busca maximizar la varianza entre los grupos en la nueva estructura, así lograr clusters lo más heterogeneos posibles entre si.
+
 
 ```{r cluster1}
 
@@ -201,6 +207,10 @@ silueta1.1<-silhouette(cutree(clust1.1 ,3) , distancias1.1)
 
 fviz_silhouette(silueta1.1, print.summary = TRUE)
 ```
+
+En el caso de los clusters jerárquicos necesitamos tomar la decisión de qué estructura de grupos es la elegida, esto es por cuántos grupos se opta. Para hacer esto se recurre a las reglas de detención, que pueden ser globales (evaluán la bondad de particionar en un número determinado de clusters) o locales (sirven para analizar si al unir dos grupos la estructura representa una mejoría).   
+
+
 
 Considerando este conjunto de variables, tanto conservando o exluyendo la observación que en el primer proyecto se encontró influyente (San Marino) los indicadores (ver valores) nos llevan a quedarnos con 3 clusters. Pero a la hora de analizar la silueta vemos que en los grupos 2 y 3 hay observaciones que se encuentran en promedio más cercanos en didstancia a las observaciones de alguno de los otros grupos.
 
