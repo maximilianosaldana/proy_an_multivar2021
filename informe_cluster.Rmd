@@ -51,10 +51,14 @@ library(factoextra)
 library(ggdendro)
 library(NbClust)
 library(cluster)
+library(MASS) 
+library(heplots) 
+library(MVN) 
+library(GGally)
 
 
 source("indicadores.R")
-
+source("testes.R")
 ```
 
 
@@ -400,6 +404,37 @@ fviz_silhouette(silueta5, print.summary = TRUE)
 fuzz <- fanny(datos[,vars_cluster1], k = 2)
 ```
 
+
+# Análisis de discriminante
+
+
+
+```{r discriminante}
+#grafico inicial
+ggpairs(datos[c(vars_cluster2, "grupo2")],  mapping = ggplot2::aes(color = as.factor(grupo2) , alpha = 0.5), 
+        diag = list(continuous = wrap("densityDiag")), 
+        lower=list(continuous = wrap("points", alpha=0.9)))
+
+#puede que la normalidad este fallando por la manera que se construyeron los grupos (en los clusters hay paises con silueta negativa, clasificados incorrectamente, lo que puede generar colas pesadas y/o otros modos)
+
+
+#hacemos los tests de normalidad, homoscedasticidad e igualdad de medias para ver si se puede aplicar discriminante lineal
+testes(datos[,c(vars_cluster2)], as.factor(datos$grupo2))
+
+
+#rechazamos la normalidad, la igualdad de las medias y la homoscedasticidad
+```
+
+
+
+```{r logistico}
+log1<-glm(as.factor(grupo2) ~ medage + gdppercap + healthexp + hospitalbed + infectionrate + CESI_INDEX , family=binomial, data=datos[,c(vars_cluster2, "grupo2")]) 
+```
+
+
+```{r}
+
+```
 
 # Conclusiones
 
