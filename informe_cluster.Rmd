@@ -123,17 +123,17 @@ acp <- PCA(datos[, vars.acp], quanti.sup = 6)
 
 # Introducción
 
-Se busca aplicar el análisis de cluster al conjunto de países estudiado en (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020), con la intención de clasificarlos y hacer una tipología según el conjunto de variables de índole económica y sanitaria que se dispone. \underline{HABLAR TAMBÍEN DE DISCRIMINANTE}
+Se busca aplicar el análisis de cluster al conjunto de países estudiado en (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020), con la intención de clasificarlos según las componentes principales generadas a partir del conjunto de variables de índole económica y sanitaria que se dispone. Posteriormente se realizará un análisis de discriminante con la intención de encontrar una regla de clasificación para discriminar entre los grupos a partir de las variables con las que se cuenta y analizar cuales tienen mayor importancia en la calsificación.
 
 # Análisis de Cluster
 
-Inicialmente se plantearon varios análisis de cluster teniendo en cuenta distintos conjuntos de las variables con las que se contaba: las originales de la base empleadas para realizar análisis de componentes principales en el trabajo de mitad de curso de Análisis Multivariado, *Aplicación del Análisis de Componentes Principales a Variables Económicas y Vinculadas al COVID-19* (Marsella y Saldaña, 2021) y otro compuesto por las componentes principales obtenidas en ese mismo trabajo. Se aplicaron métodos de cluster agregativo, empleando el método de Ward, el del vecino más cercano y el del vecino más lejano, así como también no jerárquico considerando los centroides, medoides y fuzzy, buscando explorar las distintas opciones con las que contamos para ver cuál funciona mejor para nuestros datos. En (Marsella y Saldaña, 2021) se observó que algunos países presentan un comportamiento atípico, el cual debemos tener en cuenta al aplicar las técnicas de cluster dado que algunos métodos son más susceptibles que otros a la presencia de observaciones de este tipo. Para elegir el mejor método de clasificación y la cantidad de grupos (para el caso de los métodos jerárquicos) nos valimos de las reglas de detención y siluetas de los grupos, así como también las representaciones gráficas (dendrogramas) para los cluster jerárquicos utilizados.
+Inicialmente se plantearon varios análisis de cluster teniendo en cuenta distintos conjuntos de las variables disponibles: las originales de la base empleadas para realizar análisis de componentes principales en el trabajo de mitad de curso de Análisis Multivariado, *Aplicación del Análisis de Componentes Principales a Variables Económicas y Vinculadas al COVID-19* (Marsella y Saldaña, 2021) y otro compuesto por las componentes principales obtenidas en ese mismo trabajo. Se aplicaron métodos de cluster agregativo, empleando el método de Ward, el del vecino más cercano y el del vecino más lejano, así como también no jerárquico considerando los centroides, medoides y fuzzy, buscando explorar las distintas opciones con las que se cuenta para ver cuál funciona mejor para nuestros datos. En *Marsella y Saldaña (2021)* se observó que algunos países presentan un comportamiento atípico, el cual se debe tener en cuenta al aplicar las técnicas de cluster dado que algunos métodos son más susceptibles que otros a la presencia de observaciones de este tipo. Para elegir el mejor método de clasificación y la cantidad de grupos (para el caso de los métodos jerárquicos) nos valimos de las reglas de detención y las siluetas de los grupos, así como también las representaciones gráficas (dendrogramas) para los cluster jerárquicos utilizados.
 
 
-Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos, que trabajan con particiones encajadas del conjunto de observaciones. En nuestro caso optamos por utilizar métodos agregativos en lugar de divisivos dado el bajo número de observaciones con las que contamos, en los cuales se parte de un conjunto de $I$ clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las $I$ observaciones. Para aplicar métodos de cluster se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, que para ser calculadas serán tomados en cuenta los valores de las variables de las observaciones. Adicionalmente debe ser elegido un algoritmo para unir grupos entre si y observaciones a grupos.
+Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, se opta por aplicar los métodos de clusters jerárquicos, que trabajan con particiones encajadas del conjunto de observaciones. Por esta misma razón se puede optar por utilizar métodos agregativos en lugar de divisivos. Los otros métodos de agrupación se consideraron para contar con alternativas, los resultados que dieron se encuentran presentados en el Anexo I. En los métodos agregativos se parte de un conjunto de $I$ clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las $I$ observaciones. Adicionalmente para aplicar métodos de cluster se debe definir una métrica que emplee los valores de las variables de cada objeto para determinar qué tan cerca está uno (individuos o clusters) de los otros,  y además debe ser elegido un algoritmo para unir grupos entre si y observaciones a grupos.
 
 
-El conjunto de variables utilizadas para emplear los métodos de cluster son el Índice de Estímulo Económico *CESI_INDEX* construido en el trabajo original (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020) y replicado en (Marsella y Saldaña, 2021), así como las primeras dos Componentes Principales construídas a partir de un ACP en este último trabajo. En particular, se había observado que estas dos componentes principales lograban explicar en su conjunto el 72.77% de la nube de puntos conformadas por los 166 individuos y las variables *medage*, *gdppercap*, *healthexp*, *hospitalbed* y *noinfectionrate*, por lo cual consideramos que pueden ser un buen insumo para la clasificación y que luego se puede intentar discriminar entre los grupos construidos a partir de un Análisis Discriminante utilizando las variables originales para analizar cuáles son más importantes en esa clasificación.
+El conjunto de variables utilizadas para aplicar los métodos de cluster son el Índice de Estímulo Económico *CESI_INDEX* construido en el trabajo original *Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman (2020)* y replicado en *Marsella y Saldaña (2021)*, así como las primeras dos Componentes Principales construídas a partir de un ACP en este último trabajo. En particular, se había observado que estas dos componentes principales lograban explicar en su conjunto el 72.77% de la nube de puntos conformadas por los 166 individuos y las variables *medage*, *gdppercap*, *healthexp*, *hospitalbed* y *noinfectionrate*, por lo cual consideramos que pueden ser un buen insumo para la clasificación. . La variable *CESI_INDEX* fue incluida por separado debido a que su representación en las componentes seleccionadas no era muy buena como se desarrolló en el primer proyecto del curso.
 
 
 
@@ -154,17 +154,15 @@ round(cor(datos_acp, ),2) %>% as.data.frame() %>%
 
 ```
 
-Por construcción, las correlaciones entre las componentes principales (*Dim.1* y *Dim.2*) son 0, mientras que el *CESI_INDEX* se correlaciona principalmente con la primer componente principal más que con la segunda, como habíamos visto en el primer trabajo. Dado que 0.52 se podría considerar como una correlación relativamente alta, optamos por utilizar la distancia de Mahalanobis que incluye la matriz de varianzas y covarianzas y así asegurarnos de que esa correlación no tenga una influencia grande en la formación de los grupos.
-
-Dicha distancia está definida por la fórmula:
+Por construcción, las correlaciones entre las componentes principales (*Dim.1* y *Dim.2*) son 0, mientras que el *CESI_INDEX* se correlaciona principalmente con la primer componente principal más que con la segunda, como habíamos visto en el primer trabajo. Dado que 0.52 se podría considerar como una correlación relativamente alta, optamos por utilizar la distancia de Mahalanobis que incluye la matriz de varianzas y covarianzas y así asegurarnos de que esa correlación no tenga una influencia grande en la formación de los grupos. Dicha distancia está definida como:
 
 $$d_{ij}^2 = (x_{ik} - x_{jk})'\Sigma^{-1}(x_{ik} - x_{jk})$$
-Donde $i$ y $j$ son dos individuos y $\Sigma$ es la matriz de varianzas y covarianzas de las variables. 
 
+Donde $i$ y $j$ son dos individuos y $\Sigma$ es la matriz de varianzas y covarianzas de las variables. 
 
 Como fue anteriormente mencionado, además de la métrica es necesario optar por un algoritmo para definir como unir grupos y observaciones a grupos. Inicialmente consideramos dentro de los métodos jerárquicos agregativos los métodos del vecino más cercano, vecino más lejano y método de Ward.
 
-```{r cluster vecinos, include=TRUE)}
+```{r cluster vecinos, include=TRUE, out.width= "100%"}
 rownames(datos_acp) <- datos$country
 
 datos_acp_st <- scale(datos_acp)
@@ -185,7 +183,7 @@ grid.arrange(dend.1, dend.2, ncol=2)
 
 ```
 
-En la Figura 1 se pueden ver los dendrogramas para los métodos del vecino más cercano y del vecino más lejano, los cuales son representaciones gráficas de la historia de agrupación que parte de los $I$ cluster iniciales y llega a un único cluster que contiene las $I$ observaciones. En ambos casos se puede ver que las observaciones atípicas que ya habíamos detectado en el trabajo anterior son las últimas en ser agrupadas, dado que son las más distantes de las demás observaciones en la métrica utilizada. Este resultado era esperable, dado que estos métodos son muy susceptibles a la presencia de observaciones atípicas.
+En la Figura 1 se pueden ver los dendrogramas para los métodos del vecino más cercano y del vecino más lejano, los cuales son representaciones gráficas de la historia de agrupación que parte de los $I$ cluster iniciales y llega a un único cluster que contiene las $I$ observaciones. En ambos casos se puede ver que las observaciones atípicas que ya habíamos detectado en el trabajo anterior son las últimas en ser agrupadas, dado que son las más distantes de las demás observaciones en la métrica utilizada. Este resultado era esperable, dado que estos métodos son muy susceptibles a la presencia de observaciones atípicas. El método elegido finalmente es el de Ward, el cuál se basa en agregar grupos minimizando la variabilidad dentro de los nuevos grupos formados, que necesariamente aumenta al realizar la unión de objetos heterogeneos pero se busca que aumente lo menos posible. Como contraparte se busca maximizar la varianza entre los grupos en la nueva estructura, para así lograr clusters lo más heterogeneos posibles entre si. Este método cuenta con una menor susceptibilidad a los valores atípicos y por eso resulta deseable emplearlo en nuestro caso.
 
 
 ```{r clust acp ward}
@@ -195,42 +193,29 @@ cluster_acp <- agnes(dist_maha, method = "ward", diss = TRUE)
 ```
 
 
-Inicialmente se considerará el método de Ward, el cuál se basa en agregar grupos minimizando la variabilidad dentro de los nuevos grupos formados, que necesariamente aumenta al realizar la unión de objetos heterogeneos pero se busca que aumente lo menos posible. Como contraparte se busca maximizar la varianza entre los grupos en la nueva estructura, así lograr clusters lo más heterogeneos posibles entre si.
-
-
-
-
-En el caso de los clusters jerárquicos necesitamos tomar la decisión de qué estructura de grupos es la elegida, esto es por cuántos grupos se opta. Para hacer esto se recurre a las reglas de detención, que pueden ser globales (evaluán la bondad de particionar en un número determinado de clusters) o locales (sirven para analizar si al unir dos grupos la estructura representa una mejoría).   
-
-
-
-Considerando este conjunto de variables, tanto conservando o exluyendo la observación que en el primer proyecto se encontró influyente (San Marino) los indicadores (ver valores) nos llevan a quedarnos con 3 clusters. Pero a la hora de analizar la silueta vemos que en los grupos 2 y 3 hay observaciones que se encuentran en promedio más cercanos en didstancia a las observaciones de alguno de los otros grupos.
-
-
-
-
-
-+ En este análisis empleamos las componentes principales obtenidas en el primer proyecto como variables para agrupar las observaciones.
-
-
-
-
-```{r dendrograma mas cercano}
-fviz_dend(cluster_acp2, cex = 0.3)
-fviz_dend(cluster_acp3, cex = 0.3)
-
-#aca se pueden notar los outliers, optamos por usar ward
-```
-
-
-```{r dendrograma ward}
+```{r dendrograma ward, include =TRUE}
 fviz_dend(cluster_acp,cex=0.4)
 
 ```
 
+En la Figura 2 se ve todavía la presencia de atípicos en el grupo conformado por San Marino, Luxemburgo e Islandia, en los otros dos métodos anteriores San Marino era agrupada únicamente en el último paso. Si se elegían una estructura de dos clusters en los métodos anteriores uno de ellos incluía solo a San Marino y el otro al resto de las observaciones, empleando el método de Ward si se eligen 2 clusters no se observa eso. Al estar trabajando con un método jerárquico necesitamos tomar la decisión de qué estructura de grupos es la elegida, esto es por cuántos grupos se opta. Para hacer esto se recurre a las reglas de detención, que pueden ser globales (evalúan la bondad de particionar en un número determinado de clusters) o locales (sirven para analizar si al unir dos grupos la estructura representa una mejoría). 
+
+<!-- EXPLICAR REGLAS DE DETENCION -->
+
 ```{r indicadores}
 cluster_acp_inds <- indicadores(cluster_acp$merge ,datos_acp ,9 )
 ```
+
+
+
+```{r indicadores xtable, results='asis', include = TRUE}
+
+xtable(cluster_acp_inds, caption = "Valores de los indicadores de las Reglas de Detención del método elegido.") %>% print.xtable(include.rownames = FALSE)
+```
+
+
+En la Figura 3 están presentados los valores que se toman en cuenta para aplicar las reglas de detención, a partir de los cuales hay dos estructuras de grupos de interés. En primer lugar se cuenta con una estructura de dos grupos que surge de unir el grupo de 58 observaciones creado en el paso anterior y otro de 3 conformado por San Marino, Luxemburgo e Islandia, como se podía observar en la Figura 2. Para esta estructura el valor del pseudo-t es 20.58, lo que representa una disminución respecto a la estructura con un grupo y no se da una disminución al considerar la estructura con tres grupos. En cuanto al pseudo-F el valor (108.44) representa un máximo relativo. La otra estructura es de cuatro grupos y cuenta con un valor del pseudo-t de 16.22 y un pseudo-F de 91.54 que representan un mínimo y un máximo local respectivamente. Por lo tanto según estos dos indicadores cualquiera de estas dos estrucutras de grupos puede resultar adecuada. En lo que se diferencian además de la cantidad de grupos es en sus valores del $R^2$, que necesariamente será mayor al considerar más grupos; para la estructura de dos grupos es de 0.4 y para la de cuatro es de 0.63, por lo cual tenemos un aumento aproximado del 23% de la variabilidad explicada al considerar cuatro grupos.   
+
 
 
 ```{r siluetas}
@@ -239,8 +224,30 @@ silueta_acp2 <- silhouette(cutree(cluster_acp , 4) , dist_maha)
 
 
 #grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
-fviz_silhouette(silueta_acp, print.summary = TRUE)
+sil1 <- fviz_silhouette(silueta_acp, print.summary = TRUE, label = TRUE) + coord_flip() 
+sil2 <-fviz_silhouette(silueta_acp2, print.summary = TRUE, label = TRUE) + coord_flip() 
+
+
+silprom1 <- sil1[[1]] %>% group_by(cluster) %>% summarise(sil_mean = round(mean(sil_width),2), meannames = mean(as.numeric(name)))
+
+
+silprom2 <- sil2[[1]] %>% group_by(cluster) %>% summarise(sil_mean = round(mean(sil_width),2)) %>% cbind(cord = c(40, 115, 140, 163 ))
+
+
 ```
+
+
+
+```{r grafico silueta 1}
+sil1+geom_text(data = silprom1, mapping = aes(y= 0.8, x = as.character(meannames), label = paste("Silueta promedio:", as.character(sil_mean))))
+
+```
+```{r grafico silueta 2}
+sil2+geom_text(data = silprom2, mapping = aes(y= 0.8, x = cord, label = paste("Silueta promedio:", as.character(sil_mean))))
+
+```
+
+
 
 
 ```{r}
@@ -253,7 +260,15 @@ ggplot(graf) + geom_point(aes(x=Dim.1,y= Dim.2, color = as.factor(grupos_acp)))
 
 ```
 
+```{r as}
+grupos_acp2 <- cutree(cluster_acp, 3)
 
+graf <- as.data.frame(cbind(datos_acp, grupos_acp))
+
+ggplot(graf) + geom_point(aes(x=Dim.1,y= Dim.2, color = as.factor(grupos_acp)))
+
+
+```
 
 
 ```{r}
@@ -264,6 +279,8 @@ graf <- cbind(datos$country, graf, sil)
 
 filter(graf, sil == 1)
 ```
+
+
 
 
 
@@ -375,6 +392,128 @@ print(model)
 ```
 
 The column labeled “Accuracy” is the overall agreement rate averaged over cross-validation iterations. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Análisis de discriminante multinom
+
+```{r}
+ggpairs(datos_acp,  mapping = ggplot2::aes(color = as.factor(grupos_acp) , alpha = 0.5), 
+        diag = list(continuous = wrap("densityDiag")), 
+        lower=list(continuous = wrap("points", alpha=0.9)))
+```
+
+```{r tests norm}
+testes(datos_acp, as.factor(graf$grupos_acp))
+#rechazamos la multinormalidad, la homoscedasticidad y la igualdad de medias
+```
+
+
+```{r logistico acp}
+
+datos_disc <- as.data.frame(cbind(datos[,vars_cluster], graf[,-3]))
+
+log <- glm(as.factor(grupos_acp) ~ gdppercap + noinfectionrate  , family=binomial, data=datos_disc) 
+summary(log)
+
+D1 <- log$null.deviance-log$deviance
+pchisq(D1, df = 5, lower.tail = F)
+
+
+
+respuesta <-predict.glm(log,type='response') #Tenemos la respuesta del modelo
+
+
+prediccion <- ifelse(respuesta > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
+
+#Tabla de confusion
+tabla<-table(datos_disc$grupos_acp, prediccion)
+tabla
+```
+
+
+
+```{r}
+log2 <- glm(as.factor(grupos_acp) ~  medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc) 
+summary(log2)
+
+
+log2step <- step(log2)
+summary(log2step)
+
+
+
+respuesta2 <-predict.glm(log2,type='response') #Tenemos la respuesta del modelo
+
+
+prediccion2 <- ifelse(respuesta2 > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
+
+#Tabla de confusion
+tabla2<-table(datos_disc$grupos_acp, prediccion2)
+tabla2
+```
+
+
+```{r}
+#Lo mismo con el modelo que nos da el step, con las variables significativas
+
+log.step <- glm(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc) 
+summary(log.step)
+
+
+respuesta.step <-predict.glm(log.step,type='response') #Tenemos la respuesta del modelo
+
+
+prediccion.step <- ifelse(respuesta.step > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
+
+#Tabla de confusion
+tabla.step<-table(datos_disc$grupos_acp, prediccion.step)
+tabla.step
+
+#Nos da la misma tabla de confusión que manteniendo infectionrate como variable explicativa, por lo que optamos por quitarla para lograr un modelo más parsimonioso
+
+
+rocLog<-roc(as.factor(grupos_acp) ~ respuesta.step, plot = TRUE, print.auc = TRUE)
+
+plot(rocLog, print.thres="best", print.thres.best.method="closest.topleft", col="red")
+
+prediccion.step2 <- ifelse(respuesta.step > 0.287,2 ,1)
+
+tabla.step2<-table(datos_disc$grupos_acp, prediccion.step2)
+tabla.step2
+```
+
+Como teníamos problemas de clasificación con observaciones correspondientes al segundo grupo, que tenían silueta negativa al construir los clusters, el algoritmo elije un umbral bajo para que esas observaciones sean clasificadas correctamente como pertenecientes al grupo 2.
+
+```{r validacion}
+train.control <- trainControl(method = "cv", number = 10)
+
+# Entrenar el modelo
+library(e1071)
+
+model <- train(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX,
+               data = datos_disc, method = "glm",
+               trControl = train.control)
+
+print(model)
+
+
+
+```
+
+
+
+
 
 
 
