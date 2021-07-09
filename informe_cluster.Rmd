@@ -55,6 +55,8 @@ library(MASS)
 library(heplots) 
 library(StatMatch)
 library(GGally)
+library(pROC)
+library(caret)
 
 
 source("indicadores.R")
@@ -121,45 +123,79 @@ acp <- PCA(datos[, vars.acp], quanti.sup = 6)
 
 # Introducción
 
-Se busca aplicar el análisis de cluster al conjunto de países estudiado en (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020), con la intención de clasificarlos y hacer una tipología según el conjunto de variables de índole económica y sanitaria que se dispone.
+Se busca aplicar el análisis de cluster al conjunto de países estudiado en (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020), con la intención de clasificarlos y hacer una tipología según el conjunto de variables de índole económica y sanitaria que se dispone. \underline{HABLAR TAMBÍEN DE DISCRIMINANTE}
 
 # Análisis de Cluster
 
-Inicialmente son planteados varios tipos de análisis de cluster y se analiza mediante las siluetas que tan buena es la clasificación. Se aplica cluster agregativo, empleando el método de ward y el del vecino más cercano (este último permite observar más facilmente los atípicos), también no jerárquico considerando los centroides, medoides y fuzzy. Se tienen en cuenta conjuntos distintos de variables, las originales de la base, el conjunto empleado para realizar análisis de componentes principales en Marsella y Saldaña (2021) y otro compuesto por las componentes principales obtenidas en ese mismo trabajo.
+Inicialmente se plantearon varios análisis de cluster teniendo en cuenta distintos conjuntos de las variables con las que se contaba: las originales de la base empleadas para realizar análisis de componentes principales en el trabajo de mitad de curso de Análisis Multivariado, *Aplicación del Análisis de Componentes Principales a Variables Económicas y Vinculadas al COVID-19* (Marsella y Saldaña, 2021) y otro compuesto por las componentes principales obtenidas en ese mismo trabajo. Se aplicaron métodos de cluster agregativo, empleando el método de Ward, el del vecino más cercano y el del vecino más lejano, así como también no jerárquico considerando los centroides, medoides y fuzzy, buscando explorar las distintas opciones con las que contamos para ver cuál funciona mejor para nuestros datos. En (Marsella y Saldaña, 2021) se observó que algunos países presentan un comportamiento atípico, el cual debemos tener en cuenta al aplicar las técnicas de cluster dado que algunos métodos son más susceptibles que otros a la presencia de observaciones de este tipo. Para elegir el mejor método de clasificación y la cantidad de grupos (para el caso de los métodos jerárquicos) nos valimos de las reglas de detención y siluetas de los grupos, así como también las representaciones gráficas (dendrogramas) para los cluster jerárquicos utilizados.
+
+
+Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos, que trabajan con particiones encajadas del conjunto de observaciones. En nuestro caso optamos por utilizar métodos agregativos en lugar de divisivos dado el bajo número de observaciones con las que contamos, en los cuales se parte de un conjunto de $I$ clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las $I$ observaciones. Para aplicar métodos de cluster se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, que para ser calculadas serán tomados en cuenta los valores de las variables de las observaciones. Adicionalmente debe ser elegido un algoritmo para unir grupos entre si y observaciones a grupos.
+
+
+El conjunto de variables utilizadas para emplear los métodos de cluster son el Índice de Estímulo Económico *CESI_INDEX* construido en el trabajo original (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020) y replicado en (Marsella y Saldaña, 2021), así como las primeras dos Componentes Principales construídas a partir de un ACP en este último trabajo. En particular, se había observado que estas dos componentes principales lograban explicar en su conjunto el 72.77% de la nube de puntos conformadas por los 166 individuos y las variables *medage*, *gdppercap*, *healthexp*, *hospitalbed* y *noinfectionrate*, por lo cual consideramos que pueden ser un buen insumo para la clasificación y que luego se puede intentar discriminar entre los grupos construidos a partir de un Análisis Discriminante utilizando las variables originales para analizar cuáles son más importantes en esa clasificación.
 
 
 
-Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, una primera opción a la hora de aplicar los métodos de clusters es aplicar clusters jerárquicos. En este método se trabaja con particiones encajadas del conjunto de observaciones, pudiendo ser el método de carácter agregativo o divisivo. En el primer caso se parte de un conjunto de I clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las I observaciones. Por otra parte, en el caso de los clusters jerárquicos divisivos se parte de un grupo de I observaciones y se llega a I grupos donde cada uno está conformado por una observación. Esta última estrategia de agrupación puede resultar mejor para casos con gran número de observaciones, en el conjunto de datos no contamos con esta situación por lo que podríamos seguir con la estrategia agregativa. En ambos métodos se debe definir una métrica para determinar qué tan cerca está un objeto (individuos o clusters) de los otros, que para ser calculadas seran tomados en cuenta los valores de las variables de las observaciones. Adicionalmente debe ser elegido un algoritmo para unir grupos entre si y observaciones a grupos.
 
-Como conjunto inicial de variables para agrupar las observaciones elegimos:
-
-* *fiscal* 
-* *ratecut*
-* *macrofin* 
-* *bopgdp* 
-* *medage* 
-* *gdppercap*
-* *healthexp* 
-* *hospitalbed*
-* *infectionrate*
-
-Que es casi todo el conjunto empleado en Marsella y Saldaña (2021) para el análisis de componentes principales donde se replicó el índice de estímulo económico y el posterior ACP que se hizo con dicho índice y el resto de las variables. No se consideran en este primer intento de conformar clusters las variables *otherbop* y *othermonetary* por ser cualitativas y entonces no poder aplicarse la misma distancia que en el resto de las variables (posteriormente se verá como incluirlas) , *stringency* por su cantidad de valores faltantes ya discutida en el proyecto anteriormente citado y *totalcases* por ser una variable cuya información ya está expresada en *infectionrate* y porque dificulta la comparación entre observaciones al estar medida en términos absolutos y no relativos.
-
-
-```{r correlaciones}
+```{r}
 vars_cluster <- vars.acp
 vars_cluster1 <- c("fiscal", "ratecut", "macrofin", "bopgdp", "medage", "gdppercap", "healthexp", "hospitalbed", "infectionrate")
 
-round(cor(datos[,vars_cluster1], ),2)
+#round(cor(datos[,vars_cluster1], ),2)
 ```
 
-Se debe destacar que las variables *fiscal* y *gdppercap* tienen una correlación de 0.6 mientras que *medage* y *hospitalbed* tienen una correlación de 0.71. Para considerar estas correlaciones más altas que el resto en la formación de clusters se puede emplear como distancia la de Mahalanobis, que incluye la matriz de varianzas y covarianzas en su fórmula que es:
+```{r correlaciones, include=TRUE, results='asis'}
+datos_acp <- acp$ind$coord[,1:2]
+datos_acp <- cbind(as.data.frame(datos_acp), "CESI_INDEX" = datos[,c("CESI_INDEX")])
+
+round(cor(datos_acp, ),2) %>% as.data.frame() %>%
+  xtable(caption="Matriz de correlaciones de las variables a utilizar en los métodos de cluster.")
+
+```
+
+Por construcción, las correlaciones entre las componentes principales (*Dim.1* y *Dim.2*) son 0, mientras que el *CESI_INDEX* se correlaciona principalmente con la primer componente principal más que con la segunda, como habíamos visto en el primer trabajo. Dado que 0.52 se podría considerar como una correlación relativamente alta, optamos por utilizar la distancia de Mahalanobis que incluye la matriz de varianzas y covarianzas y así asegurarnos de que esa correlación no tenga una influencia grande en la formación de los grupos.
+
+Dicha distancia está definida por la fórmula:
 
 $$d_{ij}^2 = (x_{ik} - x_{jk})'\Sigma^{-1}(x_{ik} - x_{jk})$$
 Donde $i$ y $j$ son dos individuos y $\Sigma$ es la matriz de varianzas y covarianzas de las variables. 
 
 
-Como fue anteriormente mencionado, además de la métrica es necesario optar por un algoritmo para definir como unir grupos y observaciones a grupos. Inicialmente se considerará el método de Ward, el cuál se basa en agregar grupos minimizando la variabilidad dentro de los nuevos grupos formados, que necesariamente aumenta al realizar la unión de objetos heterogeneos pero se busca que aumente lo menos posible. Como contraparte se busca maximizar la varianza entre los grupos en la nueva estructura, así lograr clusters lo más heterogeneos posibles entre si.
+Como fue anteriormente mencionado, además de la métrica es necesario optar por un algoritmo para definir como unir grupos y observaciones a grupos. Inicialmente consideramos dentro de los métodos jerárquicos agregativos los métodos del vecino más cercano, vecino más lejano y método de Ward.
+
+```{r cluster vecinos, include=TRUE)}
+rownames(datos_acp) <- datos$country
+
+datos_acp_st <- scale(datos_acp)
+cov_datos_acp <- cov(datos_acp_st)
+
+dist_maha <- mahalanobis.dist(datos_acp_st)
+
+clust2.1 <- agnes(dist_maha, method = "single", diss = TRUE)
+
+clust2.2 <- agnes(dist_maha, method = "complete", diss = TRUE)
+
+dend.1 <- fviz_dend(clust2.1,cex=0.4) #se puede notar a san marino como outlier 
+
+dend.2 <- fviz_dend(clust2.2,cex=0.4) #se pueden notar que san marino islandia y luxemburgo son los ultimos en agruparse
+
+grid.arrange(dend.1, dend.2, ncol=2)
+
+
+```
+
+En la Figura 1 se pueden ver los dendrogramas para los métodos del vecino más cercano y del vecino más lejano, los cuales son representaciones gráficas de la historia de agrupación que parte de los $I$ cluster iniciales y llega a un único cluster que contiene las $I$ observaciones. En ambos casos se puede ver que las observaciones atípicas que ya habíamos detectado en el trabajo anterior son las últimas en ser agrupadas, dado que son las más distantes de las demás observaciones en la métrica utilizada. Este resultado era esperable, dado que estos métodos son muy susceptibles a la presencia de observaciones atípicas.
+
+
+```{r clust acp ward}
+cluster_acp <- agnes(dist_maha, method = "ward", diss = TRUE)
+
+
+```
+
+
+Inicialmente se considerará el método de Ward, el cuál se basa en agregar grupos minimizando la variabilidad dentro de los nuevos grupos formados, que necesariamente aumenta al realizar la unión de objetos heterogeneos pero se busca que aumente lo menos posible. Como contraparte se busca maximizar la varianza entre los grupos en la nueva estructura, así lograr clusters lo más heterogeneos posibles entre si.
 
 
 
@@ -176,24 +212,7 @@ Considerando este conjunto de variables, tanto conservando o exluyendo la observ
 
 + En este análisis empleamos las componentes principales obtenidas en el primer proyecto como variables para agrupar las observaciones.
 
-```{r clust acp}
-datos_acp <- acp$ind$coord[,1:2]
 
-datos_acp <- cbind(as.data.frame(datos_acp), "CESI_INDEX" = datos[,c("CESI_INDEX")])
-
-datos_acp_st <- scale(datos_acp)
-cov_datos_acp <- cov(datos_acp_st)
-
-rownames(datos_acp_st) <- datos$country
-
-dist_maha <- mahalanobis.dist(datos_acp_st)
-
-
-cluster_acp <- agnes(dist_maha, method = "ward", diss = TRUE)
-cluster_acp2 <- agnes(dist_maha, method = "single", diss = TRUE)
-cluster_acp3 <- agnes(dist_maha, method = "complete", diss = TRUE)
-
-```
 
 
 ```{r dendrograma mas cercano}
@@ -308,300 +327,364 @@ tabla2
 ```
 
 
-
-
-
-
-# Conclusiones
-
-# Anexos
-
-## Anexo 1: Método de cluster alternativos
-
-### Cluster con todas las variables
-```{r cluster1}
-
-
-#ver que hacer con las cualitativas
-#ver el conjunto de variables que se eligen para hacer grupos en esta primera en general
-#hablar de covarianzas referenciando al primer proyecto, puede afectar si son altas
-
-
-#primer cluster, la función ya de por si estandariza
-clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
-clust1.1<- agnes(datos[-130, vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
-
-```
-
-
-```{r dendrograma1}
-#con san marino
-fviz_dend(clust1,cex=0.4)
-
-#se puede ver un problema de atipicos que conforman un cluster separado
-
-clust1_indicadores <- indicadores(clust1$merge ,datos[,vars_cluster1] ,10 )
-
-
-distancias1 <- get_dist(datos[,vars_cluster1], method = "euclidean", stand = TRUE)
-silueta1<-silhouette(cutree(clust1 ,3) , distancias1)
-
-fviz_silhouette(silueta1, print.summary = TRUE)
-```
-
-
-```{r dendrograma1.1}
-#con san marino
-fviz_dend(clust1.1,cex=0.4)
-
-#se puede ver un problema de atipicos que conforman un cluster separado
-
-clust1.1_indicadores <- indicadores(clust1.1$merge ,datos[-130,vars_cluster1] ,10 )
-
-
-distancias1.1 <- get_dist(datos[-130,vars_cluster1], method = "euclidean", stand = TRUE)
-silueta1.1<-silhouette(cutree(clust1.1 ,3) , distancias1.1)
-
-fviz_silhouette(silueta1.1, print.summary = TRUE)
-```
-
-
-### Cluster CESI_INDEX y otras variables
-
-```{r cluster}
-
-row.names(datos) <- datos$country
-
-datos_clustr <- scale(datos[,vars_cluster])
-
-#primer cluster, la función ya de por si estandariza
-cluster <- agnes(datos_clustr, method = "ward", diss = TRUE)
-
-```
-
-
-```{r dendrograma}
-fviz_dend(cluster,cex=0.4)
-
-```
-
-
-
-```{r }
-fviz_dend(clust2,cex=0.4)
-
-#se puede ver un problema de atipicos que conforman un cluster separado
-
-clust2_indicadores <- indicadores(clust2$merge ,datos[,vars_cluster2] ,10 )
-
-
-grupos2 <- cutree(clust2, 2)
-
-datos$grupo2 <- grupos2
-
-datos %>% filter(grupos2 == 2)
-datos %>% filter(grupos2 == 1)
-
-datos %>% arrange(desc(infectionrate))
-
-
-distancias <- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE)
-silueta2<-silhouette(cutree(clust2 , 2) , distancias)
-
-
-#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
-fviz_silhouette(silueta2, print.summary = TRUE)
-
-
-#vemos cuales son los paises con valores negativos de la silueta
-a <- rep(0,166)
-a[which(silueta2[1:166,3]<0)] <- 1
-
-datos$aux <- a
-
-
-datosaux <- datos %>% filter(grupos2 == 3)
-datosaux %>% filter(aux==1)
-
-#se puede apreciar que considerando la variable infectionrate se diferencian en varianza del conjunto del resto de los paises y los valores se acumulan mas cercanamente al cero. 
-ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = infectionrate))
-ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = gdppercap))
-
-ggplot(datosaux) + geom_point(aes(x = as.factor(aux), y = infectionrate))
-
-
-
-
-asd <- as.data.frame(cbind(acp4$ind$coord[,1:2],  "grupo"  = grupos2[-130], "silueta_neg" = as.factor(datos$aux)))
-
-
-
-asd %>% 
-  filter(grupo == 2) %>% 
-ggplot() + geom_point(aes(x = Dim.1, y = Dim.2, color = as.factor(silueta_neg) ))
-
-
-
-```
-
-
-
-
-
-```{r discriminante_orig}
-#grafico inicial
-ggpairs(datos[c(vars_cluster2, "grupo2")],  mapping = ggplot2::aes(color = as.factor(grupo2) , alpha = 0.5), 
-        diag = list(continuous = wrap("densityDiag")), 
-        lower=list(continuous = wrap("points", alpha=0.9)))
-
-#puede que la normalidad este fallando por la manera que se construyeron los grupos (en los clusters hay paises con silueta negativa, clasificados incorrectamente, lo que puede generar colas pesadas y/o otros modos)
-
-
-#hacemos los tests de normalidad, homoscedasticidad e igualdad de medias para ver si se puede aplicar discriminante lineal
-testes(datos[,c(vars_cluster2)], as.factor(datos$grupo2))
-
-
-#rechazamos la normalidad, la igualdad de las medias y la homoscedasticidad
-```
-
-
-
-```{r logistico}
-log1<-glm(as.factor(grupo2) ~ medage + gdppercap + healthexp + hospitalbed + infectionrate + CESI_INDEX , family=binomial, data=datos[,c(vars_cluster2, "grupo2")]) 
-
-log1.1 <- stepAIC(log1)
-
-
-```
-
-
 ```{r}
+#Lo mismo con el modelo que nos da el step, con las variables significativas
 
-```
-### Cluster vecino más cercano
-
-```{r vecinomcerc}
-clust2.1 <- agnes(datos[,vars_cluster2], method = "single", diss = FALSE, stand = TRUE)
-
-clust2.2 <- agnes(datos[,vars_cluster2], method = "complete", diss = FALSE, stand = TRUE)
-
-#se puede notar a san marino como outlier
-fviz_dend(clust2.1,cex=0.4)
+log.step <- glm(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc) 
+summary(log.step)
 
 
-#se pueden notar que san marino islandia y luxemburgo son los ultimos en agruparse
-fviz_dend(clust2.2,cex=0.4)
-
-clust2.3 <- agnes(datos[-c(130, 92,70),vars_cluster2], method = "complete", diss = FALSE, stand = TRUE)
-
-fviz_dend(clust2.3,cex=0.4)
-
-clust2.3_nroclust <- indicadores(clust2.3$merge ,datos[-c(130, 92,70),vars_cluster2] ,10 )
+respuesta.step <-predict.glm(log.step,type='response') #Tenemos la respuesta del modelo
 
 
+prediccion.step <- ifelse(respuesta.step > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
 
-distancias3 <- get_dist(datos[-c(130, 92,70),vars_cluster2], method = "euclidean", stand = TRUE)
-silueta2.3<-silhouette(cutree(clust2.3 , 3) , distancias3)
+#Tabla de confusion
+tabla.step<-table(datos_disc$grupos_acp, prediccion.step)
+tabla.step
+
+#Nos da la misma tabla de confusión que manteniendo infectionrate como variable explicativa, por lo que optamos por quitarla para lograr un modelo más parsimonioso
 
 
-#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
-fviz_silhouette(silueta2.3, print.summary = TRUE)
+rocLog<-roc(as.factor(grupos_acp) ~ respuesta.step, plot = TRUE, print.auc = TRUE)
 
+plot(rocLog, print.thres="best", print.thres.best.method="closest.topleft", col="red")
 
-#con este metodo de union de grupos no obtenemos buenos resultado
+prediccion.step2 <- ifelse(respuesta.step > 0.287,2 ,1)
+
+tabla.step2<-table(datos_disc$grupos_acp, prediccion.step2)
+tabla.step2
 ```
 
+Como teníamos problemas de clasificación con observaciones correspondientes al segundo grupo, que tenían silueta negativa al construir los clusters, el algoritmo elije un umbral bajo para que esas observaciones sean clasificadas correctamente como pertenecientes al grupo 2.
+
+```{r validacion}
+train.control <- trainControl(method = "cv", number = 10)
+
+# Entrenar el modelo
+library(e1071)
+
+model <- train(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX,
+               data = datos_disc, method = "glm",
+               trControl = train.control)
+
+print(model)
 
 
-
-### Cluster no jerarquico
-
-```{r clustnojer}
-set.seed(3652)
-
-
-datos2$grupo1 <- cutree(clust1, 3)
-
-centroide1 <- datos2 %>% filter(grupo1 == 1) %>% select(vars_cluster1) %>% colMeans()
-centroide2 <- datos2 %>% filter(grupo1 == 2) %>% select(vars_cluster1) %>% colMeans()
-centroide3 <- datos2 %>% filter(grupo1 == 3) %>% select(vars_cluster1) %>% colMeans()
-
-clusnoj <- kmeans(datos[,vars_cluster1], centers = rbind(centroide1, centroide2, centroide3))
-summary(clusnoj)
-
-
-
-compnoj <- as.data.frame(cbind(acp4$ind$coord[,1:2],  "grupo"  = as.factor(clusnoj[-130]$cluster))) 
-
-
-
-ggplot(compnoj) + geom_point(aes(x = Dim.1, y = Dim.2, color = as.factor(grupo) ))
-
-
-
-distancias4 <- daisy(datos[,vars_cluster1], metric = "euclidean", stand = TRUE)
-silueta4<-silhouette(clusnoj$cluster , distancias4)
-
-
-#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
-fviz_silhouette(silueta4, print.summary = TRUE)
 
 ```
 
-```{r fuzzy y medoides}
-
-medoid <- pam(datos[,vars_cluster1],2)
-
-distancias5<- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE)
-silueta5<-silhouette(medoid$clustering , distancias5)
-
-
-fviz_silhouette(silueta5, print.summary = TRUE)
+The column labeled “Accuracy” is the overall agreement rate averaged over cross-validation iterations. 
 
 
 
-fuzz <- fanny(datos[,vars_cluster2], k = 2)
-```
+
+<!-- # Conclusiones -->
+
+<!-- # Anexos -->
+
+<!-- ## Anexo 1: Método de cluster alternativos -->
+
+<!-- ### Cluster con todas las variables -->
+
+<!-- Como conjunto inicial de variables para agrupar las observaciones elegimos: -->
+
+<!-- * *fiscal*  -->
+<!-- * *ratecut* -->
+<!-- * *macrofin*  -->
+<!-- * *bopgdp*  -->
+<!-- * *medage*  -->
+<!-- * *gdppercap* -->
+<!-- * *healthexp*  -->
+<!-- * *hospitalbed* -->
+<!-- * *infectionrate* -->
+
+<!-- Que es casi todo el conjunto empleado en Marsella y Saldaña (2021) para el análisis de componentes principales donde se replicó el índice de estímulo económico y el posterior ACP que se hizo con dicho índice y el resto de las variables. No se consideran en este primer intento de conformar clusters las variables *otherbop* y *othermonetary* por ser cualitativas y entonces no poder aplicarse la misma distancia que en el resto de las variables (posteriormente se verá como incluirlas) , *stringency* por su cantidad de valores faltantes ya discutida en el proyecto anteriormente citado y *totalcases* por ser una variable cuya información ya está expresada en *infectionrate* y porque dificulta la comparación entre observaciones al estar medida en términos absolutos y no relativos. -->
 
 
-### Cluster con componentes principales (sin CESI_INDEX)
-
-```{r clust acp2}
-datos_acp2 <- acp$ind$coord[,1:2]
-
-datos_acp2 <- cbind(as.data.frame(datos_acp))
-
-datos_acp_st2 <- scale(datos_acp2)
-cov_datos_acp2 <- cov(datos_acp_st2)
-
-rownames(datos_acp_st2) <- datos$country
-
-dist_maha2 <- mahalanobis.dist(datos_acp_st2)
+<!-- ```{r cluster1} -->
 
 
-cluster_acp2 <- agnes(dist_maha2, method = "ward", diss = TRUE)
-```
+<!-- #ver que hacer con las cualitativas -->
+<!-- #ver el conjunto de variables que se eligen para hacer grupos en esta primera en general -->
+<!-- #hablar de covarianzas referenciando al primer proyecto, puede afectar si son altas -->
 
 
-```{r dendrograma2}
-fviz_dend(cluster_acp2,cex=0.4)
+<!-- #primer cluster, la función ya de por si estandariza -->
+<!-- clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TRUE) -->
+<!-- clust1.1<- agnes(datos[-130, vars_cluster1], method = "ward", diss = FALSE, stand = TRUE) -->
 
-```
-
-
-```{r indicadores2}
-cluster_acp_inds2 <- indicadores(cluster_acp2$merge ,datos_acp2 ,9 )
-```
+<!-- ``` -->
 
 
+<!-- ```{r dendrograma1} -->
+<!-- #con san marino -->
+<!-- fviz_dend(clust1,cex=0.4) -->
 
-```{r siluetas2}
-silueta_acp3<- silhouette(cutree(cluster_acp2 , 2) , dist_maha2)
-silueta_acp4 <- silhouette(cutree(cluster_acp2 , 4) , dist_maha2)
+<!-- #se puede ver un problema de atipicos que conforman un cluster separado -->
+
+<!-- clust1_indicadores <- indicadores(clust1$merge ,datos[,vars_cluster1] ,10 ) -->
 
 
-#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
-fviz_silhouette(silueta_acp4, print.summary = TRUE)
-```
+<!-- distancias1 <- get_dist(datos[,vars_cluster1], method = "euclidean", stand = TRUE) -->
+<!-- silueta1<-silhouette(cutree(clust1 ,3) , distancias1) -->
 
-# Referencias
+<!-- fviz_silhouette(silueta1, print.summary = TRUE) -->
+<!-- ``` -->
+
+
+<!-- ```{r dendrograma1.1} -->
+<!-- #con san marino -->
+<!-- fviz_dend(clust1.1,cex=0.4) -->
+
+<!-- #se puede ver un problema de atipicos que conforman un cluster separado -->
+
+<!-- clust1.1_indicadores <- indicadores(clust1.1$merge ,datos[-130,vars_cluster1] ,10 ) -->
+
+
+<!-- distancias1.1 <- get_dist(datos[-130,vars_cluster1], method = "euclidean", stand = TRUE) -->
+<!-- silueta1.1<-silhouette(cutree(clust1.1 ,3) , distancias1.1) -->
+
+<!-- fviz_silhouette(silueta1.1, print.summary = TRUE) -->
+<!-- ``` -->
+
+
+<!-- ### Cluster CESI_INDEX y otras variables -->
+
+<!-- ```{r cluster} -->
+
+<!-- row.names(datos) <- datos$country -->
+
+<!-- datos_clustr <- scale(datos[,vars_cluster]) -->
+
+<!-- #primer cluster, la función ya de por si estandariza -->
+<!-- cluster <- agnes(datos_clustr, method = "ward", diss = TRUE) -->
+
+<!-- ``` -->
+
+
+<!-- ```{r dendrograma} -->
+<!-- fviz_dend(cluster,cex=0.4) -->
+
+<!-- ``` -->
+
+
+
+<!-- ```{r } -->
+<!-- fviz_dend(clust2,cex=0.4) -->
+
+<!-- #se puede ver un problema de atipicos que conforman un cluster separado -->
+
+<!-- clust2_indicadores <- indicadores(clust2$merge ,datos[,vars_cluster2] ,10 ) -->
+
+
+<!-- grupos2 <- cutree(clust2, 2) -->
+
+<!-- datos$grupo2 <- grupos2 -->
+
+<!-- datos %>% filter(grupos2 == 2) -->
+<!-- datos %>% filter(grupos2 == 1) -->
+
+<!-- datos %>% arrange(desc(infectionrate)) -->
+
+
+<!-- distancias <- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE) -->
+<!-- silueta2<-silhouette(cutree(clust2 , 2) , distancias) -->
+
+
+<!-- #grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos -->
+<!-- fviz_silhouette(silueta2, print.summary = TRUE) -->
+
+
+<!-- #vemos cuales son los paises con valores negativos de la silueta -->
+<!-- a <- rep(0,166) -->
+<!-- a[which(silueta2[1:166,3]<0)] <- 1 -->
+
+<!-- datos$aux <- a -->
+
+
+<!-- datosaux <- datos %>% filter(grupos2 == 3) -->
+<!-- datosaux %>% filter(aux==1) -->
+
+<!-- #se puede apreciar que considerando la variable infectionrate se diferencian en varianza del conjunto del resto de los paises y los valores se acumulan mas cercanamente al cero.  -->
+<!-- ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = infectionrate)) -->
+<!-- ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = gdppercap)) -->
+
+<!-- ggplot(datosaux) + geom_point(aes(x = as.factor(aux), y = infectionrate)) -->
+
+
+
+
+<!-- asd <- as.data.frame(cbind(acp4$ind$coord[,1:2],  "grupo"  = grupos2[-130], "silueta_neg" = as.factor(datos$aux))) -->
+
+
+
+<!-- asd %>%  -->
+<!--   filter(grupo == 2) %>%  -->
+<!-- ggplot() + geom_point(aes(x = Dim.1, y = Dim.2, color = as.factor(silueta_neg) )) -->
+
+
+
+<!-- ``` -->
+
+
+
+
+
+<!-- ```{r discriminante_orig} -->
+<!-- #grafico inicial -->
+<!-- ggpairs(datos[c(vars_cluster2, "grupo2")],  mapping = ggplot2::aes(color = as.factor(grupo2) , alpha = 0.5),  -->
+<!--         diag = list(continuous = wrap("densityDiag")),  -->
+<!--         lower=list(continuous = wrap("points", alpha=0.9))) -->
+
+<!-- #puede que la normalidad este fallando por la manera que se construyeron los grupos (en los clusters hay paises con silueta negativa, clasificados incorrectamente, lo que puede generar colas pesadas y/o otros modos) -->
+
+
+<!-- #hacemos los tests de normalidad, homoscedasticidad e igualdad de medias para ver si se puede aplicar discriminante lineal -->
+<!-- testes(datos[,c(vars_cluster2)], as.factor(datos$grupo2)) -->
+
+
+<!-- #rechazamos la normalidad, la igualdad de las medias y la homoscedasticidad -->
+<!-- ``` -->
+
+
+
+<!-- ```{r logistico} -->
+<!-- log1<-glm(as.factor(grupo2) ~ medage + gdppercap + healthexp + hospitalbed + infectionrate + CESI_INDEX , family=binomial, data=datos[,c(vars_cluster2, "grupo2")])  -->
+
+<!-- log1.1 <- stepAIC(log1) -->
+
+
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+
+<!-- ``` -->
+<!-- ### Cluster vecino más cercano -->
+
+<!-- ```{r vecinomcerc} -->
+<!-- clust2.1 <- agnes(datos[,vars_cluster2], method = "single", diss = FALSE, stand = TRUE) -->
+
+<!-- clust2.2 <- agnes(datos[,vars_cluster2], method = "complete", diss = FALSE, stand = TRUE) -->
+
+<!-- #se puede notar a san marino como outlier -->
+<!-- fviz_dend(clust2.1,cex=0.4) -->
+
+
+<!-- #se pueden notar que san marino islandia y luxemburgo son los ultimos en agruparse -->
+<!-- fviz_dend(clust2.2,cex=0.4) -->
+
+<!-- clust2.3 <- agnes(datos[-c(130, 92,70),vars_cluster2], method = "complete", diss = FALSE, stand = TRUE) -->
+
+<!-- fviz_dend(clust2.3,cex=0.4) -->
+
+<!-- clust2.3_nroclust <- indicadores(clust2.3$merge ,datos[-c(130, 92,70),vars_cluster2] ,10 ) -->
+
+
+
+<!-- distancias3 <- get_dist(datos[-c(130, 92,70),vars_cluster2], method = "euclidean", stand = TRUE) -->
+<!-- silueta2.3<-silhouette(cutree(clust2.3 , 3) , distancias3) -->
+
+
+<!-- #grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos -->
+<!-- fviz_silhouette(silueta2.3, print.summary = TRUE) -->
+
+
+<!-- #con este metodo de union de grupos no obtenemos buenos resultado -->
+<!-- ``` -->
+
+
+
+
+<!-- ### Cluster no jerarquico -->
+
+<!-- ```{r clustnojer} -->
+<!-- set.seed(3652) -->
+
+
+<!-- datos2$grupo1 <- cutree(clust1, 3) -->
+
+<!-- centroide1 <- datos2 %>% filter(grupo1 == 1) %>% select(vars_cluster1) %>% colMeans() -->
+<!-- centroide2 <- datos2 %>% filter(grupo1 == 2) %>% select(vars_cluster1) %>% colMeans() -->
+<!-- centroide3 <- datos2 %>% filter(grupo1 == 3) %>% select(vars_cluster1) %>% colMeans() -->
+
+<!-- clusnoj <- kmeans(datos[,vars_cluster1], centers = rbind(centroide1, centroide2, centroide3)) -->
+<!-- summary(clusnoj) -->
+
+
+
+<!-- compnoj <- as.data.frame(cbind(acp4$ind$coord[,1:2],  "grupo"  = as.factor(clusnoj[-130]$cluster)))  -->
+
+
+
+<!-- ggplot(compnoj) + geom_point(aes(x = Dim.1, y = Dim.2, color = as.factor(grupo) )) -->
+
+
+
+<!-- distancias4 <- daisy(datos[,vars_cluster1], metric = "euclidean", stand = TRUE) -->
+<!-- silueta4<-silhouette(clusnoj$cluster , distancias4) -->
+
+
+<!-- #grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos -->
+<!-- fviz_silhouette(silueta4, print.summary = TRUE) -->
+
+<!-- ``` -->
+
+<!-- ```{r fuzzy y medoides} -->
+
+<!-- medoid <- pam(datos[,vars_cluster1],2) -->
+
+<!-- distancias5<- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE) -->
+<!-- silueta5<-silhouette(medoid$clustering , distancias5) -->
+
+
+<!-- fviz_silhouette(silueta5, print.summary = TRUE) -->
+
+
+
+<!-- fuzz <- fanny(datos[,vars_cluster2], k = 2) -->
+<!-- ``` -->
+
+
+<!-- ### Cluster con componentes principales (sin CESI_INDEX) -->
+
+<!-- ```{r clust acp2} -->
+<!-- datos_acp2 <- acp$ind$coord[,1:2] -->
+
+<!-- datos_acp2 <- cbind(as.data.frame(datos_acp)) -->
+
+<!-- datos_acp_st2 <- scale(datos_acp2) -->
+<!-- cov_datos_acp2 <- cov(datos_acp_st2) -->
+
+<!-- rownames(datos_acp_st2) <- datos$country -->
+
+<!-- dist_maha2 <- mahalanobis.dist(datos_acp_st2) -->
+
+
+<!-- cluster_acp2 <- agnes(dist_maha2, method = "ward", diss = TRUE) -->
+<!-- ``` -->
+
+
+<!-- ```{r dendrograma2} -->
+<!-- fviz_dend(cluster_acp2,cex=0.4) -->
+
+<!-- ``` -->
+
+
+<!-- ```{r indicadores2} -->
+<!-- cluster_acp_inds2 <- indicadores(cluster_acp2$merge ,datos_acp2 ,9 ) -->
+<!-- ``` -->
+
+
+
+<!-- ```{r siluetas2} -->
+<!-- silueta_acp3<- silhouette(cutree(cluster_acp2 , 2) , dist_maha2) -->
+<!-- silueta_acp4 <- silhouette(cutree(cluster_acp2 , 4) , dist_maha2) -->
+
+
+<!-- #grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos -->
+<!-- fviz_silhouette(silueta_acp4, print.summary = TRUE) -->
+<!-- ``` -->
+
+<!-- # Referencias -->
