@@ -57,6 +57,7 @@ library(StatMatch)
 library(GGally)
 library(pROC)
 library(caret)
+library(nnet)
 
 
 source("indicadores.R")
@@ -214,7 +215,7 @@ xtable(cluster_acp_inds, caption = "Valores de los indicadores de las Reglas de 
 ```
 
 
-En la Figura 3 están presentados los valores que se toman en cuenta para aplicar las reglas de detención, a partir de los cuales hay dos estructuras de grupos de interés. En primer lugar se cuenta con una estructura de dos grupos que surge de unir el grupo de 58 observaciones creado en el paso anterior y otro de 3 conformado por San Marino, Luxemburgo e Islandia, como se podía observar en la Figura 2. Para esta estructura el valor del pseudo-t es 20.58, lo que representa una disminución respecto a la estructura con un grupo y no se da una disminución al considerar la estructura con tres grupos. En cuanto al pseudo-F el valor (108.44) representa un máximo relativo. La otra estructura es de cuatro grupos y cuenta con un valor del pseudo-t de 16.22 y un pseudo-F de 91.54 que representan un mínimo y un máximo local respectivamente. Por lo tanto según estos dos indicadores cualquiera de estas dos estrucutras de grupos puede resultar adecuada. En lo que se diferencian además de la cantidad de grupos es en sus valores del $R^2$, que necesariamente será mayor al considerar más grupos; para la estructura de dos grupos es de 0.4 y para la de cuatro es de 0.63, por lo cual tenemos un aumento aproximado del 23% de la variabilidad explicada al considerar cuatro grupos.   
+En la Figura 3 están presentados los valores que se toman en cuenta para aplicar las reglas de detención, a partir de los cuales hay dos estructuras de grupos de interés. En primer lugar se cuenta con una estructura de dos grupos que surge de unir el grupo de 58 observaciones creado en el paso anterior y otro de 3 conformado por San Marino, Luxemburgo e Islandia, como se podía observar en la Figura 2. Para esta estructura el valor del pseudo-t es 20.58, lo que representa una disminución respecto a la estructura con un grupo y no se da una disminución al considerar la estructura con tres grupos. En cuanto al pseudo-F el valor (108.44) representa un máximo relativo. La otra estructura es de cuatro grupos y cuenta con un valor del pseudo-t de 16.22 y un pseudo-F de 91.54 que representan un mínimo y un máximo local respectivamente. Por lo tanto según estos dos indicadores cualquiera de estas dos estrucutras de grupos puede resultar adecuada. En lo que se diferencian además de la cantidad de grupos es en sus valores del $R^2$, que necesariamente será mayor al considerar más grupos; para la estructura de dos grupos es de 0.4 y para la de cuatro es de 0.63, por lo cual tenemos un aumento aproximado del 23% de la variabilidad explicada al considerar cuatro grupos, argumento a favor de esta última estructura. 
 
 
 
@@ -231,171 +232,61 @@ sil2 <-fviz_silhouette(silueta_acp2, print.summary = TRUE, label = TRUE) + coord
 silprom1 <- sil1[[1]] %>% group_by(cluster) %>% summarise(sil_mean = round(mean(sil_width),2), meannames = mean(as.numeric(name)))
 
 
-silprom2 <- sil2[[1]] %>% group_by(cluster) %>% summarise(sil_mean = round(mean(sil_width),2)) %>% cbind(cord = c(40, 115, 140, 163 ))
+silprom2 <- sil2[[1]] %>% group_by(cluster) %>% summarise(sil_mean = round(mean(sil_width),2)) %>% cbind(cord = c(40, 115, 140, 161 ))
 
 
 ```
 
 
+```{r graficos de silueta, out.width= "100%", include= TRUE }
+grafsiluetas1 <-  sil1+geom_text(data = silprom1, mapping = aes(y= 0.8, x = as.character(meannames), label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
 
-```{r grafico silueta 1}
-sil1+geom_text(data = silprom1, mapping = aes(y= 0.8, x = as.character(meannames), label = paste("Silueta promedio:", as.character(sil_mean))))
+grafsiluetas2 <- sil2+geom_text(data = silprom2, mapping = aes(y= 0.8, x = cord, label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
+
+
+grid.arrange(grafsiluetas1, grafsiluetas2)
+```
+Otro indicador adicional para la selección de la estructura de grupos es la silueta de las observaciones y la representación gráfica de la misma, mediante los cuales se puede evaluar que tan bien han sido asignadas las observaciones a los grupos. La silueta $s_i$ de la observación $i$ se calcula como:
+
+$$s_i = \frac{b_i - a_i}{max(b_i, a_i)}$$
+
+Donde $a_i$ es la distancia promedio de la i-ésima observación al resto de objetos de su grupo y $b_i$ es la distancia promedio de la observación a los objetos de los demás grupos. Así se tiene una medida de la similaridad de una observación respecto a las que están en su grupo y las que no. Entre más próximo a 1 sea el valor de la silueta más similar es la observación a las de su mismo grupo y más disímil a las de los demás. Una silueta próxima a -1 indica lo contrario. 
+
+Analizando los gráficos de siluetas y los valores presentados en la Figura xx se aprecia que para ambas estructuras de grupo la silueta promedio de todas las observaciones toma un valor de 0.34 aproximadamente. Sin embargo observándose la silueta promedio dentro de cada uno de los grupos en la estructura de dos grupos la silueta promedio de uno de ellos es negativa y próxima a 0, lo que indica que en promedio la distancia de las observaciones a las demás de su mismo grupo es casi igual a las distancia de las observaciones a las del otro grupo. Esto es consecuencia del elevado número de observaciones con silueta negativa en el grupo 2, aproximadamente la mitad, las cuales son más similares a las observaciones del grupo 1, lo cual no es deseado para hacer una buena clasificación. Para la estructura de 4 grupos si bien el promedio global de las siluetas es igual al de la otra estructura vemos que ninguno de los grupos tiene siluetas promedio negativas y la menor es de 0.11. Esto indicaría que las observaciones están mejor asignadas en sus grupos al considerar cuatro de ellos.
+
+En conclusión, tomando en cuenta el mejor desempeño en cuanto al $R^2$ y las siluetas promedio de los grupos, se opta por la estructura de cuatro clusters.
+
+
+
+## Descripción de los clusters
+
+```{r grupos 4 cluster, include = TRUE}
+grupos_acp2 <- cutree(cluster_acp, 4)
+
+graf2 <- as.data.frame(cbind(datos_acp, grupos_acp2))
+
+ggplot(graf2) + geom_point(aes(x=Dim.1,y= Dim.2, color = as.factor(grupos_acp2), label = row.names(graf2))) +
+  geom_text(aes(x=Dim.1,y= Dim.2, label=ifelse((Dim.1>2.5 & (Dim.2 > 2.5 | Dim.2 < -2.5)) | (Dim.1 > 3.7) | (Dim.2 > 2), as.character(row.names(graf2)),'')),hjust=0.7,vjust=-0.2) +scale_color_discrete(name= "Grupo") + geom_hline(yintercept = 0) + geom_vline(xintercept = 0) 
+
 
 ```
-```{r grafico silueta 2}
-sil2+geom_text(data = silprom2, mapping = aes(y= 0.8, x = cord, label = paste("Silueta promedio:", as.character(sil_mean))))
 
-```
+En la Figura xx se puede observar el gráfico de los países proyectados en el primer plano principal, conformado por las dos componentes principales empleadas en la formación de los clusters. Lo primero que se puede observar es que el grupo 4 es el que más se aleja de los demás, dado que las observaciones que lo componen tomaron valores altos de las dos variables consideradas (que a su vez considerando el conjunto de las variables con las que se formaron las componentes, tomaban valores atípicos, en particular en la variable *infectionrate*). Los países del grupo 1 son los que toman valores más bajos en la dimensión 1, que de acuerdo a la caracterización de los ejes realizada en *Marsella y Saldaña (2021)* corresponde principalmente a valores más bajos de variables de desarrollo económico. En cuanto a la dimensión 2 toman valores próximos a 0 y siguiendo la caracterización de este eje que principalmente se daba por la tasa de infección, esto indicaría que los niveles de infección de los países de este grupo están más cercanos al valor medio de está variable. Los países de los grupos 2 y 3 se ven diferenciados principalmente por la primera dimensión, donde los del grupo 3 tienden a tener mayores valores de esta variable, lo que se puede interpretar como un mayor nivel de desarrollo económico. También hay una tendencia a que los del grupo 2 tienen mayores valores de la segunda dimensión lo que se podría interpretar como que los países de este cluster tienen menores tasas de infección en general. 
 
 
 
+```{r boxplot noinfectionrate}
+datos_disc_multinom <- as.data.frame(cbind(datos[,vars_cluster], graf2[,-3]))
 
-```{r}
-grupos_acp <- cutree(cluster_acp, 2)
+ggplot(datos_disc_multinom) + geom_boxplot(aes(x = as.factor(grupos_acp2), y = noinfectionrate))
 
-graf <- as.data.frame(cbind(datos_acp, grupos_acp))
-
-ggplot(graf) + geom_point(aes(x=Dim.1,y= Dim.2, color = as.factor(grupos_acp)))
-
-
-```
-
-```{r as}
-grupos_acp2 <- cutree(cluster_acp, 3)
-
-graf <- as.data.frame(cbind(datos_acp, grupos_acp))
-
-ggplot(graf) + geom_point(aes(x=Dim.1,y= Dim.2, color = as.factor(grupos_acp)))
-
-
-```
-
-
-```{r}
-sil <- rep(0,166)
-sil[which(silueta_acp[1:166,3]<0)] <- 1
-
-graf <- cbind(datos$country, graf, sil)
-
-filter(graf, sil == 1)
-```
-
-
-
-
-
-
-# Análisis de discriminante
-
-```{r}
-ggpairs(datos_acp,  mapping = ggplot2::aes(color = as.factor(grupos_acp) , alpha = 0.5), 
-        diag = list(continuous = wrap("densityDiag")), 
-        lower=list(continuous = wrap("points", alpha=0.9)))
-```
-
-```{r tests norm}
-testes(datos_acp, as.factor(graf$grupos_acp))
-#rechazamos la multinormalidad, la homoscedasticidad y la igualdad de medias
-```
-
-
-```{r logistico acp}
-
-datos_disc <- as.data.frame(cbind(datos[,vars_cluster], graf[,-3]))
-
-log <- glm(as.factor(grupos_acp) ~ gdppercap + noinfectionrate  , family=binomial, data=datos_disc) 
-summary(log)
-
-D1 <- log$null.deviance-log$deviance
-pchisq(D1, df = 5, lower.tail = F)
-
-
-
-respuesta <-predict.glm(log,type='response') #Tenemos la respuesta del modelo
-
-
-prediccion <- ifelse(respuesta > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
-
-#Tabla de confusion
-tabla<-table(datos_disc$grupos_acp, prediccion)
-tabla
-```
-
-
-
-```{r}
-log2 <- glm(as.factor(grupos_acp) ~  medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc) 
-summary(log2)
-
-
-log2step <- step(log2)
-summary(log2step)
-
-
-
-respuesta2 <-predict.glm(log2,type='response') #Tenemos la respuesta del modelo
-
-
-prediccion2 <- ifelse(respuesta2 > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
-
-#Tabla de confusion
-tabla2<-table(datos_disc$grupos_acp, prediccion2)
-tabla2
 ```
 
 
 ```{r}
-#Lo mismo con el modelo que nos da el step, con las variables significativas
-
-log.step <- glm(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc) 
-summary(log.step)
-
-
-respuesta.step <-predict.glm(log.step,type='response') #Tenemos la respuesta del modelo
-
-
-prediccion.step <- ifelse(respuesta.step > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
-
-#Tabla de confusion
-tabla.step<-table(datos_disc$grupos_acp, prediccion.step)
-tabla.step
-
-#Nos da la misma tabla de confusión que manteniendo infectionrate como variable explicativa, por lo que optamos por quitarla para lograr un modelo más parsimonioso
-
-
-rocLog<-roc(as.factor(grupos_acp) ~ respuesta.step, plot = TRUE, print.auc = TRUE)
-
-plot(rocLog, print.thres="best", print.thres.best.method="closest.topleft", col="red")
-
-prediccion.step2 <- ifelse(respuesta.step > 0.287,2 ,1)
-
-tabla.step2<-table(datos_disc$grupos_acp, prediccion.step2)
-tabla.step2
-```
-
-Como teníamos problemas de clasificación con observaciones correspondientes al segundo grupo, que tenían silueta negativa al construir los clusters, el algoritmo elije un umbral bajo para que esas observaciones sean clasificadas correctamente como pertenecientes al grupo 2.
-
-```{r validacion}
-train.control <- trainControl(method = "cv", number = 10)
-
-# Entrenar el modelo
-library(e1071)
-
-model <- train(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX,
-               data = datos_disc, method = "glm",
-               trControl = train.control)
-
-print(model)
-
-
+ggplot(datos_disc_multinom) + geom_boxplot(aes(x = as.factor(grupos_acp2), y = gdppercap))
 
 ```
-
-The column labeled “Accuracy” is the overall agreement rate averaged over cross-validation iterations. 
-
-
-
-
 
 
 
@@ -408,101 +299,126 @@ The column labeled “Accuracy” is the overall agreement rate averaged over cr
 # Análisis de discriminante multinom
 
 ```{r}
-ggpairs(datos_acp,  mapping = ggplot2::aes(color = as.factor(grupos_acp) , alpha = 0.5), 
+ggpairs(graf2,  mapping = ggplot2::aes(color = as.factor(grupos_acp2) , alpha = 0.5), 
         diag = list(continuous = wrap("densityDiag")), 
         lower=list(continuous = wrap("points", alpha=0.9)))
 ```
 
-```{r tests norm}
-testes(datos_acp, as.factor(graf$grupos_acp))
-#rechazamos la multinormalidad, la homoscedasticidad y la igualdad de medias
+```{r tests norm 4 clust}
+testes(graf2[,-4], as.factor(graf2$grupos_acp2))
+#rechazamos la multinormalidad para todos los grupos menos el 4, la homoscedasticidad y la igualdad de medias
 ```
 
 
-```{r logistico acp}
+```{r multinomial con datos acp}
 
-datos_disc <- as.data.frame(cbind(datos[,vars_cluster], graf[,-3]))
 
-log <- glm(as.factor(grupos_acp) ~ gdppercap + noinfectionrate  , family=binomial, data=datos_disc) 
-summary(log)
-
-D1 <- log$null.deviance-log$deviance
-pchisq(D1, df = 5, lower.tail = F)
+mod_multinomial <- multinom(as.factor(grupos_acp2) ~ gdppercap + medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX   ,  data=datos_disc_multinom) 
 
 
 
-respuesta <-predict.glm(log,type='response') #Tenemos la respuesta del modelo
+resumen_multinom <- summary(mod_multinomial)
+
+#significacion del modelo
+
+mod_multinomial_sinvars <- multinom(as.factor(grupos_acp2) ~ 1 ,  data=datos_disc_multinom) 
+
+D1 <- mod_multinomial_sinvars$deviance-mod_multinomial$deviance
+pchisq(D1, df = 6, lower.tail = F)
+
+qchisq(0.05, df = 6)
+D1
+
+# significacion de las variables
+
+coeficientes <- resumen_multinom$coefficients
+desvios <- resumen_multinom$standard.errors
+
+## 1er modelo (grupo 2)
+
+wald1 <- coeficientes[1,]/desvios[1,]
+
+pnorm(abs(wald1), lower.tail = FALSE)
+pchisq(wald1^2, df = 1, lower.tail = F)
+
+qnorm(0.05, lower.tail = FALSE)
+abs(wald1)
 
 
-prediccion <- ifelse(respuesta > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
+## 2do modelo (grupo 3)
 
-#Tabla de confusion
-tabla<-table(datos_disc$grupos_acp, prediccion)
-tabla
+wald2 <- coeficientes[2,]/desvios[2,]
+
+pnorm(abs(wald2), lower.tail = FALSE)
+pchisq(wald2^2, df = 1, lower.tail = F)
+
+qnorm(0.05, lower.tail = FALSE)
+abs(wald2)
+
+## 3er modelo (grupo 4)
+
+wald3 <- coeficientes[3,]/desvios[3,]
+
+pnorm(abs(wald3), lower.tail = FALSE)
+pchisq(wald3^2, df = 1, lower.tail = F)
+
+qnorm(0.05, lower.tail = FALSE)
+abs(wald3)
+
+
+#Prediction
+
+predict_mod_multinomial <- predict(mod_multinomial, newdata = datos_disc_multinom , "probs") #Son las probabilidades predichas
+round(predict_mod_multinomial, 4)
+classpredict <- predict(mod_multinomial, newdata = datos_disc_multinom , "class") #Son las clasificaciones predichas
+
+#Matriz de difusion
+tabla1 <- table(datos_disc_multinom$grupos_acp2,classpredict) #Para los datos con los que se hizo el modelo
+tabla1
+round((sum(diag(tabla1))/sum(tabla1))*100,2)
+
 ```
 
 
 
 ```{r}
-log2 <- glm(as.factor(grupos_acp) ~  medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc) 
-summary(log2)
+step_multi <- step(mod_multinomial, direction = "both")
+summary(step_multi)
 
-
-log2step <- step(log2)
-summary(log2step)
-
-
-
-respuesta2 <-predict.glm(log2,type='response') #Tenemos la respuesta del modelo
-
-
-prediccion2 <- ifelse(respuesta2 > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
-
-#Tabla de confusion
-tabla2<-table(datos_disc$grupos_acp, prediccion2)
-tabla2
 ```
 
 
-```{r}
-#Lo mismo con el modelo que nos da el step, con las variables significativas
+```{r validacion multinom}
 
-log.step <- glm(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc) 
-summary(log.step)
-
-
-respuesta.step <-predict.glm(log.step,type='response') #Tenemos la respuesta del modelo
+#dividir en entrenamiento y prueba
+set.seed(3652)
+muestra <- sample.int(n = nrow(datos_disc_multinom), size = floor(0.85*nrow(datos_disc_multinom)), replace = F)
 
 
-prediccion.step <- ifelse(respuesta.step > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0
+entrenamiento <- datos_disc_multinom[muestra, ]
+testeo  <- datos_disc_multinom[-muestra, ]
 
-#Tabla de confusion
-tabla.step<-table(datos_disc$grupos_acp, prediccion.step)
-tabla.step
-
-#Nos da la misma tabla de confusión que manteniendo infectionrate como variable explicativa, por lo que optamos por quitarla para lograr un modelo más parsimonioso
+multinom_entrena <- multinom(as.factor(grupos_acp2) ~ gdppercap + medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX   ,  data=entrenamiento) 
 
 
-rocLog<-roc(as.factor(grupos_acp) ~ respuesta.step, plot = TRUE, print.auc = TRUE)
 
-plot(rocLog, print.thres="best", print.thres.best.method="closest.topleft", col="red")
+predtesteo<-predict(multinom_entrena,testeo)
+predentrena<-predict(multinom_entrena,entrenamiento)
 
-prediccion.step2 <- ifelse(respuesta.step > 0.287,2 ,1)
+tabla_e <- table(entrenamiento$grupos_acp2,predentrena)
+tabla_t <- table(testeo$grupos_acp2,predtesteo)
 
-tabla.step2<-table(datos_disc$grupos_acp, prediccion.step2)
-tabla.step2
-```
+round((sum(diag(tabla_e))/sum(tabla_e))*100,2)
 
-Como teníamos problemas de clasificación con observaciones correspondientes al segundo grupo, que tenían silueta negativa al construir los clusters, el algoritmo elije un umbral bajo para que esas observaciones sean clasificadas correctamente como pertenecientes al grupo 2.
+round((sum(diag(tabla_t))/sum(tabla_t))*100,2)
 
-```{r validacion}
+#k-folds cross validation
 train.control <- trainControl(method = "cv", number = 10)
 
 # Entrenar el modelo
-library(e1071)
 
-model <- train(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX,
-               data = datos_disc, method = "glm",
+model <- train(as.factor(grupos_acp2) ~  gdppercap + medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX,
+               data = datos_disc_multinom, method = "multinom",
                trControl = train.control)
 
 print(model)
@@ -516,11 +432,9 @@ print(model)
 
 
 
+# Conclusiones
 
-
-<!-- # Conclusiones -->
-
-<!-- # Anexos -->
+# Anexos
 
 <!-- ## Anexo 1: Método de cluster alternativos -->
 
@@ -826,4 +740,127 @@ print(model)
 <!-- fviz_silhouette(silueta_acp4, print.summary = TRUE) -->
 <!-- ``` -->
 
-<!-- # Referencias -->
+
+
+<!-- # Análisis de discriminante binomial -->
+
+
+
+<!-- # ```{r grupos 2 clust} -->
+<!-- # grupos_acp <- cutree(cluster_acp, 2) -->
+<!-- #  -->
+<!-- # graf <- as.data.frame(cbind(datos_acp, grupos_acp)) -->
+<!-- #  -->
+<!-- # ggplot(graf) + geom_point(aes(x=Dim.1,y= Dim.2, color = as.factor(grupos_acp))) -->
+<!-- #  -->
+<!-- #  -->
+<!-- # ``` -->
+
+
+<!-- ```{r} -->
+<!-- ggpairs(datos_acp,  mapping = ggplot2::aes(color = as.factor(grupos_acp) , alpha = 0.5),  -->
+<!--         diag = list(continuous = wrap("densityDiag")),  -->
+<!--         lower=list(continuous = wrap("points", alpha=0.9))) -->
+<!-- ``` -->
+
+<!-- ```{r tests norm} -->
+<!-- testes(datos_acp, as.factor(graf$grupos_acp)) -->
+<!-- #rechazamos la multinormalidad, la homoscedasticidad y la igualdad de medias -->
+<!-- ``` -->
+
+
+<!-- ```{r logistico acp} -->
+
+<!-- datos_disc <- as.data.frame(cbind(datos[,vars_cluster], graf[,-3])) -->
+
+<!-- log <- glm(as.factor(grupos_acp) ~ gdppercap + noinfectionrate  , family=binomial, data=datos_disc)  -->
+<!-- summary(log) -->
+
+<!-- D1 <- log$null.deviance-log$deviance -->
+<!-- pchisq(D1, df = 5, lower.tail = F) -->
+
+
+
+<!-- respuesta <-predict.glm(log,type='response') #Tenemos la respuesta del modelo -->
+
+
+<!-- prediccion <- ifelse(respuesta > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0 -->
+
+<!-- #Tabla de confusion -->
+<!-- tabla<-table(datos_disc$grupos_acp, prediccion) -->
+<!-- tabla -->
+<!-- ``` -->
+
+
+
+<!-- ```{r} -->
+<!-- log2 <- glm(as.factor(grupos_acp) ~  medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc)  -->
+<!-- summary(log2) -->
+
+
+<!-- log2step <- step(log2) -->
+<!-- summary(log2step) -->
+
+
+
+<!-- respuesta2 <-predict.glm(log2,type='response') #Tenemos la respuesta del modelo -->
+
+
+<!-- prediccion2 <- ifelse(respuesta2 > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0 -->
+
+<!-- #Tabla de confusion -->
+<!-- tabla2<-table(datos_disc$grupos_acp, prediccion2) -->
+<!-- tabla2 -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- #Lo mismo con el modelo que nos da el step, con las variables significativas -->
+
+<!-- log.step <- glm(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc)  -->
+<!-- summary(log.step) -->
+
+
+<!-- respuesta.step <-predict.glm(log.step,type='response') #Tenemos la respuesta del modelo -->
+
+
+<!-- prediccion.step <- ifelse(respuesta.step > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0 -->
+
+<!-- #Tabla de confusion -->
+<!-- tabla.step<-table(datos_disc$grupos_acp, prediccion.step) -->
+<!-- tabla.step -->
+
+<!-- #Nos da la misma tabla de confusión que manteniendo infectionrate como variable explicativa, por lo que optamos por quitarla para lograr un modelo más parsimonioso -->
+
+
+<!-- rocLog<-roc(as.factor(grupos_acp) ~ respuesta.step, plot = TRUE, print.auc = TRUE) -->
+
+<!-- plot(rocLog, print.thres="best", print.thres.best.method="closest.topleft", col="red") -->
+
+<!-- prediccion.step2 <- ifelse(respuesta.step > 0.287,2 ,1) -->
+
+<!-- tabla.step2<-table(datos_disc$grupos_acp, prediccion.step2) -->
+<!-- tabla.step2 -->
+<!-- ``` -->
+
+<!-- Como teníamos problemas de clasificación con observaciones correspondientes al segundo grupo, que tenían silueta negativa al construir los clusters, el algoritmo elije un umbral bajo para que esas observaciones sean clasificadas correctamente como pertenecientes al grupo 2. -->
+
+<!-- ```{r validacion} -->
+<!-- train.control <- trainControl(method = "cv", number = 10) -->
+
+<!-- # Entrenar el modelo -->
+<!-- library(e1071) -->
+
+<!-- model <- train(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX, -->
+<!--                data = datos_disc, method = "glm", -->
+<!--                trControl = train.control) -->
+
+<!-- print(model) -->
+
+
+
+<!-- ``` -->
+
+<!-- The column labeled “Accuracy” is the overall agreement rate averaged over cross-validation iterations.  -->
+
+# Referencias
