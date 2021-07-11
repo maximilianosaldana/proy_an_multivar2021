@@ -162,7 +162,7 @@ Donde $i$ y $j$ son dos individuos y $\Sigma$ es la matriz de varianzas y covari
 
 Como fue anteriormente mencionado, además de la métrica es necesario optar por un algoritmo para definir como unir grupos y observaciones a grupos. Inicialmente consideramos dentro de los métodos jerárquicos agregativos los métodos del vecino más cercano, vecino más lejano y método de Ward.
 
-```{r cluster vecinos, include=TRUE, out.width= "100%"}
+```{r cluster vecinos, include=TRUE, out.width= "100%", fig.cap="Dendrogramas para las clasificaciones realizadas con vecinos más cercanos y más lejanos."}
 rownames(datos_acp) <- datos$country
 
 datos_acp_st <- scale(datos_acp)
@@ -199,7 +199,7 @@ cluster_acp <- agnes(dist_maha, method = "ward", diss = TRUE)
 ```
 
 
-```{r dendrograma ward, include =TRUE}
+```{r dendrograma ward, include =TRUE, fig.cap="Dendrogramas para la clasificación realizada por el método de Ward", out.width="75%"}
 fviz_dend(cluster_acp,cex=0.4) +
   ggtitle("Método de Ward") +
   ylab("Altura") +
@@ -249,9 +249,9 @@ silprom2 <- sil2[[1]] %>% group_by(cluster) %>% summarise(sil_mean = round(mean(
 
 
 ```{r graficos de silueta, , include= TRUE }
-grafsiluetas1 <-  sil1+geom_text(data = silprom1, mapping = aes(y= 0.8, x = as.character(meannames), label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
+grafsiluetas1 <-  sil1+geom_text(data = silprom1, mapping = aes(y= 0.8, x = as.character(meannames), label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank()) + ggtitle("Silueta promedio: 0.34") + xlab("Ancho de silueta")
 
-grafsiluetas2 <- sil2+geom_text(data = silprom2, mapping = aes(y= 0.8, x = cord, label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
+grafsiluetas2 <- sil2+geom_text(data = silprom2, mapping = aes(y= 0.8, x = cord, label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank()) + ggtitle("Silueta promedio: 0.34") + xlab("Ancho de silueta")
 
 
 grid.arrange(grafsiluetas1, grafsiluetas2)
@@ -270,7 +270,7 @@ En conclusión, tomando en cuenta el mejor desempeño en cuanto al $R^2$ y las s
 
 ## Descripción de los clusters
 
-```{r grupos 4 cluster, include = TRUE}
+```{r grupos 4 cluster, include = TRUE, out.width="75%"}
 grupos_acp2 <- cutree(cluster_acp, 4)
 
 graf2 <- as.data.frame(cbind(datos_acp, grupos_acp2))
@@ -328,7 +328,7 @@ Luego de haber agrupado las observaciones empleando como variables dos de las co
 * *noinfectionrate*
 * *CESI_INDEX*
 
-Donde se incluye el índice de estímulo económica a pesar de no haber sido usado en la creación de las componentes para observar su efecto en la clasificación. Dado que en este conjunto de variables todas son cuantitativas una opción puede ser realizar un análisis discriminante lineal, donde se parte del supuesto que en cada grupo $g=1,...,k$ existe una distribución normal $p$-variada con vector de medias $\mu_g$ y matriz de varianzas y covarianzas $\Sigma_g$, siendo p el número de variables. Otro supuesto adicional es que para los distintos grupos las matrices $\Sigma_g$ son iguales. De cumplirse ambos supuestos se pueden derivar las funciones discriminante y de clasificación en base a ellos y la regla de clasificación elegida. Para evaluar su cumplimiento se realizan pruebas de hipótesis de multinormalidad y de homoscedasticidad. La prueba de multinormalidad empleada es la de Mardia, que pone a prueba las hipótesis nulas de  simetría y curtosis de las distribuciones de los grupos. Para no rechazar la multinormalidad no se tienen que rechazar ambas hipótesis. En el Cuadro 2 se aprecia como para los cuatro grupos al 5% se rechaza la hipótesis nula de multinormalidad, al rechazarse una o ambas de las hipótesis anteriormente presentadas (observando los p-valores para los grupos 2 y 4 la hipótesis de simetría no se rechaza pero la de curtosis sí, en los otros dos se rechazan ambas hipótesis). Por lo tanto, el análisis discriminante lineal queda descartado, lo mismo que el cuadrático que se emplea para casos donde no se cumple la homoscedasticidad. 
+Donde se incluye el índice de estímulo económica a pesar de no haber sido usado en la creación de las componentes para observar su efecto en la clasificación. Dado que en este conjunto de variables todas son cuantitativas una opción puede ser realizar un análisis discriminante lineal, donde se parte del supuesto que en cada grupo $g=1,...,k$ existe una distribución normal $p$-variada con vector de medias $\mu_g$ y matriz de varianzas y covarianzas $\Sigma_g$, siendo p el número de variables. Otro supuesto adicional es que para los distintos grupos las matrices $\Sigma_g$ son iguales. De cumplirse ambos supuestos se pueden derivar las funciones discriminante y de clasificación en base a ellos y la regla de clasificación elegida. Para evaluar su cumplimiento se realizan pruebas de hipótesis de multinormalidad y de homoscedasticidad. La prueba de multinormalidad empleada es la de Mardia, que pone a prueba las hipótesis nulas de  simetría y curtosis de las distribuciones de los grupos. Para no rechazar la multinormalidad no se tienen que rechazar ambas hipótesis. En el Cuadro 3 se aprecia como para los cuatro grupos a un nivel de significación del 5% se rechaza la hipótesis nula de multinormalidad, al rechazarse una o ambas de las hipótesis anteriormente presentadas (observando los p-valores para los grupos 2 y 4 la hipótesis de simetría no se rechaza pero la de curtosis sí, en los otros dos se rechazan ambas hipótesis). Por lo tanto, el análisis discriminante lineal queda descartado, lo mismo que el cuadrático que se emplea para casos donde no se cumple la homoscedasticidad. 
 
 ```{r}
 # a nivel de cada una de las variables se puede ver que no hay campanas con forma normal para cada uno de los grupos, lo cual indicaria que las distribuciones de los grupos no podrian ser multinormales 
@@ -364,7 +364,7 @@ colnames(matriz_tnorm) <-   c("grupo", "kappa1", "pvalsim", "kappa2", "pvalkurt"
 ```
 
 ```{r, results='asis', include= TRUE}
-xtable(as.data.frame(matriz_tnorm), round = 2) %>% print.xtable(include.rownames = FALSE)
+xtable(as.data.frame(matriz_tnorm), round = 2, caption="Valores de los estadísticos y p-valores para los test de simetría y curtosis.") %>% print.xtable(include.rownames = FALSE)
 ```
 
 Ante esta situación se opta por efectuar un análisis discriminante logístico, para el cual no se requiere el cumplimiento de la multinormalidad. Como tenemos 4 grupos donde cada uno va a tener una probabilidad, consideramos un conjunto de variables aleatorias $Y_i \sim multinomial(n, \pi_g)$, siendo $Y_i$ el grupo al que corresponde la observación $i$-ésima. En este modelo, según el método de la categoría de referencia, se emplean $k-1$ ecuaciones, para modelar la probabilidad de que una observación esté en el grupo $g$ respecto a la probabilidad de que esté en el grupo que se toma como referencia. La probabilidad que el individuo $i$ esté en el grupo $g$ es:
