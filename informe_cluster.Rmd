@@ -25,8 +25,7 @@ knitr::opts_chunk$set(echo=FALSE,
                       fig.pos = 'H',
                       fig.align = 'center',
                       out.extra = '',
-                      fig.hold = 'hold',
-                      out.width = "50%"
+                      fig.hold = 'hold'
                       )
 options(xtable.comment=FALSE,
         xtable.table.placement="H")
@@ -175,9 +174,15 @@ clust2.1 <- agnes(dist_maha, method = "single", diss = TRUE)
 
 clust2.2 <- agnes(dist_maha, method = "complete", diss = TRUE)
 
-dend.1 <- fviz_dend(clust2.1,cex=0.4) #se puede notar a san marino como outlier 
+labs <- datos$country[as.logical(c(rep(c(1,0,0), 54), 0, 1, 1, 1))]
 
-dend.2 <- fviz_dend(clust2.2,cex=0.4) #se pueden notar que san marino islandia y luxemburgo son los ultimos en agruparse
+dend.1 <- fviz_dend(clust2.1,cex=0.4, lwd=0.35) +
+  ggtitle("Vecinos más cercanos") +
+  ylab("Altura")  #se puede notar a san marino como outlier 
+
+dend.2 <- fviz_dend(clust2.2,cex=0.4, lwd=0.35) +
+  ggtitle("Vecinos más lejanos") +
+  ylab("Altura")  #se pueden notar que san marino islandia y luxemburgo son los ultimos en agruparse
 
 grid.arrange(dend.1, dend.2, ncol=2)
 
@@ -195,7 +200,12 @@ cluster_acp <- agnes(dist_maha, method = "ward", diss = TRUE)
 
 
 ```{r dendrograma ward, include =TRUE}
-fviz_dend(cluster_acp,cex=0.4)
+fviz_dend(cluster_acp,cex=0.4) +
+  ggtitle("Método de Ward") +
+  ylab("Altura") +
+  theme(axis.text = element_text(size=15),
+        axis.title = element_text(size=15)
+        )
 
 ```
 
@@ -238,7 +248,7 @@ silprom2 <- sil2[[1]] %>% group_by(cluster) %>% summarise(sil_mean = round(mean(
 ```
 
 
-```{r graficos de silueta, out.width= "100%", include= TRUE }
+```{r graficos de silueta, , include= TRUE }
 grafsiluetas1 <-  sil1+geom_text(data = silprom1, mapping = aes(y= 0.8, x = as.character(meannames), label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
 
 grafsiluetas2 <- sil2+geom_text(data = silprom2, mapping = aes(y= 0.8, x = cord, label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
@@ -252,7 +262,7 @@ $$s_i = \frac{b_i - a_i}{max(b_i, a_i)}$$
 
 Donde $a_i$ es la distancia promedio de la i-ésima observación al resto de objetos de su grupo y $b_i$ es la distancia promedio de la observación a los objetos de los demás grupos. Así se tiene una medida de la similaridad de una observación respecto a las que están en su grupo y las que no. Entre más próximo a 1 sea el valor de la silueta más similar es la observación a las de su mismo grupo y más disímil a las de los demás. Una silueta próxima a -1 indica lo contrario. 
 
-Analizando los gráficos de siluetas y los valores presentados en la Figura xx se aprecia que para ambas estructuras de grupo la silueta promedio de todas las observaciones toma un valor de 0.34 aproximadamente. Sin embargo observándose la silueta promedio dentro de cada uno de los grupos en la estructura de dos grupos la silueta promedio de uno de ellos es negativa y próxima a 0, lo que indica que en promedio la distancia de las observaciones a las demás de su mismo grupo es casi igual a las distancia de las observaciones a las del otro grupo. Esto es consecuencia del elevado número de observaciones con silueta negativa en el grupo 2, aproximadamente la mitad, las cuales son más similares a las observaciones del grupo 1, lo cual no es deseado para hacer una buena clasificación. Para la estructura de 4 grupos si bien el promedio global de las siluetas es igual al de la otra estructura vemos que ninguno de los grupos tiene siluetas promedio negativas y la menor es de 0.11. Esto indicaría que las observaciones están mejor asignadas en sus grupos al considerar cuatro de ellos.
+Analizando los gráficos de siluetas y los valores presentados en la Figura 3 se aprecia que para ambas estructuras de grupo la silueta promedio de todas las observaciones toma un valor de 0.34 aproximadamente. Sin embargo observándose la silueta promedio dentro de cada uno de los grupos en la estructura de dos grupos la silueta promedio de uno de ellos es negativa y próxima a 0, lo que indica que en promedio la distancia de las observaciones a las demás de su mismo grupo es casi igual a las distancia de las observaciones a las del otro grupo. Esto es consecuencia del elevado número de observaciones con silueta negativa en el grupo 2, aproximadamente la mitad, las cuales son más similares a las observaciones del grupo 1, lo cual no es deseado para hacer una buena clasificación. Para la estructura de 4 grupos si bien el promedio global de las siluetas es igual al de la otra estructura vemos que ninguno de los grupos tiene siluetas promedio negativas y la menor es de 0.11. Esto indicaría que las observaciones están mejor asignadas en sus grupos al considerar cuatro de ellos.
 
 En conclusión, tomando en cuenta el mejor desempeño en cuanto al $R^2$ y las siluetas promedio de los grupos, se opta por la estructura de cuatro clusters.
 
@@ -271,27 +281,38 @@ ggplot(graf2) + geom_point(aes(x=Dim.1,y= Dim.2, color = as.factor(grupos_acp2),
 
 ```
 
-En la Figura xx se puede observar el gráfico de los países proyectados en el primer plano principal, conformado por las dos componentes principales empleadas en la formación de los clusters. Lo primero que se puede observar es que el grupo 4 es el que más se aleja de los demás, dado que las observaciones que lo componen tomaron valores altos de las dos variables consideradas (que a su vez considerando el conjunto de las variables con las que se formaron las componentes, tomaban valores atípicos, en particular en la variable *infectionrate*). Los países del grupo 1 son los que toman valores más bajos en la dimensión 1, que de acuerdo a la caracterización de los ejes realizada en *Marsella y Saldaña (2021)* corresponde principalmente a valores más bajos de variables de desarrollo económico. En cuanto a la dimensión 2 toman valores próximos a 0 y siguiendo la caracterización de este eje que principalmente se daba por la tasa de infección, esto indicaría que los niveles de infección de los países de este grupo están más cercanos al valor medio de está variable. Los países de los grupos 2 y 3 se ven diferenciados principalmente por la primera dimensión, donde los del grupo 3 tienden a tener mayores valores de esta variable, lo que se puede interpretar como un mayor nivel de desarrollo económico. También hay una tendencia a que los del grupo 2 tienen mayores valores de la segunda dimensión lo que se podría interpretar como que los países de este cluster tienen menores tasas de infección en general. 
+En la Figura 4 se puede observar el gráfico de los países proyectados en el primer plano principal, conformado por las dos componentes principales empleadas en la formación de los clusters. De acuerdo a la caracterización de los ejes realizada en *Marsella y Saldaña, (2021)* la dimensión 1 se caracteriza por el desarrollo económico de los países, donde mayores valores de esta dimensión significa un mayor desarrollo económico; también se correlaciona positivamente esta dimensión con la variable *infectionrate*, lo cual habíamos encontrado que era una consecuencia de que los países con mayor desarrollo económico eran aquellos que presentaban tasas de infección más altas a marzo de 2020. En cuanto a la dimensión 2, se correlaciona principalmente con la tasa de infección de forma negativa: valores altos de la variable Dim.2 significan bajas tasas de infección. Si bien no tenemos en cuenta para los gráficos el Índice de Estímulo Económico, *CESI_INDEX*, pues solo podemos representar los puntos en el plano, las correlaciones de esta variable son de XX con la dimensión 1 y de casi 0 con la dimensión 2, por lo cual esperamos que el comportamiento de los individuos de cada grupo para esta variable tenga similaridad al que muestran para la dimensión 1.
+
+Lo primero que se puede observar es que el grupo 4 es el que más se aleja de los demás, dado que las observaciones que lo componen tomaron valores altos de las dos variables consideradas (que a su vez considerando el conjunto de las variables con las que se formaron las componentes, tomaban valores atípicos, en particular en las variables *infectionrate* y *gdppercap*). Así, por tomar valores altos de la dimensión 1 y valores bajos de la dimensión 2, los países de este cluster son aquellos que presentan alto desarrollo económico y altas tasas de infección. Las observaciones del grupo 1 son las que toman valores más bajos en la dimensión 1, por lo cual son países de menor desarrollo económico y bajas tasas de infección, donde esto último también se ve reflejado en los valores medios que toman en la dimensión 2. Los países del grupo 2 presentan niveles bajos de la dimensión 1 y altos de la dimensión 2, lo que se corresponde con un menor nivel de desarrollo económico (salvo atípicos como Japón y Corea del Sur) y bajos niveles de infección. Por su parte, el grupo 3 contiene observaciones con valores altos de la dimensión 1 y bajos de la dimensión 2, lo que representa un alto nivel de desarrollo económico y altas tasas de infección, lo que podemos ver en países como Suiza.
 
 
-
-```{r boxplot noinfectionrate}
+```{r boxplot noinfectionrate, include=TRUE, out.width="100%"}
 datos_disc_multinom <- as.data.frame(cbind(datos[,vars_cluster], graf2[,-3]))
 
-ggplot(datos_disc_multinom) + geom_boxplot(aes(x = as.factor(grupos_acp2), y = noinfectionrate))
+grid.arrange(
+  ggplot(datos_disc_multinom) +
+    geom_boxplot(aes(x = as.factor(grupos_acp2), y = 1-noinfectionrate))+
+    xlab("Grupos")+
+    ylab("Tasa de infección"),
+  ggplot(datos_disc_multinom) +
+    geom_boxplot(aes(x = as.factor(grupos_acp2), y = gdppercap))+
+    xlab("Grupos")+
+    ylab("PBI per cápita"),
+  ggplot(datos_disc_multinom) +
+    geom_boxplot(aes(x = as.factor(grupos_acp2), y = CESI_INDEX))+
+    xlab("Grupos")+
+    ylab("Índice de Estímulo Económico"),
+  ncol=3
+  )
 
 ```
-
-
-```{r}
-ggplot(datos_disc_multinom) + geom_boxplot(aes(x = as.factor(grupos_acp2), y = gdppercap))
-
-```
+En la Figura 5 se realizan gráficos de cajas para las variables *infectionrate* y *gdppercap* para cada uno de los 4 grupos, buscando verificar si la caracterización de los grupos que realizamos en base a las componentes principales se ve reflejada en estas dos variables, que fueron empleadas para su elaboración en el ACP [^1]. Incluímos también los mismos gráficos para la variable *CESI_INDEX*, que no pudimos representar en el anterior gráfico en dos dimensiones, para verificar si como suponíamos se comporta de manera similar a la dimensión 1 para cada grupo. Efectivamente, se observa que para la tasa de infección, el grupo 4 [^2] es el que presenta mayores valores de esta variable mostrando altos niveles de infección, seguido por el grupo 3 con valores altos aunque no tan extremos, mientras que los otros dos grupos muestran niveles bajos de infección. Para la variable PBI per cápita, vemos que los grupos 3 y 4 son los que toman valores más altos de la variable, seguidos por los grupos 1 y 2 (este último cuenta con un outlier, Japón, al nivel de los otros grupos). Estas observaciones se corresponden a grandes rasgos con lo que observábamos en la Figura 4. En cuanto al *CESI_INDEX*, vemos que los grupos 3 y 4 presentan niveles similares de la variable lo cual es consistente con el comportamiento de ambos grupos en la dimensión 1, mientras que a su vez los grupos 1 y 2 muestran también comportamientos similares entre sí, si bien se observa la presencia de algunos outliers en el grupo 1; el comportamiento del *CESI_INDEX* es así muy similar al de la variable *gdppercap*, algo razonable dado que esta variable es de índole económico, fue utilizada para la construcción de los componentes principales y en particular presenta una correlación muy alta con la dimensión 1.
 
 
 
 
-
+[^1]: Graficamos *infectionrate* en lugar de *noinfectionrate* para una mejor lectura e interpretación de los gráficos
+[^2]: Se debe tener en cuenta que el grupo 4 cuenta con solo 3 observaciones, por lo cual el gráfico de caja no es la representación más adecuada, no obstante se incluye el gráfico para este grupo para realizar la comparación con el resto de los grupos.
 
 
 
