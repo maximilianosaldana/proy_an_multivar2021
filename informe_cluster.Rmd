@@ -209,9 +209,8 @@ fviz_dend(cluster_acp,cex=0.4) +
 
 ```
 
-En la Figura 2 se ve todavía la presencia de atípicos en el grupo conformado por San Marino, Luxemburgo e Islandia, en los otros dos métodos anteriores San Marino era agrupada únicamente en el último paso. Si se elegían una estructura de dos clusters en los métodos anteriores uno de ellos incluía solo a San Marino y el otro al resto de las observaciones, empleando el método de Ward si se eligen 2 clusters no se observa eso. Al estar trabajando con un método jerárquico necesitamos tomar la decisión de qué estructura de grupos es la elegida, esto es por cuántos grupos se opta. Para hacer esto se recurre a las reglas de detención, que pueden ser globales (evalúan la bondad de particionar en un número determinado de clusters) o locales (sirven para analizar si al unir dos grupos la estructura representa una mejoría). 
+En la Figura 2 se ve todavía la presencia de atípicos en el grupo conformado por San Marino, Luxemburgo e Islandia, en los otros dos métodos anteriores San Marino era agrupada únicamente en el último paso. Si se elegían una estructura de dos clusters en los métodos anteriores uno de ellos incluía solo a San Marino y el otro al resto de las observaciones, empleando el método de Ward si se eligen 2 clusters no se observa eso. Al estar trabajando con un método jerárquico necesitamos tomar la decisión de qué estructura de grupos es la elegida, esto es por cuántos grupos se opta. Para hacer esto se recurre a las reglas de detención, que pueden ser globales (evalúan la bondad de particionar en un número determinado de clusters) o locales (sirven para analizar si al unir dos grupos la estructura representa una mejoría). Para esto esto en cuenta las reglas de detención locales del $pseudo-F$, $pseudo-t^2$ y la global del $R^2$, debiendo ser consideradas en conjunto. El pseudo F permite ver qué tan grande es la suma de las variaciones entre los grupos (la variación explicada) respecto a la suma de variaciones en los grupos (variación residual). Como se busca que los grupos sean disímiles entre sí, se busca que el valor del $pseudo-F$ para la estructura de grupos considerada sea alto, comparándose respecto al valor para la estructura que tiene un cluster más y la que tiene uno menos, es decir, se toma en cuenta la estructura que tiene un valor máximo local del $pseudo-F$. Por otro lado, el $pseudo-t^2$ permite observar si al pasar de $k+1$ a $k$ grupos hay un incremento de la variabilidad dentro de los grupos. Si en el paso $k+1$ el valor del $pseudo-t^2$ disminuye con respecto al que toma en el paso $k$ entonces es conveniente quedarse con la estructura de $k+1$ grupos, ya que esto implica que en esta última la variabilidad de dentro de los grupos es menor, es decir, son más homogeneos en su interior. Finalmente, como regla global se  emplea el valor del  $R^2$ , que expresa la proporción de la variabilidad total explicada por la estructura elegida. Con esta regla de detención nos quedamos con la estructura que al considerar un grupo más el  $R^2$ no siga aumentando considerablemente, aquella donde se estabilice el valor. 
 
-<!-- EXPLICAR REGLAS DE DETENCION -->
 
 ```{r indicadores}
 cluster_acp_inds <- indicadores(cluster_acp$merge ,datos_acp ,9 )
@@ -225,7 +224,8 @@ xtable(cluster_acp_inds, caption = "Valores de los indicadores de las Reglas de 
 ```
 
 
-En la Figura 3 están presentados los valores que se toman en cuenta para aplicar las reglas de detención, a partir de los cuales hay dos estructuras de grupos de interés. En primer lugar se cuenta con una estructura de dos grupos que surge de unir el grupo de 58 observaciones creado en el paso anterior y otro de 3 conformado por San Marino, Luxemburgo e Islandia, como se podía observar en la Figura 2. Para esta estructura el valor del pseudo-t es 20.58, lo que representa una disminución respecto a la estructura con un grupo y no se da una disminución al considerar la estructura con tres grupos. En cuanto al pseudo-F el valor (108.44) representa un máximo relativo. La otra estructura es de cuatro grupos y cuenta con un valor del pseudo-t de 16.22 y un pseudo-F de 91.54 que representan un mínimo y un máximo local respectivamente. Por lo tanto según estos dos indicadores cualquiera de estas dos estrucutras de grupos puede resultar adecuada. En lo que se diferencian además de la cantidad de grupos es en sus valores del $R^2$, que necesariamente será mayor al considerar más grupos; para la estructura de dos grupos es de 0.4 y para la de cuatro es de 0.63, por lo cual tenemos un aumento aproximado del 23% de la variabilidad explicada al considerar cuatro grupos, argumento a favor de esta última estructura. 
+
+En la Figura 3 están presentados los valores que se toman en cuenta para aplicar las reglas de detención, a partir de los cuales hay dos estructuras de grupos de interés. En primer lugar se cuenta con una estructura de dos grupos que surge de unir el grupo de 58 observaciones creado en el paso anterior y otro de 3 conformado por San Marino, Luxemburgo e Islandia, como se podía observar en la Figura 2. Para esta estructura el valor del $pseudo-t^2$ es 20.58, lo que representa una disminución respecto a la estructura con un grupo y no se da una disminución al considerar la estructura con tres grupos. En cuanto al $pseudo-F$ el valor (108.44) representa un máximo relativo. La otra estructura es de cuatro grupos y cuenta con un valor del $pseudo-t^2$ de 16.22 y un $pseudo-F$ de 91.54 que representan un mínimo y un máximo local respectivamente. Por lo tanto según estos dos indicadores cualquiera de estas dos estrucutras de grupos puede resultar adecuada. En lo que se diferencian además de la cantidad de grupos es en sus valores del $R^2$, que aunque necesariamente será mayor al considerar más grupos; para la estructura de dos grupos es de 0.4 y para la de cuatro es de 0.63, por lo cual tenemos un aumento aproximado del 23% de la variabilidad explicada al considerar cuatro grupos y solo siendo el aumento al considerar 5 grupos de 5%, argumentos a favor de elegir 4 clusters. 
 
 
 
@@ -317,18 +317,84 @@ En la Figura 5 se realizan gráficos de cajas para las variables *infectionrate*
 
 
 
-# Análisis de discriminante multinom
+# Análisis de discriminante 
+
+Luego de haber agrupado las observaciones empleando como variables dos de las componentes principales y el índice de estímulo económico, resulta de interés profundizar en el análisis de la estructura de grupos mediante un análisis discriminante. En esté método de clasificación supervisada haremos uso de la variable que nos indica a cual de los cuatro grupos anteriormente conformados pertenece cada observación y un conjunto de variables para encontrar una regla de clasificación que permita hacer distinción entre los grupos que ya se cuenta. En nuestro caso nos resulta de interés hacer uso del conjunto de variables que se usó para obtener las componentes principales que se tomaron en cuenta para asignar las observaciones a los distintos grupos y así ver de que manera nos permiten distinguir estos últimos. El conjunto de variables empleado es entonces:
+
+* *medage*
+* *gdppercap*
+* *healthexp*
+* *hospitalbed*
+* *noinfectionrate*
+* *CESI_INDEX*
+
+Donde se incluye el índice de estímulo económica a pesar de no haber sido usado en la creación de las componentes para observar su efecto en la clasificación. Dado que en este conjunto de variables todas son cuantitativas una opción puede ser realizar un análisis discriminante lineal, donde se parte del supuesto que en cada grupo $g=1,...,k$ existe una distribución normal $p$-variada con vector de medias $\mu_g$ y matriz de varianzas y covarianzas $\Sigma_g$, siendo p el número de variables. Otro supuesto adicional es que para los distintos grupos las matrices $\Sigma_g$ son iguales. De cumplirse ambos supuestos se pueden derivar las funciones discriminante y de clasificación en base a ellos y la regla de clasificación elegida. Para evaluar su cumplimiento se realizan pruebas de hipótesis de multinormalidad y de homoscedasticidad. La prueba de multinormalidad empleada es la de Mardia, que pone a prueba las hipótesis nulas de  simetría y curtosis de las distribuciones de los grupos. Para no rechazar la multinormalidad no se tienen que rechazar ambas hipótesis. En el Cuadro 2 se aprecia como para los cuatro grupos al 5% se rechaza la hipótesis nula de multinormalidad, al rechazarse una o ambas de las hipótesis anteriormente presentadas (observando los p-valores para los grupos 2 y 4 la hipótesis de simetría no se rechaza pero la de curtosis sí, en los otros dos se rechazan ambas hipótesis). Por lo tanto, el análisis discriminante lineal queda descartado, lo mismo que el cuadrático que se emplea para casos donde no se cumple la homoscedasticidad. 
 
 ```{r}
-ggpairs(graf2,  mapping = ggplot2::aes(color = as.factor(grupos_acp2) , alpha = 0.5), 
-        diag = list(continuous = wrap("densityDiag")), 
-        lower=list(continuous = wrap("points", alpha=0.9)))
+# a nivel de cada una de las variables se puede ver que no hay campanas con forma normal para cada uno de los grupos, lo cual indicaria que las distribuciones de los grupos no podrian ser multinormales 
+
+# ggpairs(datos_disc_multinom[,c("medage", "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX")],  mapping = ggplot2::aes(color = as.factor(datos_disc_multinom$grupos_acp2) , alpha = 0.5), 
+#         diag = list(continuous = wrap("densityDiag")), 
+#         lower=list(continuous = wrap("points", alpha=0.9)))
 ```
 
 ```{r tests norm 4 clust}
-testes(graf2[,-4], as.factor(graf2$grupos_acp2))
-#rechazamos la multinormalidad para todos los grupos menos el 4, la homoscedasticidad y la igualdad de medias
+
+sing4 <- datos_disc_multinom %>% filter(grupos_acp2 != 4)
+
+
+pruebasnorm2 <- testes(sing4[,c("medage", "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX")], sing4$grupos_acp2)
+
+# hay un problema con es test de homoscedasticidad (bajo numero de observaciones en grupo 4 posible problema), pero ya podemos concluir a partir del de normalidad 
+pruebasnorm <- testes(datos_disc_multinom[,c("medage", "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX")], datos_disc_multinom$grupos_acp2)
+pruebasnorm2 <- testes(sing4[,c("medage", "gdppercap", "healthexp", "hospitalbed", "noinfectionrate", "CESI_INDEX")], sing4$grupos_acp2)
+
+
+matriz_tnorm <- rbind(
+  as.integer(c(1     ,  56.8888077,   0.4417598, -15.8470844 ,  0.0000000, 105.0000000)), 
+  c(2     ,  4.533441e+01,  8.451587e-01, -5.223915e+00,  1.751788e-07,  2.500000e+01),
+  c(3     ,   12.52814,   1.00000, -11.69642,   0.00000,  33.00000),
+  c(4     ,   4.118525e-02,  1.000000e+00, -4.110058e+00,  3.955595e-05,  3.000000e+00) 
+)
+
+
+colnames(matriz_tnorm) <-   c("grupo", "kappa1", "pvalsim", "kappa2", "pvalkurt", "n")
+
+
 ```
+
+```{r, results='asis', include= TRUE}
+xtable(as.data.frame(matriz_tnorm), round = 2) %>% print.xtable(include.rownames = FALSE)
+```
+
+Ante esta situación se opta por efectuar un análisis discriminante logístico, para el cual no se requiere el cumplimiento de la multinormalidad. Como tenemos 4 grupos donde cada uno va a tener una probabilidad, consideramos un conjunto de variables aleatorias $Y_i \sim multinomial(n, \pi_g)$, siendo $Y_i$ el grupo al que corresponde la observación $i$-ésima. En este modelo, según el método de la categoría de referencia, se emplean $k-1$ ecuaciones, para modelar la probabilidad de que una observación esté en el grupo $g$ respecto a la probabilidad de que esté en el grupo que se toma como referencia. La probabilidad que el individuo $i$ esté en el grupo $g$ es:
+
+$$\pi_{i,g} = P(y_i = g) = \frac{exp(x_i^t\beta_g)}{\sum_{j=1}^k exp(x_{ij}^t\beta_j)}$$
+
+Donde $x_i$ es el vector con los valores de las variables para el individuo $i$ y $\beta_g$ es un vector de coeficientes a estimar para el grupo $g$. Las funciones de enlace serían:
+
+$$log_e[\frac{\pi_g}{\pi_k}]= x_i^t \beta_g, \,\, g=1,...,k-1$$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ```{r multinomial con datos acp}
