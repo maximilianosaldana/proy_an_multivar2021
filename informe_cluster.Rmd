@@ -368,7 +368,7 @@ colnames(matriz_tnorm) <-   c("grupo", "kappa1", "pvalsim", "kappa2", "pvalkurt"
 xtable(as.data.frame(matriz_tnorm), round = 2, caption="Valores de los estadísticos y p-valores para los test de simetría y curtosis.") %>% print.xtable(include.rownames = FALSE)
 ```
 
-Ante esta situación se opta por efectuar un análisis discriminante logístico, para el cual no se requiere el cumplimiento de la multinormalidad. Como tenemos más de dos grupos donde cada observación va a tener una probabilidad de pertenecer a cada uno, consideramos un conjunto de variables aleatorias $Y_i \sim multinomial(n, \pi_g)$, siendo $Y_i$ el grupo al que corresponde la observación $i$-ésima. En este modelo, según el método de la categoría de referencia, se emplean $k-1$ ecuaciones, para modelar la probabilidad de que una observación esté en el grupo $g$ respecto a la probabilidad de que esté en el grupo que se toma como referencia. La probabilidad que el individuo $i$ esté en el grupo $g$ es:
+Ante esta situación se opta por efectuar un análisis discriminante logístico, para el cual no se requiere el cumplimiento de la multinormalidad. Como tenemos más de dos grupos donde cada observación va a tener una probabilidad de pertenecer a cada uno, consideramos un conjunto de variables aleatorias $Y_i \sim multinomial(n, \pi_g)$, siendo $Y_i$ el grupo al que corresponde la observación $i$-ésima. En este modelo, según el método de la categoría de referencia, se emplean $k-1$ ecuaciones, para modelar la probabilidad de que una observación esté en el grupo $g$ respecto a la probabilidad de que esté en el grupo que se toma como referencia (en el caso del modelo planteo es el grupo 1). La probabilidad que el individuo $i$ esté en el grupo $g$ es:
 
 $$\pi_{i,g} = P(y_i = g) = \frac{exp(x_i^t\beta_g)}{\sum_{j=1}^k exp(x_{ij}^t\beta_j)}$$
 
@@ -412,7 +412,7 @@ D1
 ```
 
  
-Para evaluar qué variables mantenemos en el modelo efectuamos las pruebas de significación individuales para cada una. En este caso evaluamos la significación de cada variable para cada una de las 3 ecuaciones del modelo. La hipótesis nula es $H_0) \beta_{gj} = 0$, con $g=1,2,3$, $j=1,...,6$     Se hace uso del estadístico de Wald
+Para evaluar qué variables mantenemos en el modelo efectuamos las pruebas de significación individuales para cada una. En este caso evaluamos la significación de cada variable para cada una de las 3 ecuaciones del modelo. La hipótesis nula es $H_0) \beta_{gj} = 0$, con $g=1,2,3$, $j=1,...,6$ y se hace uso del estadístico de Wald $z^* = \frac{\hat{\beta}_k}{s_{\beta_k}}$ (bajo $H_0$ cierta $z^* \sim N(0,1)$) y se rechaza $H_0$ si $|z^*|> z_{1-\alpha/2}$. En el caso del modelo planteado, para las tres ecuaciones consideradas todas las variables resultan significativas al 5%, dados que los p-valores son menores que 0.05. Esto implica que todas las variables consideradas resultan relevantes para separar los grupos, no hay ninguna de las que se empleó en para formar las componentes principales con las que se agruparon los países que no aporta a la clasificación.  
 
 
 ```{r contrases individuales de las vars}
@@ -460,46 +460,34 @@ tests_wald_multinom <- coeftest(mod_multinomial)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-```{r multinomial con datos acp}
-
-
-
-
-
-
-
-
-
+```{r error aparente}
 #Prediction
 
-predict_mod_multinomial <- predict(mod_multinomial, newdata = datos_disc_multinom , "probs") #Son las probabilidades predichas
+predict_mod_multinomial <- predict(mod_multinomial, newdata = datos_disc_multinom , "probs") 
 round(predict_mod_multinomial, 4)
 classpredict <- predict(mod_multinomial, newdata = datos_disc_multinom , "class") #Son las clasificaciones predichas
 
 #Matriz de difusion
 tabla1 <- table(datos_disc_multinom$grupos_acp2,classpredict) #Para los datos con los que se hizo el modelo
-tabla1
-round((sum(diag(tabla1))/sum(tabla1))*100,2)
+
+
+round((sum(diag(tabla1))/sum(tabla1))*100,2) 
 
 ```
 
 
+Para determinar si se cuenta con un buen modelo y validarlo se recurre a analizar los errores de clasificación, para esto se hace uso de matrices de difusión en las cuales se expresa para cada grupo la cantidad de observaciones clasificadas en el grupo correcto (valores de la diagonal de la matriz) como en los otros grupos (valores fuera de la diagonal). Para obtener la matriz de difusión se debe definir la forma con la que se calculan los errores. Una primera opción es calcular el error aparente, cuyo resultado se observa en el Cuadro xx, donde las columnas representan el grupo predicho por el modelo y las filas el grupo real. 
+
+```{r tabla error aparente, results='asis'}
+tabla1 %>% xtable(caption = "Matriz de difusión, error aparente")
+
+```
+
+Con el error aparente se construye el modelo con todas las observaciones y para cada una de ellas se compara el grupo predicho por el modelo con el grupo al que efectivamente pertenece. Así se puede calcular la proporción total de aciertos como la traza de la matriz sobre el total de observaciones. El modelo planteado tiene un porcentaje de acierto de 95.78%, ocurriendo la mayor proporción de error en el grupo 4, donde de los 3 países 2 son clasificados correctamente. Para las observaciones del grupo 3 no se cometen errores de clasificación. No obstante al tomar en cuenta el error aparente se usan las mismas observaciones para calcular el error y validar el modelo que para construirlo, lo cual puede llevar a un caso de sobreajuste, situación en la cual el modelo funciona bien para la muestra considerada pero no para nevos datos. Para no caer en esta situación una opción es recurrir a dividir la muestra en una submuestra de entrenamiento y otra de prueba. En este método se estima el modelo con el conjunto de observaciones de entrenamiento y se calcula el error que comete al predecir el grupo de las observaciones del conjunto de prueba.
 
 
 
-```{r validacion multinom}
-
+```{r entrenamiento y prueba}
 #dividir en entrenamiento y prueba
 set.seed(3652)
 muestra <- sample.int(n = nrow(datos_disc_multinom), size = floor(0.85*nrow(datos_disc_multinom)), replace = F)
@@ -521,6 +509,23 @@ tabla_t <- table(testeo$grupos_acp2,predtesteo)
 round((sum(diag(tabla_e))/sum(tabla_e))*100,2)
 
 round((sum(diag(tabla_t))/sum(tabla_t))*100,2)
+```
+
+
+```{r tabla error pred, results='asis'}
+
+tabla_t %>% xtable()
+
+```
+
+
+
+
+
+
+```{r k folds}
+
+
 
 #k-folds cross validation
 train.control <- trainControl(method = "cv", number = 10)
@@ -534,6 +539,11 @@ model <- train(as.factor(grupos_acp2) ~  gdppercap + medage + noinfectionrate + 
 print(model)
 
 
+datosmod2 <- datos_disc_multinom %>% filter(grupos_acp2 != 4, grupos_acp2 != 3)
+
+model2 <- train(as.factor(grupos_acp2) ~  gdppercap + medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX,
+               data = datosmod2, method = "multinom",
+               trControl = train.control)
 
 ```
 
