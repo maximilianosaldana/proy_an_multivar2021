@@ -1,5 +1,5 @@
 ---
-title: "Aplicación del Análisis de Cluster a Variables Económicas y Vinculadas al COVID-19"
+title: "Clasificación de Países Según Variables Socio-Económicas y Sanitarias"
 subtitle: "Análisis Multivariado, Proyecto de Fin de Curso"
 author: "Emanuelle Marsella, Maximiliano Saldaña"
 date: "Julio, 2020"
@@ -41,7 +41,6 @@ options(xtable.comment=FALSE,
 ```{r, include = FALSE}
 library(dplyr)
 library(ggplot2)
-library(readxl)
 library(xtable)
 library(FactoMineR)
 library(forcats)
@@ -122,19 +121,42 @@ acp <- PCA(datos[, vars.acp], quanti.sup = 6)
 
 # Resumen ejecutivo
 
+En este trabajo se aplican tecnicas de clasificación (Análisis de Cluster y Análisis Discriminante) a una base de datos que contiene información a marzo de 2020 referente a variables socio-económicas, sanitarias y la tasa de infección de COVID-19. Se logra una clasificación en 4 grupos mediante el análisis de cluster jerárquico agregativo y se emplean estos grupos para un análisis discriminate logístico.
+
 # Introducción
 
-Se busca aplicar el análisis de cluster al conjunto de países estudiado en (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020), con la intención de clasificarlos según las componentes principales generadas a partir del conjunto de variables de índole económica y sanitaria que se dispone. Posteriormente se realizará un análisis de discriminante con la intención de encontrar una regla de clasificación para discriminar entre los grupos a partir de las variables con las que se cuenta y analizar cuales tienen mayor importancia en la calsificación.
+Se busca aplicar técnicas de clasificación al conjunto de países estudiado en *Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index* (Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020), contándose con variables de carácter socio-económico y sanitario (en particular la tasa de infección de COVID-19 de los países) a marzo de 2020. También se cuenta con las componentes principales construidas en *Aplicación del Análisis de Componentes Principales a Variables Económicas y Vinculadas al COVID-19* (Marsella y Saldaña, 2021). Inicialmente se buscará clasificar los países con un análisis de cluster a partir de un subconjunto de las variables con las que se cuenta (las componentes principales y el índice de estímulo económico) y caracterizarlos, para posteriormente usar estos grupos en un análisis de discriminante, con la intención de encontrar una regla de clasificación para discriminar entre los grupos a partir de las variables con las que se cuenta.
+
+# Breve descripción de los datos
+
+Se cuenta con 166 observaciones correspondientes a países y un subconjunto de 8 variables de las extraídas de Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman; 2020). Las variables empleadas son:
+
+* *medage*: edad mediana en el país
+
+* *noinfectionrate*: tasa de de no infección, representa la proporción de la población total del país no infectada de COVID-19
+
+* *hospitalbed*: camas de hospital por cada 1000 personas
+
+* *healthexp*: gastos en salud, expresados como porcentaje del PBI
+
+* *gdppercap*: PBI per cápita del país en dólares a niveles de 2010
+
+* *CESI_INDEX*: índice de estímulo económico.
+
+* Dim.1 y Dim.2: Primeras dos componentes principales construídas en el primer proyecto de Análisis Multivariado.
+
+Durante el informe se referenciará información referente a las variables que se obtuvo en Marsella y Saldaña (2021). 
+
 
 # Análisis de Cluster
 
-Inicialmente se plantearon varios análisis de cluster teniendo en cuenta distintos conjuntos de las variables disponibles: las originales de la base empleadas para realizar análisis de componentes principales en el trabajo de mitad de curso de Análisis Multivariado, *Aplicación del Análisis de Componentes Principales a Variables Económicas y Vinculadas al COVID-19* (Marsella y Saldaña, 2021) y otro compuesto por las componentes principales obtenidas en ese mismo trabajo. Se aplicaron métodos de cluster agregativo, empleando el método de Ward, el del vecino más cercano y el del vecino más lejano, así como también no jerárquico considerando los centroides, medoides y fuzzy, buscando explorar las distintas opciones con las que se cuenta para ver cuál funciona mejor para nuestros datos. En *Marsella y Saldaña (2021)* se observó que algunos países presentan un comportamiento atípico, el cual se debe tener en cuenta al aplicar las técnicas de cluster dado que algunos métodos son más susceptibles que otros a la presencia de observaciones de este tipo. Para elegir el mejor método de clasificación y la cantidad de grupos (para el caso de los métodos jerárquicos) nos valimos de las reglas de detención y las siluetas de los grupos, así como también las representaciones gráficas (dendrogramas) para los cluster jerárquicos utilizados.
+Inicialmente se plantearon varios análisis de cluster teniendo en cuenta distintos conjuntos de las variables disponibles: las originales de la base empleadas para realizar análisis de componentes principales en el trabajo de mitad de curso de Análisis Multivariado (Marsella y Saldaña, 2021),  y otro compuesto por las componentes principales obtenidas en ese mismo trabajo. Se aplicaron métodos de cluster agregativo, empleando el método de Ward, el del vecino más cercano y el del vecino más lejano, así como también no jerárquico considerando los centroides, medoides y fuzzy, buscando explorar las distintas opciones con las que se cuenta para ver cuál funciona mejor para nuestros datos. En *Marsella y Saldaña (2021)* se observó que algunos países presentan un comportamiento atípico, el cual se debe tener en cuenta al aplicar las técnicas de cluster dado que algunos métodos son más susceptibles que otros a la presencia de observaciones de este tipo. Para elegir el mejor método de clasificación y la cantidad de grupos (para el caso de los métodos jerárquicos) nos valimos de las reglas de detención y las siluetas de los grupos, así como también las representaciones gráficas (dendrogramas) para los cluster jerárquicos utilizados.
 
 
-Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, se opta por aplicar los métodos de clusters jerárquicos, que trabajan con particiones encajadas del conjunto de observaciones. Por esta misma razón se puede optar por utilizar métodos agregativos en lugar de divisivos. Los otros métodos de agrupación se consideraron para contar con alternativas, los resultados que dieron se encuentran presentados en el Anexo I. En los métodos agregativos se parte de un conjunto de $I$ clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las $I$ observaciones. Adicionalmente para aplicar métodos de cluster se debe definir una métrica que emplee los valores de las variables de cada objeto para determinar qué tan cerca está uno (individuos o clusters) de los otros,  y además debe ser elegido un algoritmo para unir grupos entre si y observaciones a grupos.
+Dado que la cantidad de observaciones con las que se cuenta originalmente (166) no es muy elevada, finalmente se optó por aplicar los métodos de clusters jerárquicos, que trabajan con particiones encajadas del conjunto de observaciones. Por esta misma razón se optó por utilizar métodos agregativos en lugar de divisivos. Los otros métodos de agrupación se consideraron para contar con alternativas, los resultados que dieron se encuentran presentados en el Anexo, incluido en el script de este trabajo. En los métodos agregativos se parte de un conjunto de $I$ clusters donde cada uno está formado por una observación y se llega en el paso final a un cluster con las $I$ observaciones. Adicionalmente para aplicar métodos de cluster se debe definir una métrica que emplee los valores de las variables de cada objeto para determinar qué tan cerca está uno (individuos o clusters) de los otros,  y además debe ser elegido un algoritmo para unir grupos entre si y observaciones a grupos.
 
 
-El conjunto de variables utilizadas para aplicar los métodos de cluster son el Índice de Estímulo Económico *CESI_INDEX* construido en el trabajo original *Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman (2020)* y replicado en *Marsella y Saldaña (2021)*, así como las primeras dos Componentes Principales construídas a partir de un ACP en este último trabajo. En particular, se había observado que estas dos componentes principales lograban explicar en su conjunto el 72.77% de la nube de puntos conformadas por los 166 individuos y las variables *medage*, *gdppercap*, *healthexp*, *hospitalbed* y *noinfectionrate*, por lo cual consideramos que pueden ser un buen insumo para la clasificación. . La variable *CESI_INDEX* fue incluida por separado debido a que su representación en las componentes seleccionadas no era muy buena como se desarrolló en el primer proyecto del curso.
+El conjunto de variables finalmente utilizadas para aplicar los métodos de cluster son el Índice de Estímulo Económico *CESI_INDEX* construido en el trabajo original *Ceyhun Elgin, Gokce Basbug, Abdullah Yalaman (2020)* y replicado en *Marsella y Saldaña (2021)*, así como las primeras dos Componentes Principales construídas a partir de un ACP en este último trabajo. En particular, se había observado que estas dos componentes principales lograban explicar en su conjunto el 72.77% de la nube de puntos conformadas por los 166 individuos y las variables *medage*, *gdppercap*, *healthexp*, *hospitalbed* y *noinfectionrate*, por lo cual consideramos que pueden ser un buen insumo para la clasificación. Adicionalmente se incluye la variable *CESI_INDEX* debido a que no se terminó empleando para la construcción de las componentes y su representación en el primer plano plano no era muy buena como se desarrolló en el primer proyecto del curso.
 
 
 
@@ -155,7 +177,7 @@ round(cor(datos_acp, ),2) %>% as.data.frame() %>%
 
 ```
 
-Por construcción, las correlaciones entre las componentes principales (*Dim.1* y *Dim.2*) son 0, mientras que el *CESI_INDEX* se correlaciona principalmente con la primer componente principal más que con la segunda, como habíamos visto en el primer trabajo. Dado que 0.52 se podría considerar como una correlación relativamente alta, optamos por utilizar la distancia de Mahalanobis que incluye la matriz de varianzas y covarianzas y así asegurarnos de que esa correlación no tenga una influencia grande en la formación de los grupos. Dicha distancia está definida como:
+Por construcción, las correlaciones entre las componentes principales (*Dim.1* y *Dim.2*) son 0, mientras que el *CESI_INDEX* se correlaciona principalmente con la primer componente principal más que con la segunda, como habíamos visto en el primer trabajo. Dado que 0.52 se podría considerar como una correlación relativamente alta, optamos por utilizar la distancia de Mahalanobis que incluye la matriz de varianzas y covarianzas y así asegurarnos de que esa correlación no tenga una gran influencia  en la formación de los grupos. Dicha distancia está definida como:
 
 $$d_{ij}^2 = (x_{ik} - x_{jk})'\Sigma^{-1}(x_{ik} - x_{jk})$$
 
@@ -177,11 +199,11 @@ clust2.2 <- agnes(dist_maha, method = "complete", diss = TRUE)
 
 labs <- datos$country[as.logical(c(rep(c(1,0,0), 54), 0, 1, 1, 1))]
 
-dend.1 <- fviz_dend(clust2.1,cex=0.4, lwd=0.35) +
+dend.1 <- fviz_dend(clust2.1,cex=0.4, lwd=0.35, show_labels = FALSE) +
   ggtitle("Vecinos más cercanos") +
   ylab("Altura")  #se puede notar a san marino como outlier 
 
-dend.2 <- fviz_dend(clust2.2,cex=0.4, lwd=0.35) +
+dend.2 <- fviz_dend(clust2.2,cex=0.4, lwd=0.35, show_labels = FALSE) +
   ggtitle("Vecinos más lejanos") +
   ylab("Altura")  #se pueden notar que san marino islandia y luxemburgo son los ultimos en agruparse
 
@@ -190,7 +212,7 @@ grid.arrange(dend.1, dend.2, ncol=2)
 
 ```
 
-En la Figura 1 se pueden ver los dendrogramas para los métodos del vecino más cercano y del vecino más lejano, los cuales son representaciones gráficas de la historia de agrupación que parte de los $I$ cluster iniciales y llega a un único cluster que contiene las $I$ observaciones. En ambos casos se puede ver que las observaciones atípicas que ya habíamos detectado en el trabajo anterior son las últimas en ser agrupadas, dado que son las más distantes de las demás observaciones en la métrica utilizada. Este resultado era esperable, dado que estos métodos son muy susceptibles a la presencia de observaciones atípicas. El método elegido finalmente es el de Ward, el cuál se basa en agregar grupos minimizando la variabilidad dentro de los nuevos grupos formados, que necesariamente aumenta al realizar la unión de objetos heterogeneos pero se busca que aumente lo menos posible. Como contraparte se busca maximizar la varianza entre los grupos en la nueva estructura, para así lograr clusters lo más heterogeneos posibles entre si. Este método cuenta con una menor susceptibilidad a los valores atípicos y por eso resulta deseable emplearlo en nuestro caso.
+En la Figura 1 se pueden ver los dendrogramas para los métodos del vecino más cercano y del vecino más lejano, los cuales son representaciones gráficas de la historia de agrupación que parte de los $I$ cluster iniciales y llega a un único cluster que contiene las $I$ observaciones. En ambos casos se puede ver que hay un conjunto de observaciones que son las últimas en ser agrupadas, dado que son las más distantes de las demás observaciones en la métrica utilizada, estas son las observaciones con valores atípicos de las variables que ya habían sido detectadas en el trabajo anterior (San Marino, Islandia y Luxemburgo, siendo San Marino la última de todas en ser agrupada). Este resultado era esperable, dado que estos métodos son muy susceptibles a la presencia de observaciones atípicas. El método elegido finalmente es el de Ward, el cuál se basa en agregar grupos minimizando la variabilidad dentro de los nuevos grupos formados, que necesariamente aumenta al realizar la unión de objetos heterogeneos pero se busca que aumente lo menos posible. Como contraparte se busca maximizar la varianza entre los grupos en la nueva estructura, para así lograr clusters lo más heterogeneos posibles entre si. Este método cuenta con una menor susceptibilidad a los valores atípicos y por eso resulta deseable emplearlo en nuestro caso.
 
 
 ```{r clust acp ward}
@@ -201,7 +223,7 @@ cluster_acp <- agnes(dist_maha, method = "ward", diss = TRUE)
 
 
 ```{r dendrograma ward, include =TRUE, fig.cap="Dendrogramas para la clasificación realizada por el método de Ward", out.width="75%"}
-fviz_dend(cluster_acp,cex=0.4) +
+fviz_dend(cluster_acp,cex=0.4, show_labels = FALSE) +
   ggtitle("Método de Ward") +
   ylab("Altura") +
   theme(axis.text = element_text(size=15),
@@ -210,7 +232,7 @@ fviz_dend(cluster_acp,cex=0.4) +
 
 ```
 
-En la Figura 2 se ve todavía la presencia de atípicos en el grupo conformado por San Marino, Luxemburgo e Islandia, en los otros dos métodos anteriores San Marino era agrupada únicamente en el último paso. Si se elegían una estructura de dos clusters en los métodos anteriores uno de ellos incluía solo a San Marino y el otro al resto de las observaciones, empleando el método de Ward si se eligen 2 clusters no se observa eso. Al estar trabajando con un método jerárquico necesitamos tomar la decisión de qué estructura de grupos es la elegida, esto es por cuántos grupos se opta. Para hacer esto se recurre a las reglas de detención, que pueden ser globales (evalúan la bondad de particionar en un número determinado de clusters) o locales (sirven para analizar si al unir dos grupos la estructura representa una mejoría). Para esto esto en cuenta las reglas de detención locales del $pseudo-F$, $pseudo-t^2$ y la global del $R^2$, debiendo ser consideradas en conjunto. El pseudo F permite ver qué tan grande es la suma de las variaciones entre los grupos (la variación explicada) respecto a la suma de variaciones en los grupos (variación residual). Como se busca que los grupos sean disímiles entre sí, se busca que el valor del $pseudo-F$ para la estructura de grupos considerada sea alto, comparándose respecto al valor para la estructura que tiene un cluster más y la que tiene uno menos, es decir, se toma en cuenta la estructura que tiene un valor máximo local del $pseudo-F$. Por otro lado, el $pseudo-t^2$ permite observar si al pasar de $k+1$ a $k$ grupos hay un incremento de la variabilidad dentro de los grupos. Si en el paso $k+1$ el valor del $pseudo-t^2$ disminuye con respecto al que toma en el paso $k$ entonces es conveniente quedarse con la estructura de $k+1$ grupos, ya que esto implica que en esta última la variabilidad de dentro de los grupos es menor, es decir, son más homogeneos en su interior. Finalmente, como regla global se  emplea el valor del  $R^2$ , que expresa la proporción de la variabilidad total explicada por la estructura elegida. Con esta regla de detención nos quedamos con la estructura que al considerar un grupo más el  $R^2$ no siga aumentando considerablemente, aquella donde se estabilice el valor. 
+En la Figura 2 se ve todavía la presencia de atípicos, en el grupo conformado por San Marino, Luxemburgo e Islandia (en los otros dos métodos anteriores San Marino era agrupada únicamente en el último paso). Si se elegían una estructura de dos clusters en los métodos anteriores uno de ellos incluía solo a San Marino y el otro al resto de las observaciones, empleando el método de Ward si se eligen 2 clusters no se observa eso. Al estar trabajando con un método jerárquico necesitamos tomar la decisión de qué estructura de grupos es la elegida, esto es, por cuántos grupos se opta. Para hacer esto se recurre a las reglas de detención, que pueden ser globales (evalúan la bondad de particionar en un número determinado de clusters) o locales (sirven para analizar si al unir dos grupos la estructura representa una mejoría). Se toman cuenta las reglas de detención locales del $pseudo-F$, $pseudo-t^2$ y la global del $R^2$, debiendo ser consideradas en conjunto. El pseudo F permite ver qué tan grande es la suma de las variaciones entre los grupos (la variación explicada) respecto a la suma de variaciones en los grupos (variación residual). Como se busca que los grupos sean disímiles entre sí, se busca que el valor del $pseudo-F$ para la estructura de grupos considerada sea alto, comparándose respecto al valor para la estructura que tiene un cluster más y la que tiene uno menos, es decir, se toma en cuenta la estructura que tiene un valor máximo local del $pseudo-F$. Por otro lado, el $pseudo-t^2$ permite observar si al pasar de $k+1$ a $k$ grupos hay un incremento de la variabilidad dentro de los grupos. Si en el paso $k+1$ el valor del $pseudo-t^2$ disminuye con respecto al que toma en el paso $k$ entonces es conveniente quedarse con la estructura de $k+1$ grupos, ya que esto implica que en esta última la variabilidad de dentro de los grupos es menor, es decir, son más homogeneos en su interior. Finalmente, como regla global se  emplea el valor del  $R^2$ , que expresa la proporción de la variabilidad total explicada por la estructura elegida. Con esta regla de detención nos quedamos con la estructura que al considerar un grupo más el  $R^2$ no siga aumentando considerablemente, aquella donde se estabilice el valor. 
 
 
 ```{r indicadores}
@@ -226,7 +248,7 @@ xtable(cluster_acp_inds, caption = "Valores de los indicadores de las Reglas de 
 
 
 
-En la Figura 3 están presentados los valores que se toman en cuenta para aplicar las reglas de detención, a partir de los cuales hay dos estructuras de grupos de interés. En primer lugar se cuenta con una estructura de dos grupos que surge de unir el grupo de 58 observaciones creado en el paso anterior y otro de 3 conformado por San Marino, Luxemburgo e Islandia, como se podía observar en la Figura 2. Para esta estructura el valor del $pseudo-t^2$ es 20.58, lo que representa una disminución respecto a la estructura con un grupo y no se da una disminución al considerar la estructura con tres grupos. En cuanto al $pseudo-F$ el valor (108.44) representa un máximo relativo. La otra estructura es de cuatro grupos y cuenta con un valor del $pseudo-t^2$ de 16.22 y un $pseudo-F$ de 91.54 que representan un mínimo y un máximo local respectivamente. Por lo tanto según estos dos indicadores cualquiera de estas dos estrucutras de grupos puede resultar adecuada. En lo que se diferencian además de la cantidad de grupos es en sus valores del $R^2$, que aunque necesariamente será mayor al considerar más grupos; para la estructura de dos grupos es de 0.4 y para la de cuatro es de 0.63, por lo cual tenemos un aumento aproximado del 23% de la variabilidad explicada al considerar cuatro grupos y solo siendo el aumento al considerar 5 grupos de 5%, argumentos a favor de elegir 4 clusters. 
+En el Cuadro 2 están presentados los valores que se toman en cuenta para aplicar las reglas de detención, a partir de los cuales hay dos estructuras de grupos de interés. En primer lugar se cuenta con una estructura de dos grupos que surge de unir el grupo de 58 observaciones creado en el paso anterior y otro de 3 conformado por San Marino, Luxemburgo e Islandia, como se podía observar en la Figura 2. Para esta estructura el valor del $pseudo-t^2$ es 20.58, lo que representa una disminución respecto a la estructura con un grupo y no se da una disminución al considerar la estructura con tres grupos. En cuanto al $pseudo-F$ el valor (108.44) representa un máximo relativo. La otra estructura es de cuatro grupos y cuenta con un valor del $pseudo-t^2$ de 16.22 y un $pseudo-F$ de 91.54 que representan un mínimo y un máximo local respectivamente. Por lo tanto según estos dos indicadores cualquiera de estas dos estrucutras de grupos puede resultar adecuada. En lo que se diferencian además de la cantidad de grupos es en sus valores del $R^2$, que aunque necesariamente será mayor al considerar más grupos para la estructura de dos grupos es de 0.4 y para la de cuatro es de 0.63, por lo cual tenemos un aumento aproximado del 23% de la variabilidad explicada al considerar cuatro grupos y solo siendo el aumento al considerar 5 grupos de 5%, argumentos a favor de elegir 4 clusters. 
 
 
 
@@ -249,10 +271,10 @@ silprom2 <- sil2[[1]] %>% group_by(cluster) %>% summarise(sil_mean = round(mean(
 ```
 
 
-```{r graficos de silueta, , include= TRUE }
-grafsiluetas1 <-  sil1+geom_text(data = silprom1, mapping = aes(y= 0.8, x = as.character(meannames), label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank()) + ggtitle("Silueta promedio: 0.34") + xlab("Ancho de silueta")
+```{r graficos de silueta, , include= TRUE, fig.cap= "Gráficos de silueta para las dos estructuras de grupos propuestas.", out.width= "85%" }
+grafsiluetas1 <-  sil1+geom_text(data = silprom1, mapping = aes(y= 0.8, x = as.character(meannames), label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank()) + ggtitle("Silueta promedio: 0.34") + ylab("Ancho de silueta")
 
-grafsiluetas2 <- sil2+geom_text(data = silprom2, mapping = aes(y= 0.8, x = cord, label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank()) + ggtitle("Silueta promedio: 0.34") + xlab("Ancho de silueta")
+grafsiluetas2 <- sil2+geom_text(data = silprom2, mapping = aes(y= 0.8, x = cord, label = paste("Silueta promedio:", as.character(sil_mean)))) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank()) + ggtitle("Silueta promedio: 0.34") + ylab("Ancho de silueta")
 
 
 grid.arrange(grafsiluetas1, grafsiluetas2)
@@ -265,13 +287,13 @@ Donde $a_i$ es la distancia promedio de la i-ésima observación al resto de obj
 
 Analizando los gráficos de siluetas y los valores presentados en la Figura 3 se aprecia que para ambas estructuras de grupo la silueta promedio de todas las observaciones toma un valor de 0.34 aproximadamente. Sin embargo observándose la silueta promedio dentro de cada uno de los grupos en la estructura de dos grupos la silueta promedio de uno de ellos es negativa y próxima a 0, lo que indica que en promedio la distancia de las observaciones a las demás de su mismo grupo es casi igual a las distancia de las observaciones a las del otro grupo. Esto es consecuencia del elevado número de observaciones con silueta negativa en el grupo 2, aproximadamente la mitad, las cuales son más similares a las observaciones del grupo 1, lo cual no es deseado para hacer una buena clasificación. Para la estructura de 4 grupos si bien el promedio global de las siluetas es igual al de la otra estructura vemos que ninguno de los grupos tiene siluetas promedio negativas y la menor es de 0.11. Esto indicaría que las observaciones están mejor asignadas en sus grupos al considerar cuatro de ellos.
 
-En conclusión, tomando en cuenta el mejor desempeño en cuanto al $R^2$ y las siluetas promedio de los grupos, se opta por la estructura de cuatro clusters.
+En conclusión, tomando en cuenta su mejor desempeño en cuanto al $R^2$ y las siluetas promedio de los grupos, se opta por la estructura de cuatro clusters en lugar de la de dos.
 
 
 
 ## Descripción de los clusters
 
-```{r grupos 4 cluster, include = TRUE, out.width="75%"}
+```{r grupos 4 cluster, include = TRUE, out.width="75%", fig.cap="Gráfico de las proyecciones de los países en el primer plano principal, coloreados por cluster."}
 grupos_acp2 <- cutree(cluster_acp, 4)
 
 graf2 <- as.data.frame(cbind(datos_acp, grupos_acp2))
@@ -282,12 +304,12 @@ ggplot(graf2) + geom_point(aes(x=Dim.1,y= Dim.2, color = as.factor(grupos_acp2),
 
 ```
 
-En la Figura 4 se puede observar el gráfico de los países proyectados en el primer plano principal, conformado por las dos componentes principales empleadas en la formación de los clusters. De acuerdo a la caracterización de los ejes realizada en *Marsella y Saldaña, (2021)* la dimensión 1 se caracteriza por el desarrollo económico de los países, donde mayores valores de esta dimensión significa un mayor desarrollo económico; también se correlaciona positivamente esta dimensión con la variable *infectionrate*, lo cual habíamos encontrado que era una consecuencia de que los países con mayor desarrollo económico eran aquellos que presentaban tasas de infección más altas a marzo de 2020. En cuanto a la dimensión 2, se correlaciona principalmente con la tasa de infección de forma negativa: valores altos de la variable Dim.2 significan bajas tasas de infección. Si bien no tenemos en cuenta para los gráficos el Índice de Estímulo Económico, *CESI_INDEX*, pues solo podemos representar los puntos en el plano, las correlaciones de esta variable son de XX con la dimensión 1 y de casi 0 con la dimensión 2, por lo cual esperamos que el comportamiento de los individuos de cada grupo para esta variable tenga similaridad al que muestran para la dimensión 1.
+En la Figura 4 se puede observar el gráfico de los países proyectados en el primer plano principal, conformado por las dos componentes principales empleadas en la formación de los clusters. De acuerdo a la caracterización de los ejes realizada en *Marsella y Saldaña, (2021)* la dimensión 1 se caracteriza por el desarrollo económico de los países, donde mayores valores de esta dimensión significa un mayor desarrollo económico; también se correlaciona positivamente esta dimensión con la variable *infectionrate*, lo cual habíamos encontrado que era una consecuencia de que los países con mayor desarrollo económico eran aquellos que presentaban tasas de infección más altas a marzo de 2020. En cuanto a la dimensión 2, se correlaciona principalmente con la tasa de infección de forma negativa: valores altos de la variable Dim.2 significan bajas tasas de infección. Si bien no tenemos en cuenta para los gráficos el Índice de Estímulo Económico, *CESI_INDEX*, pues solo podemos representar los puntos en el plano, las correlaciones de esta variable son de 0.52 con la dimensión 1 y -0.09 con la dimensión 2, por lo cual esperamos que el comportamiento de los individuos de cada grupo para esta variable tenga similaridad al que muestran para la dimensión 1.
 
-Lo primero que se puede observar es que el grupo 4 es el que más se aleja de los demás, dado que las observaciones que lo componen tomaron valores altos de las dos variables consideradas (que a su vez considerando el conjunto de las variables con las que se formaron las componentes, tomaban valores atípicos, en particular en las variables *infectionrate* y *gdppercap*). Así, por tomar valores altos de la dimensión 1 y valores bajos de la dimensión 2, los países de este cluster son aquellos que presentan alto desarrollo económico y altas tasas de infección. Las observaciones del grupo 1 son las que toman valores más bajos en la dimensión 1, por lo cual son países de menor desarrollo económico y bajas tasas de infección, donde esto último también se ve reflejado en los valores medios que toman en la dimensión 2. Los países del grupo 2 presentan niveles bajos de la dimensión 1 y altos de la dimensión 2, lo que se corresponde con un menor nivel de desarrollo económico (salvo atípicos como Japón y Corea del Sur) y bajos niveles de infección. Por su parte, el grupo 3 contiene observaciones con valores altos de la dimensión 1 y bajos de la dimensión 2, lo que representa un alto nivel de desarrollo económico y altas tasas de infección, lo que podemos ver en países como Suiza.
+Lo primero que se puede observar es que el grupo 4 es el que más se aleja de los demás, dado que las observaciones que lo componen tomaron valores altos de las dos variables consideradas (que a su vez considerando el conjunto de las variables con las que se formaron las componentes, tomaban valores atípicos, en particular en las variables *infectionrate* y *gdppercap*). Así, por tomar valores altos de la dimensión 1 y valores bajos de la dimensión 2, los países de este cluster son aquellos que presentan alto desarrollo económico y altas tasas de infección. Las observaciones del grupo 1 son las que toman valores más bajos en la dimensión 1, por lo cual son países de menor desarrollo económico y bajas tasas de infección, donde esto último también se ve reflejado en los valores medios que toman en la dimensión 2. Los países del grupo 2 presentan niveles bajos de la dimensión 1 y altos de la dimensión 2, lo que se corresponde con un menor nivel de desarrollo económico (salvo atípicos dentro del grupo como Japón y Corea del Sur) y bajos niveles de infección. Por su parte, el grupo 3 contiene observaciones con valores altos de la dimensión 1 y bajos de la dimensión 2, lo que representa un alto nivel de desarrollo económico y altas tasas de infección, lo que podemos ver en países como Suiza.
 
 
-```{r boxplot noinfectionrate, include=TRUE, out.width="100%"}
+```{r boxplot noinfectionrate, include=TRUE, out.width="85%", fig.cap="Gráfico de cajas de la tasa de infección, PBI per cápita e índice de estímulo económico, para los distintos grupos."}
 datos_disc_multinom <- as.data.frame(cbind(datos[,vars_cluster], graf2[,-3]))
 
 grid.arrange(
@@ -307,7 +329,7 @@ grid.arrange(
   )
 
 ```
-En la Figura 5 se realizan gráficos de cajas para las variables *infectionrate* y *gdppercap* para cada uno de los 4 grupos, buscando verificar si la caracterización de los grupos que realizamos en base a las componentes principales se ve reflejada en estas dos variables, que fueron empleadas para su elaboración en el ACP [^1]. Incluímos también los mismos gráficos para la variable *CESI_INDEX*, que no pudimos representar en el anterior gráfico en dos dimensiones, para verificar si como suponíamos se comporta de manera similar a la dimensión 1 para cada grupo. Efectivamente, se observa que para la tasa de infección, el grupo 4 [^2] es el que presenta mayores valores de esta variable mostrando altos niveles de infección, seguido por el grupo 3 con valores altos aunque no tan extremos, mientras que los otros dos grupos muestran niveles bajos de infección. Para la variable PBI per cápita, vemos que los grupos 3 y 4 son los que toman valores más altos de la variable, seguidos por los grupos 1 y 2 (este último cuenta con un outlier, Japón, al nivel de los otros grupos). Estas observaciones se corresponden a grandes rasgos con lo que observábamos en la Figura 4. En cuanto al *CESI_INDEX*, vemos que los grupos 3 y 4 presentan niveles similares de la variable lo cual es consistente con el comportamiento de ambos grupos en la dimensión 1, mientras que a su vez los grupos 1 y 2 muestran también comportamientos similares entre sí, si bien se observa la presencia de algunos outliers en el grupo 1; el comportamiento del *CESI_INDEX* es así muy similar al de la variable *gdppercap*, algo razonable dado que esta variable es de índole económico, fue utilizada para la construcción de los componentes principales y en particular presenta una correlación muy alta con la dimensión 1.
+En la Figura 5 se realizan gráficos de cajas para las variables *infectionrate* y *gdppercap* para cada uno de los 4 grupos, buscando verificar si la caracterización de los grupos que realizamos en base a las componentes principales se ve reflejada en estas dos variables, que fueron empleadas para su elaboración[^1]. Incluímos también los mismos gráficos para la variable *CESI_INDEX*, que no pudimos representar en el anterior gráfico en dos dimensiones, para verificar si como suponíamos se comporta de manera similar a la dimensión 1 para cada grupo. Efectivamente, se observa que para la tasa de infección, el grupo 4[^2] es el que presenta mayores valores de esta variable mostrando altos niveles de infección, seguido por el grupo 3 con valores altos aunque no tan extremos, mientras que los otros dos grupos muestran niveles bajos de infección. Para la variable PBI per cápita, vemos que los grupos 3 y 4 son los que toman valores más altos de la variable, seguidos por los grupos 1 y 2 (este último cuenta con un outlier, Japón, al nivel de los otros grupos). Estas observaciones se corresponden a grandes rasgos con lo que se observaba en la Figura 4. En cuanto al *CESI_INDEX*, vemos que los grupos 3 y 4 presentan niveles similares de la variable lo cual es consistente con el comportamiento de ambos grupos en la dimensión 1, mientras que a su vez los grupos 1 y 2 muestran también comportamientos similares entre sí, si bien se observa la presencia de algunos outliers en el grupo 1; el comportamiento del *CESI_INDEX* es así muy similar al de la variable *gdppercap*, algo razonable dado que esta variable es de índole económico, fue utilizada para la construcción de los componentes principales y en particular presenta una correlación relativamente alta con la dimensión 1.
 
 
 
@@ -318,7 +340,7 @@ En la Figura 5 se realizan gráficos de cajas para las variables *infectionrate*
 
 
 
-# Análisis de discriminante 
+# Análisis discriminante 
 
 Luego de haber agrupado las observaciones empleando como variables dos de las componentes principales y el índice de estímulo económico, resulta de interés profundizar en el análisis de la estructura de grupos mediante un análisis discriminante. En esté método de clasificación supervisada haremos uso de la variable que nos indica a cual de los cuatro grupos anteriormente conformados pertenece cada observación y un conjunto de variables para encontrar una regla de clasificación que permita hacer distinción entre los grupos que ya se cuenta. En nuestro caso nos resulta de interés hacer uso del conjunto de variables que se usó para obtener las componentes principales que se tomaron en cuenta para asignar las observaciones a los distintos grupos y así ver de que manera nos permiten distinguir estos últimos. El conjunto de variables empleado es entonces:
 
@@ -329,7 +351,7 @@ Luego de haber agrupado las observaciones empleando como variables dos de las co
 * *noinfectionrate*
 * *CESI_INDEX*
 
-Donde se incluye el índice de estímulo económica a pesar de no haber sido usado en la creación de las componentes para observar su efecto en la clasificación. Dado que en este conjunto de variables todas son cuantitativas una opción puede ser realizar un análisis discriminante lineal, donde se parte del supuesto que en cada grupo $g=1,...,k$ existe una distribución normal $p$-variada con vector de medias $\mu_g$ y matriz de varianzas y covarianzas $\Sigma_g$, siendo p el número de variables. Otro supuesto adicional es que para los distintos grupos las matrices $\Sigma_g$ son iguales. De cumplirse ambos supuestos se pueden derivar las funciones discriminante y de clasificación en base a ellos y la regla de clasificación elegida. Para evaluar su cumplimiento se realizan pruebas de hipótesis de multinormalidad y de homoscedasticidad. La prueba de multinormalidad empleada es la de Mardia, que pone a prueba las hipótesis nulas de  simetría y curtosis de las distribuciones de los grupos. Para no rechazar la multinormalidad no se tienen que rechazar ambas hipótesis. En el Cuadro 3 se aprecia como para los cuatro grupos a un nivel de significación del 5% se rechaza la hipótesis nula de multinormalidad, al rechazarse una o ambas de las hipótesis anteriormente presentadas (observando los p-valores para los grupos 2 y 4 la hipótesis de simetría no se rechaza pero la de curtosis sí, en los otros dos se rechazan ambas hipótesis). Por lo tanto, el análisis discriminante lineal queda descartado, lo mismo que el cuadrático que se emplea para casos donde no se cumple la homoscedasticidad. 
+Donde se incluye el índice de estímulo económica a pesar de no haber sido usado en la creación de las componentes para observar su efecto en la clasificación. Dado que en este conjunto de variables todas son cuantitativas una opción puede ser realizar un análisis discriminante lineal, donde se parte del supuesto que en cada grupo $g=1,...,k$ existe una distribución normal $p$-variada con vector de medias $\mu_g$ y matriz de varianzas y covarianzas $\Sigma_g$, siendo p el número de variables. Otro supuesto adicional es que para los distintos grupos las matrices $\Sigma_g$ son iguales. De cumplirse ambos supuestos se pueden derivar las funciones discriminante y de clasificación en base a ellos y la regla de clasificación elegida. Para evaluar su cumplimiento se realizan pruebas de hipótesis de multinormalidad y de homoscedasticidad. La prueba de multinormalidad empleada es la de Mardia, que pone a prueba las hipótesis nulas de  simetría y curtosis de las distribuciones de los grupos. Para no rechazar la multinormalidad no se tiene que rechazar ninguna de las hipótesis. En el Cuadro 3 se aprecia como para los cuatro grupos a un nivel de significación del 5% se rechaza la hipótesis nula de multinormalidad, al rechazarse una o ambas de las hipótesis anteriormente presentadas (observando los p-valores para los grupos 2 y 4 la hipótesis de simetría no se rechaza pero la de curtosis sí, en los otros dos se rechazan ambas hipótesis). Por lo tanto, el análisis discriminante lineal queda descartado, lo mismo que el cuadrático que se emplea para casos donde no se cumple la homoscedasticidad. 
 
 ```{r}
 # a nivel de cada una de las variables se puede ver que no hay campanas con forma normal para cada uno de los grupos, lo cual indicaria que las distribuciones de los grupos no podrian ser multinormales 
@@ -368,17 +390,18 @@ colnames(matriz_tnorm) <-   c("grupo", "kappa1", "pvalsim", "kappa2", "pvalkurt"
 xtable(as.data.frame(matriz_tnorm), round = 2, caption="Valores de los estadísticos y p-valores para los test de simetría y curtosis.") %>% print.xtable(include.rownames = FALSE)
 ```
 
-Ante esta situación se opta por efectuar un análisis discriminante logístico, para el cual no se requiere el cumplimiento de la multinormalidad. Como tenemos más de dos grupos donde cada observación va a tener una probabilidad de pertenecer a cada uno, consideramos un conjunto de variables aleatorias $Y_i \sim multinomial(n, \pi_g)$, siendo $Y_i$ el grupo al que corresponde la observación $i$-ésima. En este modelo, según el método de la categoría de referencia, se emplean $k-1$ ecuaciones, para modelar la probabilidad de que una observación esté en el grupo $g$ respecto a la probabilidad de que esté en el grupo que se toma como referencia (en el caso del modelo planteo es el grupo 1). La probabilidad que el individuo $i$ esté en el grupo $g$ es:
+Ante esta situación se opta por efectuar un análisis discriminante logístico, para el cual no se requiere el cumplimiento de la multinormalidad. Como tenemos más de dos grupos donde cada observación va a tener una probabilidad de pertenecer a cada uno, consideramos un conjunto de variables aleatorias $Y_i \sim multinomial(n, \pi_g)$, siendo $Y_i$ el grupo al que corresponde la observación $i$-ésima. En este modelo, según el método de la categoría de referencia, se emplean $k-1$ ecuaciones, para modelar la probabilidad de que una observación esté en el grupo $g$ respecto a la probabilidad de que esté en el grupo que se toma como referencia (en el caso del modelo planteado es el grupo 1). La probabilidad que el individuo $i$ esté en el grupo $g$ es:
 
 $$\pi_{i,g} = P(y_i = g) = \frac{exp(x_i^t\beta_g)}{\sum_{j=1}^k exp(x_{ij}^t\beta_j)}$$
 
 Donde $x_i$ es el vector con los valores de las variables para el individuo $i$ y $\beta_g$ es un vector de coeficientes a estimar para el grupo $g$. Las funciones de enlace serían:
 
-$$log_e[\frac{\pi_g}{\pi_k}]= x_i^t \beta_g, \,\, g=1,...,k-1$$
+$$log_e \left[\frac{\pi_{ig}}{\pi_{ik}}\right]= x_i^t \beta_g, \,\, g=1,...,k-1$$
 
 En particular, en nuestro caso contamos con cuatro grupos, por lo que el modelo contará con tres ecuaciones y funciones de enlace para cada observación, donde:
 
-$$x_i^t \beta_g= \beta_{0g} + \beta_{1g}medage_i + \beta_{2g}gdppercap_i + \beta_{3g}healthexp_i + \beta_{4g}hospitalbed_i + \beta_{5g}noinfectionrate_i + \beta_{6g}CESI_INDEX_i$$
+$$x_i^t \beta_g= \beta_{0g} + \beta_{1g}medage_i + \beta_{2g}gdppercap_i + \beta_{3g}healthexp_i + \beta_{4g}hospitalbed_i$$
+$$ + \beta_{5g}noinfectionrate_i + \beta_{6g}CESI\_INDEX_i$$
 
 $\forall \,\, i= 1,...,166$ y $g=1,2,3$.
 
@@ -397,7 +420,7 @@ resumen_multinom <- summary(mod_multinomial)
 Los parámetros del modelo se estiman maximizando la función de verosimilitud de los parámetros $\beta_g$ con métodos computacionales, en particular el método de Newton-Rhapson (con el algoritmo Broyden-Fletcher-Goldfarb-Shanno). Se realiza la prueba de significación conjunta del modelo, donde se pone a prueba la hipótesis nula :
 
 $$H_0) \begin{pmatrix} \beta_{11}\\ \beta_{12} \\ \beta_{13} \end{pmatrix}  = \begin{pmatrix}\beta_{21}\\ \beta_{22} \\ \beta_{23}\end{pmatrix}  = ... = \begin{pmatrix}\beta_{61}\\ \beta_{62} \\ \beta_{63}\end{pmatrix}  = \begin{pmatrix}0\\ 0 \\ 0 \end{pmatrix}$$
-Donde la hipótesis alternativa es que alguno de los vectores de parámetros de las variables sea distinto al vector nulo. Se emplea el estadístico de razón de verosimilitud $-2log \frac{L_R}{L_c}$ que bajo $H_0$ cierta se distribuye $\chi^2_{(k-1)(J)}$ *(Hosmer y Lemeshow, 2000,  p. 270)* donde $J$ es el número de variables explicativas del modelo, en nuestro caso $k=4$ y $J=6$. Para el conjunto de variables consideradas $-2log \frac{L_R}{L_c} = 293.42 > 9.39= \chi^2_{18,0.05}$, por lo que rechazamos la hipótesis nula y entonces el modelo en su conjunto resulta significativo al 5%.    
+Donde la hipótesis alternativa es que alguno de los vectores de parámetros de las variables sea distinto al vector nulo. Se emplea el estadístico *Deviance* que resulta equivalente al de razón de verosimilitud $-2log \frac{L_R}{L_c}$ ($L_R$ es la verosimilitud del modelo con solo la constante y $L_c$ la del modelo con todas las variables). Bajo $H_0$ cierta este estadístico se distribuye $\chi^2_{(k-1)(J)}$ (Hosmer y Lemeshow, 2000,  p. 270) donde $J$ es el número de variables explicativas del modelo. En nuestro caso $k=4$ y $J=6$ y para el conjunto de variables consideradas $-2log \frac{L_R}{L_c} = 293.42 > 9.39= \chi^2_{18,0.05}$, por lo que rechazamos la hipótesis nula y entonces el modelo en su conjunto resulta significativo al 5%.    
 
 ```{r contraste de sig modelo}
 #significacion del modelo
@@ -412,7 +435,7 @@ D1
 ```
 
  
-Para evaluar qué variables mantenemos en el modelo efectuamos las pruebas de significación individuales para cada una. En este caso evaluamos la significación de cada variable para cada una de las 3 ecuaciones del modelo. La hipótesis nula es $H_0) \beta_{gj} = 0$, con $g=1,2,3$, $j=1,...,6$ y se hace uso del estadístico de Wald $z^* = \frac{\hat{\beta}_k}{s_{\beta_k}}$ (bajo $H_0$ cierta $z^* \sim N(0,1)$) y se rechaza $H_0$ si $|z^*|> z_{1-\alpha/2}$. En el caso del modelo planteado, para las tres ecuaciones consideradas todas las variables resultan significativas al 5%, dados que los p-valores son menores que 0.05. Esto implica que todas las variables consideradas resultan relevantes para separar los grupos, no hay ninguna de las que se empleó en para formar las componentes principales con las que se agruparon los países que no aporta a la clasificación.  
+Para evaluar qué variables mantenemos en el modelo efectuamos las pruebas de significación individuales para cada una. En este caso evaluamos la significación de cada variable para cada una de las 3 ecuaciones del modelo. La hipótesis nula es $H_0) \beta_{gj} = 0$, con $g=1,2,3$, $j=1,...,6$ y se hace uso del estadístico de Wald $z^* = \frac{\hat{\beta}_k}{s_{\beta_k}}$ (bajo $H_0$ cierta $z^* \sim N(0,1)$) y se rechaza $H_0$ si $|z^*|> z_{1-\alpha/2}$. En el caso del modelo planteado, para las tres ecuaciones consideradas todas las variables resultan significativas al 5%, dados que los p-valores son menores que 0.05 (cuadro completo en el Anexo). Esto implica que todas las variables consideradas resultan relevantes para separar los grupos, no hay ninguna de las que se empleó para construir las componentes principales con las que se agruparon los países que no aporte a la clasificación y por lo tanto se conservan todas en el modelo.  
 
 
 ```{r contrases individuales de las vars}
@@ -476,15 +499,14 @@ round((sum(diag(tabla1))/sum(tabla1))*100,2)
 ```
 
 
-Para determinar si se cuenta con un buen modelo y validarlo se recurre a analizar los errores de clasificación, para esto se hace uso de matrices de difusión en las cuales se expresa para cada grupo la cantidad de observaciones clasificadas en el grupo correcto (valores de la diagonal de la matriz) como en los otros grupos (valores fuera de la diagonal). Para obtener la matriz de difusión se debe definir la forma con la que se calculan los errores. Una primera opción es calcular el error aparente, cuyo resultado se observa en el Cuadro xx, donde las columnas representan el grupo predicho por el modelo y las filas el grupo real. 
+Para determinar si se cuenta con un buen modelo y validarlo se recurre a analizar los errores de clasificación, para lo cual se hace uso de matrices de difusión en las que se expresa para cada grupo tanto la cantidad de observaciones clasificadas en el grupo correcto (valores de la diagonal de la matriz) como en los otros grupos (valores fuera de la diagonal). Para obtener la matriz de difusión se debe definir la forma con la que se calculan los errores. Una primera opción es calcular el error aparente, cuyo resultado se observa en el Cuadro 4, donde las columnas representan el grupo predicho por el modelo y las filas el grupo real. 
 
-```{r tabla error aparente, results='asis'}
+```{r tabla error aparente, results='asis', include=TRUE}
 tabla1 %>% xtable(caption = "Matriz de difusión, error aparente")
 
 ```
 
-Con el error aparente se construye el modelo con todas las observaciones y para cada una de ellas se compara el grupo predicho por el modelo con el grupo al que efectivamente pertenece. Así se puede calcular la proporción total de aciertos como la traza de la matriz sobre el total de observaciones. El modelo planteado tiene un porcentaje de acierto de 95.78%, ocurriendo la mayor proporción de error en el grupo 4, donde de los 3 países 2 son clasificados correctamente. Para las observaciones del grupo 3 no se cometen errores de clasificación. No obstante al tomar en cuenta el error aparente se usan las mismas observaciones para calcular el error y validar el modelo que para construirlo, lo cual puede llevar a un caso de sobreajuste, situación en la cual el modelo funciona bien para la muestra considerada pero no para nevos datos. Para no caer en esta situación una opción es recurrir a dividir la muestra en una submuestra de entrenamiento y otra de prueba. En este método se estima el modelo con el conjunto de observaciones de entrenamiento y se calcula el error que comete al predecir el grupo de las observaciones del conjunto de prueba.
-
+Para calcular el error aparente se construye el modelo con todas las observaciones y para cada una de ellas se compara el grupo predicho por el modelo con el grupo al que efectivamente pertenece. Así se puede calcular la proporción total de aciertos como la traza de la matriz de difusión sobre el total de observaciones. El modelo planteado tiene un porcentaje de acierto de 95.78%, ocurriendo la mayor proporción de error en el grupo 4, donde de los 3 países 2 son clasificados correctamente. Para las observaciones del grupo 3 no se cometen errores de clasificación. No obstante al tomar en cuenta el error aparente se usan las mismas observaciones para calcular el error y validar el modelo que para construirlo, lo cual puede llevar a un caso de sobreajuste, situación en la cual el modelo funciona bien para la muestra considerada pero no para nuevos datos. Para no caer en esta situación una opción es recurrir a dividir la muestra en una submuestra de entrenamiento y otra de prueba. En este método se estima el modelo con el conjunto de observaciones de entrenamiento y se calcula el error que comete al predecir el grupo de las observaciones del conjunto de prueba. Esta forma de validación funcionará mejor si se cuenta con una muestra de tamaño considerable, si la muestra es muy pequeña el error será muy susceptible a las observaciones que se seleccionan para los grupos de entrenamiento y prueba. Se toma una muestra del 15% de los países (25), debe tenerse en cuenta que al contar con un grupo de solo 3 observaciones puede ocurrir que en alguna de las submuestras no haya observaciones de esté grupo. Dada la muestra tomada se da que los tres países del grupo 4 quedan en el conjunto de entrenamiento,  por lo tanto en este caso particular no se tiene una medida del error de predicción para este grupo, lo que representa una limitante del modelo. 
 
 
 ```{r entrenamiento y prueba}
@@ -512,475 +534,400 @@ round((sum(diag(tabla_t))/sum(tabla_t))*100,2)
 ```
 
 
-```{r tabla error pred, results='asis'}
+```{r tabla error pred, results='asis', include=TRUE}
 
-tabla_t %>% xtable()
-
-```
-
-
-
-
-
-
-```{r k folds}
-
-
-
-#k-folds cross validation
-train.control <- trainControl(method = "cv", number = 10)
-
-# Entrenar el modelo
-
-model <- train(as.factor(grupos_acp2) ~  gdppercap + medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX,
-               data = datos_disc_multinom, method = "multinom",
-               trControl = train.control)
-
-print(model)
-
-
-datosmod2 <- datos_disc_multinom %>% filter(grupos_acp2 != 4, grupos_acp2 != 3)
-
-model2 <- train(as.factor(grupos_acp2) ~  gdppercap + medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX,
-               data = datosmod2, method = "multinom",
-               trControl = train.control)
+tabla_t %>% xtable(caption = "Matriz de difusión, error en muestra de prueba")
 
 ```
 
-
-
-
+En el Cuadro 5 se muestra la matriz de difusión para el conjunto de prueba, se aprecia como el modelo predice que una de las observaciones estará en el grupo 4 cuando el grupo real es el 3, mientras que todos los países de los grupos 1 y 2 son clasificados correctamente. El porcentaje de acierto en el grupo de prueba es de 96%, lo que indica una buena capacidad predictiva del modelo con los grupos distintos al 4.
 
 
 # Conclusiones
 
-# Anexos
+En el análisis de cluster, se llegó a que la estructura de clasificación de los países preferida es la de 4 grupos, a partir del análisis simultáneo de los distintos indicadores: variabilidad explicada por el modelo ($R^2$), heterogeneidad dentro de los grupos (pseudo-t), heterogeneidad entre los distintos grupos (pseudo-F) y calidad de representación de las observaciones (siluetas). Los grupos de la estructura propuesta son fácilmente distinguibles en el primer plano principal de las componentes principales construidas en Marsella y Saldaña (2021): el grupo 1 caracteriza los países con menor desarrollo económico que a su vez tienen bajas tasas de infección de COVID-19 a marzo de 2020, el grupo 2 a los países de un mayor nivel económico y bajos niveles de infección, el grupo 3 también a los desarrollados económicamente pero con tasas de infección más altas, mientras que el grupo 4 agrupa a las observaciones atípicas San Marino, Luxemburgo e Islandia, que presentaban niveles de desarrollo económico altos y valores extremos en las tasas de infección. Esta caracterización en el plano se verifica por ejemplo para el PBI per cápita y la tasa de infección, variables originales utilizadas para construir las componentes principales. Las dos componentes explicaban un 72.77% de la inercia global, lo cual significa que hay poca pérdida de información respecto de las variables originales. Al realizar el análisis discriminante logístico con las variables originales se logró clasificar a los países en los grupos con un error reducido, los clusters construidos con las componentes del ACP son coherentes con la clasificación a la que se llega con las variables originales. El modelo planteado presentó como limitación problemas para clasificar a los países del grupo 4 durante la validación, dado el tamaño reducido de este grupo.
 
-<!-- ## Anexo 1: Método de cluster alternativos -->
+
+
+# Referencias
+
+* Jorge Blanco. (2006). *Introducción al Análisis Multivariado*. Montevideo: IESTA.
+
+* C. Elgin, G. Basbug y A. Salaman. (2020). *Economic Policy Responses to a Pandemic: Developing the COVID-19 Economic Stimulus Index*. CEPR Press.
+
+* D. Hosmer y S. Lemeshow. (2000). *Applied Logistic Regression. Segunda Edición*. John Wiley &  Sons, Inc.
+
+* Laura Nalbarte. (2020). *Análisis Multivariado I - Análisis de Cluster*. Montevideo: IESTA.
+
+* Laura Nalbarte. (2020). *Análisis Multivariado I - Análisis Discriminante*. Montevideo: IESTA.
+
+* Hadley Wickham, Romain François, Lionel Henry and
+  Kirill Müller (2021). dplyr: A Grammar of Data
+  Manipulation. R package version 1.0.6.
+  https://CRAN.R-project.org/package=dplyr
+
+* H. Wickham. ggplot2: Elegant Graphics for Data
+  Analysis. Springer-Verlag New York, 2016.
+
+* David B. Dahl, David Scott, Charles Roosen, Arni
+  Magnusson and Jonathan Swinton (2019). xtable:
+  Export Tables to LaTeX or HTML. R package version
+  1.8-4. https://CRAN.R-project.org/package=xtable
+
+* Sebastien Le, Julie Josse, Francois Husson (2008).
+  FactoMineR: An R Package for Multivariate Analysis.
+  Journal of Statistical Software, 25(1), 1-18.
+  10.18637/jss.v025.i01
+  
+* Hadley Wickham (2021). forcats: Tools for Working
+  with Categorical Variables (Factors). R package
+  version 0.5.1.
+  https://CRAN.R-project.org/package=forcats
+  
+* Baptiste Auguie (2017). gridExtra: Miscellaneous
+  Functions for "Grid" Graphics. R package version
+  2.3. https://CRAN.R-project.org/package=gridExtra
+  
+* Alboukadel Kassambara and Fabian Mundt (2020).
+  factoextra: Extract and Visualize the Results of
+  Multivariate Data Analyses. R package version 1.0.7.
+  https://CRAN.R-project.org/package=factoextra
+
+* Andrie de Vries and Brian D. Ripley (2020).
+  ggdendro: Create Dendrograms and Tree Diagrams Using
+  'ggplot2'. R package version 0.1.22.
+  https://CRAN.R-project.org/package=ggdendro
+  
+*  Malika Charrad, Nadia Ghazzali, Veronique Boiteau,
+  Azam Niknafs (2014). NbClust: An R Package for
+  Determining the Relevant Number of Clusters in a
+  Data Set. Journal of Statistical Software, 61(6),
+  1-36. URL http://www.jstatsoft.org/v61/i06/.
+ 
+* Maechler, M., Rousseeuw, P., Struyf, A., Hubert, M., Hornik, K.(2021). cluster: Cluster Analysis  Basics and Extensions. R package version 2.1.2.
+
+* Venables, W. N. & Ripley, B. D. (2002) Modern Applied
+  Statistics with S. Fourth Edition. Springer, New York. ISBN
+  0-387-95457-0
+  
+* Michael Friendly (2010). HE Plots for Repeated Measures
+  Designs. Journal of Statistical Software, 37(4), 1-40. URL
+  https://www.jstatsoft.org/v37/i04/.  
+
+* Marcello D'Orazio (2020). StatMatch: Statistical Matching or
+  Data Fusion. R package version 1.4.0.
+  https://CRAN.R-project.org/package=StatMatch
+
+* Barret Schloerke, Di Cook, Joseph Larmarange, Francois Briatte,
+  Moritz Marbach, Edwin Thoen, Amos Elberg and Jason Crowley
+  (2021). GGally: Extension to 'ggplot2'. R package version
+  2.1.2. https://CRAN.R-project.org/package=GGally
+  
+* Xavier Robin, Natacha Turck, Alexandre Hainard, Natalia
+  Tiberti, Frédérique Lisacek, Jean-Charles Sanchez and Markus
+  Müller (2011). pROC: an open-source package for R and S+ to
+  analyze and compare ROC curves. BMC Bioinformatics, 12, p. 77.
+  DOI: 10.1186/1471-2105-12-77
+  <http://www.biomedcentral.com/1471-2105/12/77/>
+  
+* Max Kuhn (2021). caret: Classification and Regression Training.
+  R package version 6.0-88.
+  https://CRAN.R-project.org/package=caret
+  
+* Christian Kleiber and Achim Zeileis (2008). Applied
+  Econometrics with R. New York: Springer-Verlag. ISBN
+  978-0-387-77316-2. URL https://CRAN.R-project.org/package=AER
+  
+  
+
+# Anexo
+
+```{r tabla p vals}
+tests_wald_multinom 
+```
+
+
+
+
+
+
+
+<!-- # Anexos script -->
+
+
 
 <!-- ### Cluster con todas las variables -->
 
 <!-- Como conjunto inicial de variables para agrupar las observaciones elegimos: -->
 
-<!-- * *fiscal*  -->
+<!-- * *fiscal* -->
 <!-- * *ratecut* -->
-<!-- * *macrofin*  -->
-<!-- * *bopgdp*  -->
-<!-- * *medage*  -->
+<!-- * *macrofin* -->
+<!-- * *bopgdp* -->
+<!-- * *medage* -->
 <!-- * *gdppercap* -->
-<!-- * *healthexp*  -->
+<!-- * *healthexp* -->
 <!-- * *hospitalbed* -->
 <!-- * *infectionrate* -->
 
 <!-- Que es casi todo el conjunto empleado en Marsella y Saldaña (2021) para el análisis de componentes principales donde se replicó el índice de estímulo económico y el posterior ACP que se hizo con dicho índice y el resto de las variables. No se consideran en este primer intento de conformar clusters las variables *otherbop* y *othermonetary* por ser cualitativas y entonces no poder aplicarse la misma distancia que en el resto de las variables (posteriormente se verá como incluirlas) , *stringency* por su cantidad de valores faltantes ya discutida en el proyecto anteriormente citado y *totalcases* por ser una variable cuya información ya está expresada en *infectionrate* y porque dificulta la comparación entre observaciones al estar medida en términos absolutos y no relativos. -->
 
 
-<!-- ```{r cluster1} -->
+```{r cluster anexo 1}
 
 
-<!-- #ver que hacer con las cualitativas -->
-<!-- #ver el conjunto de variables que se eligen para hacer grupos en esta primera en general -->
-<!-- #hablar de covarianzas referenciando al primer proyecto, puede afectar si son altas -->
+#primer cluster, la función ya de por si estandariza
+clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
+clust1.1<- agnes(datos[-130, vars_cluster1], method = "ward", diss = FALSE, stand = TRUE)
+
+```
 
 
-<!-- #primer cluster, la función ya de por si estandariza -->
-<!-- clust1 <- agnes(datos[,vars_cluster1], method = "ward", diss = FALSE, stand = TRUE) -->
-<!-- clust1.1<- agnes(datos[-130, vars_cluster1], method = "ward", diss = FALSE, stand = TRUE) -->
+```{r dendrograma anexo 1, include=TRUE}
+#con san marino
+fviz_dend(clust1,cex=0.4)
+```
 
-<!-- ``` -->
+```{r indicadores anexo 1}
+#se puede ver un problema de atipicos que conforman un cluster separado
 
-
-<!-- ```{r dendrograma1} -->
-<!-- #con san marino -->
-<!-- fviz_dend(clust1,cex=0.4) -->
-
-<!-- #se puede ver un problema de atipicos que conforman un cluster separado -->
-
-<!-- clust1_indicadores <- indicadores(clust1$merge ,datos[,vars_cluster1] ,10 ) -->
+clust1_indicadores <- indicadores(clust1$merge ,datos[,vars_cluster1] ,10 )
 
 
-<!-- distancias1 <- get_dist(datos[,vars_cluster1], method = "euclidean", stand = TRUE) -->
-<!-- silueta1<-silhouette(cutree(clust1 ,3) , distancias1) -->
-
-<!-- fviz_silhouette(silueta1, print.summary = TRUE) -->
-<!-- ``` -->
+distancias1 <- get_dist(datos[,vars_cluster1], method = "euclidean", stand = TRUE)
+silueta1<-silhouette(cutree(clust1 ,3) , distancias1)
+```
 
 
-<!-- ```{r dendrograma1.1} -->
-<!-- #con san marino -->
-<!-- fviz_dend(clust1.1,cex=0.4) -->
-
-<!-- #se puede ver un problema de atipicos que conforman un cluster separado -->
-
-<!-- clust1.1_indicadores <- indicadores(clust1.1$merge ,datos[-130,vars_cluster1] ,10 ) -->
+```{r sil anexo 1}
+fviz_silhouette(silueta1, print.summary = TRUE) + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank()) + ggtitle("Silueta promedio: 0.34") + ylab("Ancho de silueta")
+```
 
 
-<!-- distancias1.1 <- get_dist(datos[-130,vars_cluster1], method = "euclidean", stand = TRUE) -->
-<!-- silueta1.1<-silhouette(cutree(clust1.1 ,3) , distancias1.1) -->
+```{r dendrograma1.1}
+#con san marino
+fviz_dend(clust1.1,cex=0.4)
 
-<!-- fviz_silhouette(silueta1.1, print.summary = TRUE) -->
-<!-- ``` -->
+#se puede ver un problema de atipicos que conforman un cluster separado
+
+clust1.1_indicadores <- indicadores(clust1.1$merge ,datos[-130,vars_cluster1] ,10 )
+
+
+distancias1.1 <- get_dist(datos[-130,vars_cluster1], method = "euclidean", stand = TRUE)
+silueta1.1<-silhouette(cutree(clust1.1 ,3) , distancias1.1)
+
+fviz_silhouette(silueta1.1, print.summary = TRUE)
+```
 
 
 <!-- ### Cluster CESI_INDEX y otras variables -->
 
-<!-- ```{r cluster} -->
+```{r cluster}
 
-<!-- row.names(datos) <- datos$country -->
+row.names(datos) <- datos$country
 
-<!-- datos_clustr <- scale(datos[,vars_cluster]) -->
+datos_clustr <- scale(datos[,vars_cluster])
 
-<!-- #primer cluster, la función ya de por si estandariza -->
-<!-- cluster <- agnes(datos_clustr, method = "ward", diss = TRUE) -->
+#primer cluster, la función ya de por si estandariza
+cluster <- agnes(datos_clustr, method = "ward", diss = TRUE)
 
-<!-- ``` -->
-
-
-<!-- ```{r dendrograma} -->
-<!-- fviz_dend(cluster,cex=0.4) -->
-
-<!-- ``` -->
+```
 
 
+```{r dendrograma}
+fviz_dend(cluster,cex=0.4)
 
-<!-- ```{r } -->
-<!-- fviz_dend(clust2,cex=0.4) -->
-
-<!-- #se puede ver un problema de atipicos que conforman un cluster separado -->
-
-<!-- clust2_indicadores <- indicadores(clust2$merge ,datos[,vars_cluster2] ,10 ) -->
-
-
-<!-- grupos2 <- cutree(clust2, 2) -->
-
-<!-- datos$grupo2 <- grupos2 -->
-
-<!-- datos %>% filter(grupos2 == 2) -->
-<!-- datos %>% filter(grupos2 == 1) -->
-
-<!-- datos %>% arrange(desc(infectionrate)) -->
-
-
-<!-- distancias <- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE) -->
-<!-- silueta2<-silhouette(cutree(clust2 , 2) , distancias) -->
-
-
-<!-- #grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos -->
-<!-- fviz_silhouette(silueta2, print.summary = TRUE) -->
-
-
-<!-- #vemos cuales son los paises con valores negativos de la silueta -->
-<!-- a <- rep(0,166) -->
-<!-- a[which(silueta2[1:166,3]<0)] <- 1 -->
-
-<!-- datos$aux <- a -->
-
-
-<!-- datosaux <- datos %>% filter(grupos2 == 3) -->
-<!-- datosaux %>% filter(aux==1) -->
-
-<!-- #se puede apreciar que considerando la variable infectionrate se diferencian en varianza del conjunto del resto de los paises y los valores se acumulan mas cercanamente al cero.  -->
-<!-- ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = infectionrate)) -->
-<!-- ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = gdppercap)) -->
-
-<!-- ggplot(datosaux) + geom_point(aes(x = as.factor(aux), y = infectionrate)) -->
+```
 
 
 
+```{r }
+fviz_dend(clust2,cex=0.4)
 
-<!-- asd <- as.data.frame(cbind(acp4$ind$coord[,1:2],  "grupo"  = grupos2[-130], "silueta_neg" = as.factor(datos$aux))) -->
+#se puede ver un problema de atipicos que conforman un cluster separado
 
-
-
-<!-- asd %>%  -->
-<!--   filter(grupo == 2) %>%  -->
-<!-- ggplot() + geom_point(aes(x = Dim.1, y = Dim.2, color = as.factor(silueta_neg) )) -->
+clust2_indicadores <- indicadores(clust2$merge ,datos[,vars_cluster2] ,10 )
 
 
+grupos2 <- cutree(clust2, 2)
 
-<!-- ``` -->
+datos$grupo2 <- grupos2
+
+datos %>% filter(grupos2 == 2)
+datos %>% filter(grupos2 == 1)
+
+datos %>% arrange(desc(infectionrate))
+
+
+distancias <- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE)
+silueta2<-silhouette(cutree(clust2 , 2) , distancias)
+
+
+#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
+fviz_silhouette(silueta2, print.summary = TRUE)
+
+
+#vemos cuales son los paises con valores negativos de la silueta
+a <- rep(0,166)
+a[which(silueta2[1:166,3]<0)] <- 1
+
+datos$aux <- a
+
+
+datosaux <- datos %>% filter(grupos2 == 3)
+datosaux %>% filter(aux==1)
+
+#se puede apreciar que considerando la variable infectionrate se diferencian en varianza del conjunto del resto de los paises y los valores se acumulan mas cercanamente al cero.
+ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = infectionrate))
+ggplot(datosaux)+geom_boxplot(aes(x=as.factor(aux), y = gdppercap))
+
+ggplot(datosaux) + geom_point(aes(x = as.factor(aux), y = infectionrate))
 
 
 
 
-
-<!-- ```{r discriminante_orig} -->
-<!-- #grafico inicial -->
-<!-- ggpairs(datos[c(vars_cluster2, "grupo2")],  mapping = ggplot2::aes(color = as.factor(grupo2) , alpha = 0.5),  -->
-<!--         diag = list(continuous = wrap("densityDiag")),  -->
-<!--         lower=list(continuous = wrap("points", alpha=0.9))) -->
-
-<!-- #puede que la normalidad este fallando por la manera que se construyeron los grupos (en los clusters hay paises con silueta negativa, clasificados incorrectamente, lo que puede generar colas pesadas y/o otros modos) -->
-
-
-<!-- #hacemos los tests de normalidad, homoscedasticidad e igualdad de medias para ver si se puede aplicar discriminante lineal -->
-<!-- testes(datos[,c(vars_cluster2)], as.factor(datos$grupo2)) -->
-
-
-<!-- #rechazamos la normalidad, la igualdad de las medias y la homoscedasticidad -->
-<!-- ``` -->
+asd <- as.data.frame(cbind(acp4$ind$coord[,1:2],  "grupo"  = grupos2[-130], "silueta_neg" = as.factor(datos$aux)))
 
 
 
-<!-- ```{r logistico} -->
-<!-- log1<-glm(as.factor(grupo2) ~ medage + gdppercap + healthexp + hospitalbed + infectionrate + CESI_INDEX , family=binomial, data=datos[,c(vars_cluster2, "grupo2")])  -->
-
-<!-- log1.1 <- stepAIC(log1) -->
-
-
-<!-- ``` -->
+asd %>%
+  filter(grupo == 2) %>%
+ggplot() + geom_point(aes(x = Dim.1, y = Dim.2, color = as.factor(silueta_neg) ))
 
 
-<!-- ```{r} -->
 
-<!-- ``` -->
+```
+
+
+
+
+
+
 <!-- ### Cluster vecino más cercano -->
 
-<!-- ```{r vecinomcerc} -->
-<!-- clust2.1 <- agnes(datos[,vars_cluster2], method = "single", diss = FALSE, stand = TRUE) -->
+```{r vecinomcerc}
+clust2.1 <- agnes(datos[,vars_cluster2], method = "single", diss = FALSE, stand = TRUE)
 
-<!-- clust2.2 <- agnes(datos[,vars_cluster2], method = "complete", diss = FALSE, stand = TRUE) -->
+clust2.2 <- agnes(datos[,vars_cluster2], method = "complete", diss = FALSE, stand = TRUE)
 
-<!-- #se puede notar a san marino como outlier -->
-<!-- fviz_dend(clust2.1,cex=0.4) -->
-
-
-<!-- #se pueden notar que san marino islandia y luxemburgo son los ultimos en agruparse -->
-<!-- fviz_dend(clust2.2,cex=0.4) -->
-
-<!-- clust2.3 <- agnes(datos[-c(130, 92,70),vars_cluster2], method = "complete", diss = FALSE, stand = TRUE) -->
-
-<!-- fviz_dend(clust2.3,cex=0.4) -->
-
-<!-- clust2.3_nroclust <- indicadores(clust2.3$merge ,datos[-c(130, 92,70),vars_cluster2] ,10 ) -->
+#se puede notar a san marino como outlier
+fviz_dend(clust2.1,cex=0.4)
 
 
+#se pueden notar que san marino islandia y luxemburgo son los ultimos en agruparse
+fviz_dend(clust2.2,cex=0.4)
 
-<!-- distancias3 <- get_dist(datos[-c(130, 92,70),vars_cluster2], method = "euclidean", stand = TRUE) -->
-<!-- silueta2.3<-silhouette(cutree(clust2.3 , 3) , distancias3) -->
+clust2.3 <- agnes(datos[-c(130, 92,70),vars_cluster2], method = "complete", diss = FALSE, stand = TRUE)
+
+fviz_dend(clust2.3,cex=0.4)
+
+clust2.3_nroclust <- indicadores(clust2.3$merge ,datos[-c(130, 92,70),vars_cluster2] ,10 )
 
 
-<!-- #grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos -->
-<!-- fviz_silhouette(silueta2.3, print.summary = TRUE) -->
+
+distancias3 <- get_dist(datos[-c(130, 92,70),vars_cluster2], method = "euclidean", stand = TRUE)
+silueta2.3<-silhouette(cutree(clust2.3 , 3) , distancias3)
 
 
-<!-- #con este metodo de union de grupos no obtenemos buenos resultado -->
-<!-- ``` -->
+#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
+fviz_silhouette(silueta2.3, print.summary = TRUE)
+
+
+#con este metodo de union de grupos no obtenemos buenos resultado
+```
 
 
 
 
 <!-- ### Cluster no jerarquico -->
 
-<!-- ```{r clustnojer} -->
-<!-- set.seed(3652) -->
+```{r clustnojer}
+set.seed(3652)
 
 
-<!-- datos2$grupo1 <- cutree(clust1, 3) -->
+datos2$grupo1 <- cutree(clust1, 3)
 
-<!-- centroide1 <- datos2 %>% filter(grupo1 == 1) %>% select(vars_cluster1) %>% colMeans() -->
-<!-- centroide2 <- datos2 %>% filter(grupo1 == 2) %>% select(vars_cluster1) %>% colMeans() -->
-<!-- centroide3 <- datos2 %>% filter(grupo1 == 3) %>% select(vars_cluster1) %>% colMeans() -->
+centroide1 <- datos2 %>% filter(grupo1 == 1) %>% select(vars_cluster1) %>% colMeans()
+centroide2 <- datos2 %>% filter(grupo1 == 2) %>% select(vars_cluster1) %>% colMeans()
+centroide3 <- datos2 %>% filter(grupo1 == 3) %>% select(vars_cluster1) %>% colMeans()
 
-<!-- clusnoj <- kmeans(datos[,vars_cluster1], centers = rbind(centroide1, centroide2, centroide3)) -->
-<!-- summary(clusnoj) -->
-
-
-
-<!-- compnoj <- as.data.frame(cbind(acp4$ind$coord[,1:2],  "grupo"  = as.factor(clusnoj[-130]$cluster)))  -->
+clusnoj <- kmeans(datos[,vars_cluster1], centers = rbind(centroide1, centroide2, centroide3))
+summary(clusnoj)
 
 
 
-<!-- ggplot(compnoj) + geom_point(aes(x = Dim.1, y = Dim.2, color = as.factor(grupo) )) -->
+compnoj <- as.data.frame(cbind(acp4$ind$coord[,1:2],  "grupo"  = as.factor(clusnoj[-130]$cluster)))
 
 
 
-<!-- distancias4 <- daisy(datos[,vars_cluster1], metric = "euclidean", stand = TRUE) -->
-<!-- silueta4<-silhouette(clusnoj$cluster , distancias4) -->
-
-
-<!-- #grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos -->
-<!-- fviz_silhouette(silueta4, print.summary = TRUE) -->
-
-<!-- ``` -->
-
-<!-- ```{r fuzzy y medoides} -->
-
-<!-- medoid <- pam(datos[,vars_cluster1],2) -->
-
-<!-- distancias5<- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE) -->
-<!-- silueta5<-silhouette(medoid$clustering , distancias5) -->
-
-
-<!-- fviz_silhouette(silueta5, print.summary = TRUE) -->
+ggplot(compnoj) + geom_point(aes(x = Dim.1, y = Dim.2, color = as.factor(grupo) ))
 
 
 
-<!-- fuzz <- fanny(datos[,vars_cluster2], k = 2) -->
-<!-- ``` -->
+distancias4 <- daisy(datos[,vars_cluster1], metric = "euclidean", stand = TRUE)
+silueta4<-silhouette(clusnoj$cluster , distancias4)
+
+
+#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
+fviz_silhouette(silueta4, print.summary = TRUE)
+
+```
+
+```{r fuzzy y medoides}
+
+medoid <- pam(datos[,vars_cluster1],2)
+
+distancias5<- get_dist(datos[,vars_cluster2], method = "euclidean", stand = TRUE)
+silueta5<-silhouette(medoid$clustering , distancias5)
+
+
+fviz_silhouette(silueta5, print.summary = TRUE)
+
+
+
+fuzz <- fanny(datos[,vars_cluster2], k = 2)
+```
 
 
 <!-- ### Cluster con componentes principales (sin CESI_INDEX) -->
 
-<!-- ```{r clust acp2} -->
-<!-- datos_acp2 <- acp$ind$coord[,1:2] -->
+```{r clust acp2}
+datos_acp2 <- acp$ind$coord[,1:2]
 
-<!-- datos_acp2 <- cbind(as.data.frame(datos_acp)) -->
+datos_acp2 <- cbind(as.data.frame(datos_acp))
 
-<!-- datos_acp_st2 <- scale(datos_acp2) -->
-<!-- cov_datos_acp2 <- cov(datos_acp_st2) -->
+datos_acp_st2 <- scale(datos_acp2)
+cov_datos_acp2 <- cov(datos_acp_st2)
 
-<!-- rownames(datos_acp_st2) <- datos$country -->
+rownames(datos_acp_st2) <- datos$country
 
-<!-- dist_maha2 <- mahalanobis.dist(datos_acp_st2) -->
+dist_maha2 <- mahalanobis.dist(datos_acp_st2)
 
 
-<!-- cluster_acp2 <- agnes(dist_maha2, method = "ward", diss = TRUE) -->
-<!-- ``` -->
+cluster_acp2 <- agnes(dist_maha2, method = "ward", diss = TRUE)
+```
 
 
-<!-- ```{r dendrograma2} -->
-<!-- fviz_dend(cluster_acp2,cex=0.4) -->
+```{r dendrograma2}
+fviz_dend(cluster_acp2,cex=0.4)
 
-<!-- ``` -->
+```
 
 
-<!-- ```{r indicadores2} -->
-<!-- cluster_acp_inds2 <- indicadores(cluster_acp2$merge ,datos_acp2 ,9 ) -->
-<!-- ``` -->
+```{r indicadores2}
+cluster_acp_inds2 <- indicadores(cluster_acp2$merge ,datos_acp2 ,9 )
+```
 
 
 
-<!-- ```{r siluetas2} -->
-<!-- silueta_acp3<- silhouette(cutree(cluster_acp2 , 2) , dist_maha2) -->
-<!-- silueta_acp4 <- silhouette(cutree(cluster_acp2 , 4) , dist_maha2) -->
+```{r siluetas2}
+silueta_acp3<- silhouette(cutree(cluster_acp2 , 2) , dist_maha2)
+silueta_acp4 <- silhouette(cutree(cluster_acp2 , 4) , dist_maha2)
 
 
-<!-- #grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos -->
-<!-- fviz_silhouette(silueta_acp4, print.summary = TRUE) -->
-<!-- ``` -->
+#grafico de silueta, vemos que hay un conjunto de observaciones del grupo 2 con valores negativos
+fviz_silhouette(silueta_acp4, print.summary = TRUE)
+```
 
 
 
-<!-- # Análisis de discriminante binomial -->
-
-
-
-<!-- # ```{r grupos 2 clust} -->
-<!-- # grupos_acp <- cutree(cluster_acp, 2) -->
-<!-- #  -->
-<!-- # graf <- as.data.frame(cbind(datos_acp, grupos_acp)) -->
-<!-- #  -->
-<!-- # ggplot(graf) + geom_point(aes(x=Dim.1,y= Dim.2, color = as.factor(grupos_acp))) -->
-<!-- #  -->
-<!-- #  -->
-<!-- # ``` -->
-
-
-<!-- ```{r} -->
-<!-- ggpairs(datos_acp,  mapping = ggplot2::aes(color = as.factor(grupos_acp) , alpha = 0.5),  -->
-<!--         diag = list(continuous = wrap("densityDiag")),  -->
-<!--         lower=list(continuous = wrap("points", alpha=0.9))) -->
-<!-- ``` -->
-
-<!-- ```{r tests norm} -->
-<!-- testes(datos_acp, as.factor(graf$grupos_acp)) -->
-<!-- #rechazamos la multinormalidad, la homoscedasticidad y la igualdad de medias -->
-<!-- ``` -->
-
-
-<!-- ```{r logistico acp} -->
-
-<!-- datos_disc <- as.data.frame(cbind(datos[,vars_cluster], graf[,-3])) -->
-
-<!-- log <- glm(as.factor(grupos_acp) ~ gdppercap + noinfectionrate  , family=binomial, data=datos_disc)  -->
-<!-- summary(log) -->
-
-<!-- D1 <- log$null.deviance-log$deviance -->
-<!-- pchisq(D1, df = 5, lower.tail = F) -->
-
-
-
-<!-- respuesta <-predict.glm(log,type='response') #Tenemos la respuesta del modelo -->
-
-
-<!-- prediccion <- ifelse(respuesta > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0 -->
-
-<!-- #Tabla de confusion -->
-<!-- tabla<-table(datos_disc$grupos_acp, prediccion) -->
-<!-- tabla -->
-<!-- ``` -->
-
-
-
-<!-- ```{r} -->
-<!-- log2 <- glm(as.factor(grupos_acp) ~  medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc)  -->
-<!-- summary(log2) -->
-
-
-<!-- log2step <- step(log2) -->
-<!-- summary(log2step) -->
-
-
-
-<!-- respuesta2 <-predict.glm(log2,type='response') #Tenemos la respuesta del modelo -->
-
-
-<!-- prediccion2 <- ifelse(respuesta2 > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0 -->
-
-<!-- #Tabla de confusion -->
-<!-- tabla2<-table(datos_disc$grupos_acp, prediccion2) -->
-<!-- tabla2 -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- #Lo mismo con el modelo que nos da el step, con las variables significativas -->
-
-<!-- log.step <- glm(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX  , family=binomial, data=datos_disc)  -->
-<!-- summary(log.step) -->
-
-
-<!-- respuesta.step <-predict.glm(log.step,type='response') #Tenemos la respuesta del modelo -->
-
-
-<!-- prediccion.step <- ifelse(respuesta.step > 0.5,2 ,1)#A los que tengan un score de mas de 0.5 le asigna 1 a los otros 0 -->
-
-<!-- #Tabla de confusion -->
-<!-- tabla.step<-table(datos_disc$grupos_acp, prediccion.step) -->
-<!-- tabla.step -->
-
-<!-- #Nos da la misma tabla de confusión que manteniendo infectionrate como variable explicativa, por lo que optamos por quitarla para lograr un modelo más parsimonioso -->
-
-
-<!-- rocLog<-roc(as.factor(grupos_acp) ~ respuesta.step, plot = TRUE, print.auc = TRUE) -->
-
-<!-- plot(rocLog, print.thres="best", print.thres.best.method="closest.topleft", col="red") -->
-
-<!-- prediccion.step2 <- ifelse(respuesta.step > 0.287,2 ,1) -->
-
-<!-- tabla.step2<-table(datos_disc$grupos_acp, prediccion.step2) -->
-<!-- tabla.step2 -->
-<!-- ``` -->
-
-<!-- Como teníamos problemas de clasificación con observaciones correspondientes al segundo grupo, que tenían silueta negativa al construir los clusters, el algoritmo elije un umbral bajo para que esas observaciones sean clasificadas correctamente como pertenecientes al grupo 2. -->
-
-<!-- ```{r validacion} -->
-<!-- train.control <- trainControl(method = "cv", number = 10) -->
-
-<!-- # Entrenar el modelo -->
-<!-- library(e1071) -->
-
-<!-- model <- train(as.factor(grupos_acp) ~  medage + healthexp + hospitalbed + CESI_INDEX, -->
-<!--                data = datos_disc, method = "glm", -->
-<!--                trControl = train.control) -->
-
-<!-- print(model) -->
-
-
-
-<!-- ``` -->
-
-<!-- The column labeled “Accuracy” is the overall agreement rate averaged over cross-validation iterations.  -->
-
-# Referencias
