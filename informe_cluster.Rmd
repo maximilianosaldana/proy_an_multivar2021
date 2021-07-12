@@ -57,6 +57,7 @@ library(GGally)
 library(pROC)
 library(caret)
 library(nnet)
+library(AER)
 
 
 source("indicadores.R")
@@ -367,7 +368,7 @@ colnames(matriz_tnorm) <-   c("grupo", "kappa1", "pvalsim", "kappa2", "pvalkurt"
 xtable(as.data.frame(matriz_tnorm), round = 2, caption="Valores de los estadísticos y p-valores para los test de simetría y curtosis.") %>% print.xtable(include.rownames = FALSE)
 ```
 
-Ante esta situación se opta por efectuar un análisis discriminante logístico, para el cual no se requiere el cumplimiento de la multinormalidad. Como tenemos 4 grupos donde cada uno va a tener una probabilidad, consideramos un conjunto de variables aleatorias $Y_i \sim multinomial(n, \pi_g)$, siendo $Y_i$ el grupo al que corresponde la observación $i$-ésima. En este modelo, según el método de la categoría de referencia, se emplean $k-1$ ecuaciones, para modelar la probabilidad de que una observación esté en el grupo $g$ respecto a la probabilidad de que esté en el grupo que se toma como referencia. La probabilidad que el individuo $i$ esté en el grupo $g$ es:
+Ante esta situación se opta por efectuar un análisis discriminante logístico, para el cual no se requiere el cumplimiento de la multinormalidad. Como tenemos más de dos grupos donde cada observación va a tener una probabilidad de pertenecer a cada uno, consideramos un conjunto de variables aleatorias $Y_i \sim multinomial(n, \pi_g)$, siendo $Y_i$ el grupo al que corresponde la observación $i$-ésima. En este modelo, según el método de la categoría de referencia, se emplean $k-1$ ecuaciones, para modelar la probabilidad de que una observación esté en el grupo $g$ respecto a la probabilidad de que esté en el grupo que se toma como referencia. La probabilidad que el individuo $i$ esté en el grupo $g$ es:
 
 $$\pi_{i,g} = P(y_i = g) = \frac{exp(x_i^t\beta_g)}{\sum_{j=1}^k exp(x_{ij}^t\beta_j)}$$
 
@@ -375,14 +376,87 @@ Donde $x_i$ es el vector con los valores de las variables para el individuo $i$ 
 
 $$log_e[\frac{\pi_g}{\pi_k}]= x_i^t \beta_g, \,\, g=1,...,k-1$$
 
+En particular, en nuestro caso contamos con cuatro grupos, por lo que el modelo contará con tres ecuaciones y funciones de enlace para cada observación, donde:
+
+$$x_i^t \beta_g= \beta_{0g} + \beta_{1g}medage_i + \beta_{2g}gdppercap_i + \beta_{3g}healthexp_i + \beta_{4g}hospitalbed_i + \beta_{5g}noinfectionrate_i + \beta_{6g}CESI_INDEX_i$$
+
+$\forall \,\, i= 1,...,166$ y $g=1,2,3$.
 
 
 
+```{r modelo multinom}
+mod_multinomial <- multinom(as.factor(grupos_acp2) ~ gdppercap + medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX   ,  data=datos_disc_multinom) 
 
 
 
+resumen_multinom <- summary(mod_multinomial)
+```
 
 
+
+Los parámetros del modelo se estiman maximizando la función de verosimilitud de los parámetros $\beta_g$ con métodos computacionales, en particular el método de Newton-Rhapson (con el algoritmo Broyden-Fletcher-Goldfarb-Shanno). Se realiza la prueba de significación conjunta del modelo, donde se pone a prueba la hipótesis nula :
+
+$$H_0) \begin{pmatrix} \beta_{11}\\ \beta_{12} \\ \beta_{13} \end{pmatrix}  = \begin{pmatrix}\beta_{21}\\ \beta_{22} \\ \beta_{23}\end{pmatrix}  = ... = \begin{pmatrix}\beta_{61}\\ \beta_{62} \\ \beta_{63}\end{pmatrix}  = \begin{pmatrix}0\\ 0 \\ 0 \end{pmatrix}$$
+Donde la hipótesis alternativa es que alguno de los vectores de parámetros de las variables sea distinto al vector nulo. Se emplea el estadístico de razón de verosimilitud $-2log \frac{L_R}{L_c}$ que bajo $H_0$ cierta se distribuye $\chi^2_{(k-1)(J)}$ *(Hosmer y Lemeshow, 2000,  p. 270)* donde $J$ es el número de variables explicativas del modelo, en nuestro caso $k=4$ y $J=6$. Para el conjunto de variables consideradas $-2log \frac{L_R}{L_c} = 293.42 > 9.39= \chi^2_{18,0.05}$, por lo que rechazamos la hipótesis nula y entonces el modelo en su conjunto resulta significativo al 5%.    
+
+```{r contraste de sig modelo}
+#significacion del modelo
+
+mod_multinomial_sinvars <- multinom(as.factor(grupos_acp2) ~ 1 ,  data=datos_disc_multinom) 
+
+D1 <- mod_multinomial_sinvars$deviance - mod_multinomial$deviance
+pchisq(D1, df = (4-1)*(6), lower.tail = F)
+
+qchisq(0.05, df = 18)
+D1
+```
+
+ 
+Para evaluar qué variables mantenemos en el modelo efectuamos las pruebas de significación individuales para cada una. En este caso evaluamos la significación de cada variable para cada una de las 3 ecuaciones del modelo. La hipótesis nula es $H_0) \beta_{gj} = 0$, con $g=1,2,3$, $j=1,...,6$     Se hace uso del estadístico de Wald
+
+
+```{r contrases individuales de las vars}
+
+tests_wald_multinom <- coeftest(mod_multinomial)
+
+#MANUALMENTE
+
+# significacion de las variables
+
+# coeficientes <- resumen_multinom$coefficients
+# desvios <- resumen_multinom$standard.errors
+# 
+# ## 1er modelo (grupo 2)
+# 
+# wald1 <- coeficientes[1,]/desvios[1,]
+# 
+# pnorm(abs(wald1), lower.tail = FALSE)
+# pchisq(wald1^2, df = 1, lower.tail = F)
+# 
+# qnorm(0.05, lower.tail = FALSE)
+# abs(wald1)
+# 
+# 
+# ## 2do modelo (grupo 3)
+# 
+# wald2 <- coeficientes[2,]/desvios[2,]
+# 
+# pnorm(abs(wald2), lower.tail = FALSE)
+# pchisq(wald2^2, df = 1, lower.tail = F)
+# 
+# qnorm(0.05, lower.tail = FALSE)
+# abs(wald2)
+# 
+# ## 3er modelo (grupo 4)
+# 
+# wald3 <- coeficientes[3,]/desvios[3,]
+# 
+# pnorm(abs(wald3), lower.tail = FALSE)
+# pchisq(wald3^2, df = 1, lower.tail = F)
+# 
+# qnorm(0.05, lower.tail = FALSE)
+# abs(wald3)
+```
 
 
 
@@ -400,57 +474,11 @@ $$log_e[\frac{\pi_g}{\pi_k}]= x_i^t \beta_g, \,\, g=1,...,k-1$$
 ```{r multinomial con datos acp}
 
 
-mod_multinomial <- multinom(as.factor(grupos_acp2) ~ gdppercap + medage + noinfectionrate + healthexp + hospitalbed + CESI_INDEX   ,  data=datos_disc_multinom) 
 
 
 
-resumen_multinom <- summary(mod_multinomial)
-
-#significacion del modelo
-
-mod_multinomial_sinvars <- multinom(as.factor(grupos_acp2) ~ 1 ,  data=datos_disc_multinom) 
-
-D1 <- mod_multinomial_sinvars$deviance-mod_multinomial$deviance
-pchisq(D1, df = 6, lower.tail = F)
-
-qchisq(0.05, df = 6)
-D1
-
-# significacion de las variables
-
-coeficientes <- resumen_multinom$coefficients
-desvios <- resumen_multinom$standard.errors
-
-## 1er modelo (grupo 2)
-
-wald1 <- coeficientes[1,]/desvios[1,]
-
-pnorm(abs(wald1), lower.tail = FALSE)
-pchisq(wald1^2, df = 1, lower.tail = F)
-
-qnorm(0.05, lower.tail = FALSE)
-abs(wald1)
 
 
-## 2do modelo (grupo 3)
-
-wald2 <- coeficientes[2,]/desvios[2,]
-
-pnorm(abs(wald2), lower.tail = FALSE)
-pchisq(wald2^2, df = 1, lower.tail = F)
-
-qnorm(0.05, lower.tail = FALSE)
-abs(wald2)
-
-## 3er modelo (grupo 4)
-
-wald3 <- coeficientes[3,]/desvios[3,]
-
-pnorm(abs(wald3), lower.tail = FALSE)
-pchisq(wald3^2, df = 1, lower.tail = F)
-
-qnorm(0.05, lower.tail = FALSE)
-abs(wald3)
 
 
 #Prediction
@@ -468,11 +496,6 @@ round((sum(diag(tabla1))/sum(tabla1))*100,2)
 
 
 
-```{r}
-step_multi <- step(mod_multinomial, direction = "both")
-summary(step_multi)
-
-```
 
 
 ```{r validacion multinom}
